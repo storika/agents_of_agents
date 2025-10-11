@@ -11,4 +11,4 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = ["generate_image", "hr_validation_agent"]
+packages = ["generate_image", "hr_validation_agent", "image_caption_agent"]
