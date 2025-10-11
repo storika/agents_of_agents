@@ -1,0 +1,157 @@
+{
+  "version": "2.1.0",
+  "description": "Agent archetype registry for HR Director team composition. 30 archetypes across 5 categories provide diverse options for building optimal teams.",
+  "lastUpdated": "2025-10-11",
+  "schema_format": "simplified",
+  "totalArchetypes": 30,
+  "categories": {
+    "orchestrator": {
+      "description": "Strategic coordinators who manage team discussions and make final decisions",
+      "file": "archetypes/orchestrators.json",
+      "teamRole": "parent_agent",
+      "requiredPerTeam": 1,
+      "count": 6,
+      "archetypes": ["ContentTeamLead", "CampaignManager", "CommunityTeamLead", "ViralStrategist", "NewsJackingCoordinator", "CreativeDirector"]
+    },
+    "content_creation": {
+      "description": "Specialists who research, create, and optimize content",
+      "file": "archetypes/content_creation.json",
+      "teamRole": "sub_agent",
+      "requiredPerTeam": "1-3",
+      "count": 8,
+      "archetypes": ["TrendResearcher", "ViralCopywriter", "ThreadWriter", "MemeCreator", "Storyteller", "Hooksmith", "ListicleWriter", "ControversialTake"]
+    },
+    "intelligence": {
+      "description": "Analysts who provide data-driven insights for strategy",
+      "file": "archetypes/intelligence.json",
+      "teamRole": "sub_agent",
+      "requiredPerTeam": "0-2",
+      "count": 6,
+      "archetypes": ["PerformanceAnalyst", "AudienceResearcher", "CompetitorAnalyst", "TimingOptimizer", "ConversionTracker", "ViralityScout"]
+    },
+    "quality_safety": {
+      "description": "Validators who ensure brand safety and content quality",
+      "file": "archetypes/quality_safety.json",
+      "teamRole": "sub_agent",
+      "requiredPerTeam": "1-2",
+      "count": 5,
+      "archetypes": ["BrandSafetyValidator", "FactChecker", "CrisisManager", "ToneChecker", "AccessibilityChecker"]
+    },
+    "engagement": {
+      "description": "Community builders who handle interactions and relationships",
+      "file": "archetypes/engagement.json",
+      "teamRole": "sub_agent",
+      "requiredPerTeam": "0-2",
+      "count": 5,
+      "archetypes": ["CommunityManager", "InfluencerOutreach", "ConversationStarter", "UGCCollector", "ReputationGuard"]
+    }
+  },
+  "commonTeamPatterns": {
+    "trend_focused_team": {
+      "description": "Fast-paced team that jumps on trending topics",
+      "orchestrator": "ContentTeamLead",
+      "subAgents": ["TrendResearcher", "ViralCopywriter", "BrandSafetyValidator"],
+      "bestFor": ["virality", "brand_awareness", "real_time_marketing"]
+    },
+    "meme_focused_team": {
+      "description": "Humorous team specializing in viral meme content",
+      "orchestrator": "ContentTeamLead",
+      "subAgents": ["MemeCreator", "ViralCopywriter", "BrandSafetyValidator"],
+      "bestFor": ["virality", "engagement", "younger_audiences"]
+    },
+    "thread_focused_team": {
+      "description": "Educational team creating long-form thread content",
+      "orchestrator": "ContentTeamLead",
+      "subAgents": ["ThreadWriter", "FactChecker", "BrandSafetyValidator"],
+      "bestFor": ["thought_leadership", "education", "authority_building"]
+    },
+    "data_driven_team": {
+      "description": "Analytics-focused team optimizing based on performance",
+      "orchestrator": "ContentTeamLead",
+      "subAgents": ["PerformanceAnalyst", "ViralCopywriter", "BrandSafetyValidator"],
+      "bestFor": ["optimization", "growth", "conversion"]
+    },
+    "community_building_team": {
+      "description": "Engagement-focused team building relationships",
+      "orchestrator": "CommunityTeamLead",
+      "subAgents": ["CommunityManager", "AudienceResearcher", "BrandSafetyValidator"],
+      "bestFor": ["community_building", "loyalty", "engagement"]
+    },
+    "influencer_partnership_team": {
+      "description": "Growth team leveraging influencer relationships",
+      "orchestrator": "CommunityTeamLead",
+      "subAgents": ["InfluencerOutreach", "AudienceResearcher", "BrandSafetyValidator"],
+      "bestFor": ["reach_expansion", "audience_growth", "partnerships"]
+    },
+    "campaign_launch_team": {
+      "description": "Strategic team for multi-day campaigns",
+      "orchestrator": "CampaignManager",
+      "subAgents": ["TrendResearcher", "ViralCopywriter", "PerformanceAnalyst", "BrandSafetyValidator"],
+      "bestFor": ["product_launch", "campaigns", "storytelling"]
+    },
+    "viral_testing_team": {
+      "description": "Experimental team focused on A/B testing and viral mechanics",
+      "orchestrator": "ViralStrategist",
+      "subAgents": ["Hooksmith", "ViralityScout", "PerformanceAnalyst", "BrandSafetyValidator"],
+      "bestFor": ["virality", "experimentation", "rapid_iteration"]
+    },
+    "newsjacking_team": {
+      "description": "Rapid-response team for breaking news and viral moments",
+      "orchestrator": "NewsJackingCoordinator",
+      "subAgents": ["TrendResearcher", "ViralCopywriter", "BrandSafetyValidator"],
+      "bestFor": ["real_time_marketing", "reactive_content", "agility"]
+    },
+    "creative_brand_team": {
+      "description": "Bold creative team pushing boundaries for standout content",
+      "orchestrator": "CreativeDirector",
+      "subAgents": ["Storyteller", "MemeCreator", "ControversialTake", "ToneChecker"],
+      "bestFor": ["differentiation", "brand_building", "creative_excellence"]
+    },
+    "conversion_optimization_team": {
+      "description": "Conversion-focused team driving actions and sales",
+      "orchestrator": "ContentTeamLead",
+      "subAgents": ["ConversionTracker", "Hooksmith", "TimingOptimizer", "BrandSafetyValidator"],
+      "bestFor": ["conversions", "sales", "roi"]
+    },
+    "reputation_management_team": {
+      "description": "Protective team monitoring and managing brand reputation",
+      "orchestrator": "CommunityTeamLead",
+      "subAgents": ["ReputationGuard", "CrisisManager", "CommunityManager", "ToneChecker"],
+      "bestFor": ["reputation_protection", "crisis_prevention", "trust_building"]
+    }
+  },
+  "usageInstructions": {
+    "forHRDirector": "Load archetype arrays from category files. With 30 archetypes, you have diverse options to match any account strategy, stage, or goal. Select archetypes by name and fill template variables from owner profile.",
+    "archetypeSelection": [
+      "1. Choose 1 orchestrator archetype based on team strategy (6 options)",
+      "2. Choose 2-4 sub-agent archetypes based on needs (24 options across 4 categories)",
+      "3. Ensure at least 1 quality_safety archetype per team",
+      "4. Consider owner goals, account stage, and risk tolerance",
+      "5. Use commonTeamPatterns (12 templates) as starting points",
+      "6. Mix and match archetypes to create unique team compositions"
+    ],
+    "loading": "Load archetypes from JSON files: orchestrators.json (6), content_creation.json (8), intelligence.json (6), quality_safety.json (5), engagement.json (5)"
+  },
+  "schemaReference": {
+    "archetypeFields": [
+      "name: CamelCase unique identifier",
+      "version: Semantic version",
+      "role: category.specialty (e.g., orchestrator.content)",
+      "objective: One-line purpose statement",
+      "system_prompt: Concise prompt with {template_variables}",
+      "io.inputs: Array of input parameter names",
+      "io.outputs: Array of output parameter names",
+      "tool_bindings: Array of tool names needed"
+    ],
+    "templateVariables": [
+      "{handle}: X account handle",
+      "{brand_tone}: casual/professional/edgy/humorous",
+      "{risk_tolerance}: conservative/moderate/bold",
+      "{topics_to_avoid}: Comma-separated list",
+      "{sub_agents}: Sub-agent names/handles",
+      "{target_audience}: Audience description",
+      "{brand_focus}: Primary brand focus",
+      "...and more context-specific variables"
+    ]
+  }
+}
