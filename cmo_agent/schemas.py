@@ -88,3 +88,100 @@ class IterationMetrics(BaseModel):
     actual_engagement: Optional[Dict[str, int]] = Field(default=None)
     timestamp: str
 
+
+# ===== NEW LAYER SCHEMAS =====
+
+class TrendingTopic(BaseModel):
+    """트렌딩 토픽"""
+    topic_name: str
+    relevance_score: float = Field(ge=0.0, le=1.0)
+    timeliness_score: float = Field(ge=0.0, le=1.0)
+
+
+class ViralAngle(BaseModel):
+    """바이럴 가능성이 있는 각도"""
+    angle_summary: str
+    potential_platforms: List[str]
+    engagement_likelihood: float = Field(ge=0.0, le=1.0)
+
+
+class ResearchLayerOutput(BaseModel):
+    """Research Layer 출력"""
+    trending_topics: List[TrendingTopic]
+    audience_insights: str
+    viral_potential_angles: List[ViralAngle]
+    data_sources_used: List[str]
+
+
+class ContentIdea(BaseModel):
+    """콘텐츠 아이디어"""
+    idea_id: str
+    title: str
+    hook: str
+    angle: str
+    target_platforms: List[str]
+    novelty_score: float = Field(ge=0.0, le=1.0)
+    creativity_score: float = Field(ge=0.0, le=1.0)
+    engagement_potential_score: float = Field(ge=0.0, le=1.0)
+
+
+class CreativeWriterOutput(BaseModel):
+    """Creative Writer Layer 출력"""
+    ideas: List[ContentIdea]
+
+
+class ContentPiece(BaseModel):
+    """생성된 콘텐츠 조각"""
+    platform: str
+    format: str
+    content: str
+    character_count: int
+    hashtags: List[str]
+    call_to_action: Optional[str] = None
+    clarity_score: float = Field(ge=0.0, le=1.0)
+    shareability_score: float = Field(ge=0.0, le=1.0)
+
+
+class GeneratorOutput(BaseModel):
+    """Generator Layer 출력"""
+    generated_content_id: str
+    source_idea_id: str
+    content_pieces: List[ContentPiece]
+    completeness_assessment: str
+
+
+class ContentEvaluation(BaseModel):
+    """콘텐츠 평가"""
+    platform: str
+    content_summary: str
+    accuracy_score: float = Field(ge=0.0, le=1.0)
+    objectivity_score: float = Field(ge=0.0, le=1.0)
+    thoroughness_score: float = Field(ge=0.0, le=1.0)
+    overall_quality_score: float = Field(ge=0.0, le=1.0)
+    feedback_points: List[str]
+
+
+class CriticOutput(BaseModel):
+    """Critic Layer 출력"""
+    evaluation_id: str
+    generated_content_id: str
+    evaluations: List[ContentEvaluation]
+
+
+class RedFlag(BaseModel):
+    """안전성 위험 플래그"""
+    category: str  # 'Brand Safety', 'Ethical', 'Legal'
+    description: str
+    severity: str  # 'minor', 'moderate', 'severe'
+
+
+class SafetyOutput(BaseModel):
+    """Safety Layer 출력"""
+    safety_assessment_id: str
+    generated_content_id: str
+    overall_safety_score: float = Field(ge=0.0, le=1.0)
+    risk_level: str  # 'low', 'medium', 'high', 'critical'
+    compliance_status: str  # 'compliant', 'non-compliant', 'review_required'
+    red_flags: List[RedFlag]
+    recommendations: List[str]
+

@@ -34,9 +34,12 @@ from cmo_agent.tools import (
 # Import sub-agent management
 from cmo_agent.sub_agents import (
     SubAgentTeam,
-    call_writer_agents,
-    call_critic_agents,
-    call_safety_agents
+    # Sequential layer agents
+    call_research_layer,
+    call_creative_writer_layer,
+    call_generator_layer,
+    call_critic_layer,
+    call_safety_layer
 )
 
 
@@ -102,17 +105,15 @@ def get_sub_agent_team() -> SubAgentTeam:
 def orchestrate_content_creation(
     iteration: int = 0,
     topic: str = "AI agents",
-    num_candidates: int = 3,
-    use_sub_agents: bool = False
+    num_candidates: int = 3
 ) -> str:
     """
-    콘텐츠 생성 전체 프로세스 오케스트레이션
+    콘텐츠 생성 전체 프로세스 오케스트레이션 (시뮬레이션 모드)
     
     Args:
         iteration: 현재 반복 횟수
         topic: 콘텐츠 주제
         num_candidates: 생성할 후보 수 (3-6 권장)
-        use_sub_agents: 실제 서브 에이전트 사용 여부 (False=시뮬레이션)
     
     Returns:
         JSON 형식의 CMO 실행 결과
@@ -132,104 +133,42 @@ def orchestrate_content_creation(
         print(f"\n2️⃣ Generate Stage - {num_candidates}개 후보 생성 중...")
         candidates = []
         
-        if use_sub_agents:
-            # 실제 서브 에이전트 사용
-            print("   🤖 서브 에이전트 Writer 팀 호출 중...")
-            team = get_sub_agent_team()
-            
-            # Writer 에이전트들로부터 변형 생성
-            writer_variants = call_writer_agents(team, topic, num_candidates)
-            
-            if writer_variants:
-                candidates.extend(writer_variants)
-                print(f"   ✓ Writer 에이전트가 {len(writer_variants)}개 후보 생성")
-            
-            # 부족한 후보는 시뮬레이션으로 채우기
-            remaining = num_candidates - len(candidates)
-            if remaining > 0:
-                print(f"   ⚠️ {remaining}개 추가 후보를 시뮬레이션으로 생성")
-                for i in range(remaining):
-                    selected_topic = research_result['topics'][i % len(research_result['topics'])]
-                    candidate_json = generate_content_candidate(
-                        topic=selected_topic,
-                        tone=research_result['tone_style']
-                    )
-                    candidate_dict = json.loads(candidate_json)
-                    candidates.append(candidate_dict)
-        else:
-            # 시뮬레이션 모드
-            for i in range(num_candidates):
-                # 각 토픽에서 후보 생성
-                selected_topic = research_result['topics'][i % len(research_result['topics'])]
-                candidate_json = generate_content_candidate(
-                    topic=selected_topic,
-                    tone=research_result['tone_style']
-                )
-                candidate_dict = json.loads(candidate_json)
-                candidates.append(candidate_dict)
-                print(f"   ✓ 후보 {i+1}: {candidate_dict['text'][:60]}...")
+        # 시뮬레이션 모드 (use_sub_agents는 더 이상 사용되지 않음)
+        for i in range(num_candidates):
+            # 각 토픽에서 후보 생성
+            selected_topic = research_result['topics'][i % len(research_result['topics'])]
+            candidate_json = generate_content_candidate(
+                topic=selected_topic,
+                tone=research_result['tone_style']
+            )
+            candidate_dict = json.loads(candidate_json)
+            candidates.append(candidate_dict)
+            print(f"   ✓ 후보 {i+1}: {candidate_dict['text'][:60]}...")
         
         # === 3️⃣ EVALUATE STAGE ===
         print(f"\n3️⃣ Evaluate Stage - 평가 중...")
         evaluated_candidates = []
         
-        if use_sub_agents:
-            team = get_sub_agent_team()
+        # 시뮬레이션 모드
+        for i, candidate in enumerate(candidates):
+            # Critic + Safety 에이전트 호출 (시뮬레이션)
+            scores_json = evaluate_content(
+                text=candidate['text'],
+                media_prompt=candidate['media_prompt']
+            )
+            scores = json.loads(scores_json)
             
-            for i, candidate in enumerate(candidates):
-                # Critic 에이전트 호출
-                critic_scores = call_critic_agents(team, candidate)
-                
-                # Safety 에이전트 호출
-                safety_result = call_safety_agents(team, candidate)
-                
-                # 점수 병합
-                scores = {**critic_scores, "safety": safety_result["safety"]}
-                
-                # Overall 계산
-                weights = {
-                    "clarity": 0.25,
-                    "novelty": 0.25,
-                    "shareability": 0.30,
-                    "credibility": 0.10,
-                    "safety": 0.10
-                }
-                overall = sum(scores.get(metric, 0.0) * weight for metric, weight in weights.items())
-                scores["overall"] = round(overall, 2)
-                
-                # Safety check
-                if not safety_result.get("passed", True) or scores['safety'] < 0.8:
-                    print(f"   ✗ 후보 {i+1}: 안전성 기준 미달 (safety={scores['safety']})")
-                    print(f"      이슈: {safety_result.get('issues', [])}")
-                    continue
-                
-                candidate['scores'] = scores
-                evaluated_candidates.append(candidate)
-                
-                print(f"   ✓ 후보 {i+1}: overall={scores['overall']:.2f} "
-                      f"(clarity={scores['clarity']:.2f}, novelty={scores['novelty']:.2f}, "
-                      f"shareability={scores['shareability']:.2f})")
-        else:
-            # 시뮬레이션 모드
-            for i, candidate in enumerate(candidates):
-                # Critic + Safety 에이전트 호출 (시뮬레이션)
-                scores_json = evaluate_content(
-                    text=candidate['text'],
-                    media_prompt=candidate['media_prompt']
-                )
-                scores = json.loads(scores_json)
-                
-                # Safety check
-                if scores['safety'] < 0.8:
-                    print(f"   ✗ 후보 {i+1}: 안전성 기준 미달 (safety={scores['safety']})")
-                    continue
-                
-                candidate['scores'] = scores
-                evaluated_candidates.append(candidate)
-                
-                print(f"   ✓ 후보 {i+1}: overall={scores['overall']:.2f} "
-                      f"(clarity={scores['clarity']:.2f}, novelty={scores['novelty']:.2f}, "
-                      f"shareability={scores['shareability']:.2f})")
+            # Safety check
+            if scores['safety'] < 0.8:
+                print(f"   ✗ 후보 {i+1}: 안전성 기준 미달 (safety={scores['safety']})")
+                continue
+            
+            candidate['scores'] = scores
+            evaluated_candidates.append(candidate)
+            
+            print(f"   ✓ 후보 {i+1}: overall={scores['overall']:.2f} "
+                  f"(clarity={scores['clarity']:.2f}, novelty={scores['novelty']:.2f}, "
+                  f"shareability={scores['shareability']:.2f})")
         
         # 점수 기준 정렬
         evaluated_candidates.sort(key=lambda x: x['scores']['overall'], reverse=True)
@@ -313,6 +252,233 @@ def generate_feedback_summary(candidates: list) -> str:
     summary += f"안전한 톤, 개발자 친화적 메시지."
     
     return summary
+
+
+@weave.op()
+def orchestrate_sequential_layers(
+    topic: str = "AI agents",
+    audience_demographics: str = "developers, tech enthusiasts"
+) -> str:
+    """
+    5개 레이어를 순차적으로 실행하는 새로운 CMO 오케스트레이션
+    
+    Args:
+        topic: 콘텐츠 주제
+        audience_demographics: 타겟 청중
+    
+    Returns:
+        JSON 형식의 실행 결과
+    """
+    try:
+        print(f"\n{'='*70}")
+        print(f"🚀 CMO Sequential Layers 실행")
+        print(f"주제: {topic}")
+        print(f"청중: {audience_demographics}")
+        print(f"{'='*70}\n")
+        
+        # 기본 임계값 설정
+        thresholds = {
+            "clarity": 0.55,
+            "novelty": 0.55,
+            "shareability": 0.55,
+            "credibility": 0.60,
+            "safety": 0.80
+        }
+        
+        # === LAYER 1: RESEARCH ===
+        print("\n" + "="*70)
+        print("LAYER 1️⃣: RESEARCH")
+        print("="*70)
+        research_output = call_research_layer(topic, audience_demographics)
+        print(f"\n📊 Research 결과:")
+        print(f"  - 트렌딩 토픽: {len(research_output.get('trending_topics', []))}개")
+        print(f"  - 청중 인사이트: {research_output.get('audience_insights', '')[:100]}...")
+        print(f"  - 바이럴 각도: {len(research_output.get('viral_potential_angles', []))}개")
+        
+        # === LAYER 2: CREATIVE WRITER ===
+        print("\n" + "="*70)
+        print("LAYER 2️⃣: CREATIVE WRITER")
+        print("="*70)
+        writer_output = call_creative_writer_layer(research_output)
+        ideas = writer_output.get("ideas", [])
+        print(f"\n💡 생성된 아이디어: {len(ideas)}개")
+        for i, idea in enumerate(ideas):
+            print(f"  {i+1}. {idea.get('title', 'N/A')}")
+            print(f"     Hook: {idea.get('hook', '')[:60]}...")
+            print(f"     Scores: novelty={idea.get('novelty_score', 0):.2f}, "
+                  f"creativity={idea.get('creativity_score', 0):.2f}, "
+                  f"engagement={idea.get('engagement_potential_score', 0):.2f}")
+        
+        # 최고 점수 아이디어 선택
+        if not ideas:
+            return json.dumps({
+                "error": "Creative Writer가 아이디어를 생성하지 못했습니다.",
+                "research_output": research_output
+            }, indent=2, ensure_ascii=False)
+        
+        # novelty, creativity, engagement 평균으로 선택
+        selected_idea = max(ideas, key=lambda x: (
+            x.get('novelty_score', 0) + 
+            x.get('creativity_score', 0) + 
+            x.get('engagement_potential_score', 0)
+        ) / 3)
+        
+        print(f"\n✅ 선택된 아이디어: {selected_idea.get('title', '')}")
+        
+        # === LAYER 3: GENERATOR ===
+        print("\n" + "="*70)
+        print("LAYER 3️⃣: GENERATOR")
+        print("="*70)
+        generator_output = call_generator_layer(selected_idea)
+        content_pieces = generator_output.get("content_pieces", [])
+        print(f"\n📝 생성된 콘텐츠: {len(content_pieces)}개")
+        for i, piece in enumerate(content_pieces):
+            print(f"  {i+1}. [{piece.get('platform', 'N/A')}] {piece.get('format', 'N/A')}")
+            print(f"     {piece.get('content', '')[:80]}...")
+            print(f"     Clarity: {piece.get('clarity_score', 0):.2f}, "
+                  f"Shareability: {piece.get('shareability_score', 0):.2f}")
+        
+        if not content_pieces:
+            return json.dumps({
+                "error": "Generator가 콘텐츠를 생성하지 못했습니다.",
+                "research_output": research_output,
+                "writer_output": writer_output
+            }, indent=2, ensure_ascii=False)
+        
+        # === LAYER 4: CRITIC ===
+        print("\n" + "="*70)
+        print("LAYER 4️⃣: CRITIC")
+        print("="*70)
+        critic_output = call_critic_layer(generator_output)
+        evaluations = critic_output.get("evaluations", [])
+        print(f"\n🔎 평가 결과: {len(evaluations)}개")
+        for i, eval in enumerate(evaluations):
+            print(f"  {i+1}. [{eval.get('platform', 'N/A')}]")
+            print(f"     Accuracy: {eval.get('accuracy_score', 0):.2f}, "
+                  f"Objectivity: {eval.get('objectivity_score', 0):.2f}, "
+                  f"Thoroughness: {eval.get('thoroughness_score', 0):.2f}")
+            print(f"     Overall Quality: {eval.get('overall_quality_score', 0):.2f}")
+            feedback = eval.get('feedback_points', [])
+            if feedback:
+                print(f"     피드백: {', '.join(feedback[:2])}")
+        
+        # === LAYER 5: SAFETY ===
+        print("\n" + "="*70)
+        print("LAYER 5️⃣: SAFETY")
+        print("="*70)
+        safety_output = call_safety_layer(generator_output, critic_output)
+        print(f"\n🛡️ 안전성 평가:")
+        print(f"  - 안전 점수: {safety_output.get('overall_safety_score', 0):.2f}")
+        print(f"  - 위험 수준: {safety_output.get('risk_level', 'unknown')}")
+        print(f"  - 준수 상태: {safety_output.get('compliance_status', 'unknown')}")
+        
+        red_flags = safety_output.get("red_flags", [])
+        if red_flags:
+            print(f"  ⚠️ 위험 플래그: {len(red_flags)}개")
+            for flag in red_flags:
+                print(f"     [{flag.get('category', '')}] {flag.get('description', '')} "
+                      f"(심각도: {flag.get('severity', '')})")
+        else:
+            print(f"  ✅ 위험 플래그 없음")
+        
+        # === FINAL DECISION ===
+        print("\n" + "="*70)
+        print("FINAL DECISION")
+        print("="*70)
+        
+        # 안전성 체크
+        safety_score = safety_output.get("overall_safety_score", 0)
+        if safety_score < thresholds.get("safety", 0.8):
+            print(f"\n❌ 안전성 기준 미달: {safety_score:.2f} < {thresholds.get('safety', 0.8)}")
+            result = {
+                "status": "rejected",
+                "reason": "safety_threshold_not_met",
+                "research_output": research_output,
+                "writer_output": writer_output,
+                "generator_output": generator_output,
+                "critic_output": critic_output,
+                "safety_output": safety_output,
+                "thresholds": thresholds
+            }
+        elif safety_output.get("compliance_status") == "non-compliant":
+            print(f"\n❌ 준수 기준 미달: {safety_output.get('compliance_status')}")
+            result = {
+                "status": "rejected",
+                "reason": "non_compliant",
+                "research_output": research_output,
+                "writer_output": writer_output,
+                "generator_output": generator_output,
+                "critic_output": critic_output,
+                "safety_output": safety_output,
+                "thresholds": thresholds
+            }
+        else:
+            # 품질 기준 체크
+            avg_clarity = sum(p.get('clarity_score', 0) for p in content_pieces) / len(content_pieces)
+            avg_shareability = sum(p.get('shareability_score', 0) for p in content_pieces) / len(content_pieces)
+            avg_quality = sum(e.get('overall_quality_score', 0) for e in evaluations) / len(evaluations) if evaluations else 0
+            
+            print(f"\n📊 최종 점수:")
+            print(f"  - Clarity: {avg_clarity:.2f} (threshold: {thresholds.get('clarity', 0.55)})")
+            print(f"  - Shareability: {avg_shareability:.2f} (threshold: {thresholds.get('shareability', 0.55)})")
+            print(f"  - Quality: {avg_quality:.2f} (threshold: {thresholds.get('credibility', 0.60)})")
+            print(f"  - Safety: {safety_score:.2f} (threshold: {thresholds.get('safety', 0.8)})")
+            
+            passed = (
+                avg_clarity >= thresholds.get("clarity", 0.55) and
+                avg_shareability >= thresholds.get("shareability", 0.55) and
+                avg_quality >= thresholds.get("credibility", 0.60)
+            )
+            
+            if passed:
+                print(f"\n✅ 모든 기준 통과! 콘텐츠 승인")
+                result = {
+                    "status": "approved",
+                    "research_output": research_output,
+                    "writer_output": writer_output,
+                    "generator_output": generator_output,
+                    "critic_output": critic_output,
+                    "safety_output": safety_output,
+                    "final_scores": {
+                        "clarity": avg_clarity,
+                        "shareability": avg_shareability,
+                        "quality": avg_quality,
+                        "safety": safety_score
+                    },
+                    "thresholds": thresholds,
+                    "recommendations": safety_output.get("recommendations", [])
+                }
+            else:
+                print(f"\n⚠️ 품질 기준 미달")
+                result = {
+                    "status": "needs_improvement",
+                    "reason": "quality_threshold_not_met",
+                    "research_output": research_output,
+                    "writer_output": writer_output,
+                    "generator_output": generator_output,
+                    "critic_output": critic_output,
+                    "safety_output": safety_output,
+                    "final_scores": {
+                        "clarity": avg_clarity,
+                        "shareability": avg_shareability,
+                        "quality": avg_quality,
+                        "safety": safety_score
+                    },
+                    "thresholds": thresholds
+                }
+        
+        print(f"\n{'='*70}")
+        print(f"✨ Sequential Layers 실행 완료!")
+        print(f"{'='*70}\n")
+        
+        return json.dumps(result, indent=2, ensure_ascii=False)
+        
+    except Exception as e:
+        import traceback
+        return json.dumps({
+            "error": f"Sequential layers 실행 중 오류 발생: {str(e)}",
+            "traceback": traceback.format_exc()
+        }, indent=2, ensure_ascii=False)
 
 
 @weave.op()
@@ -463,6 +629,7 @@ For most requests, you should call orchestrate_content_creation() or run_cmo_ite
         save_iteration_metrics,
         initialize_sub_agents,
         orchestrate_content_creation,
+        orchestrate_sequential_layers,
         run_cmo_iteration
     ],
 )

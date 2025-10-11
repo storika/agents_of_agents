@@ -1,21 +1,21 @@
 """
-Pydantic schemas for HR/Validation Agent input and output structures.
+Pydantic schemas for Prompt Optimizer (5-layer architecture)
 """
 
-from typing import Dict, List, Literal
+from typing import Dict, List, Literal, Optional
 from pydantic import BaseModel, Field
 
 
 # ===== INPUT SCHEMAS =====
 
-class AgentState(BaseModel):
-    """Individual agent state in the team."""
-    name: str
-    role: str
-    utility: float = Field(ge=0.0, le=1.0)  # EMA based on content they contributed to
-    prompt_version: int = Field(ge=0)
-    prompt_similarity: Dict[str, float] = Field(default_factory=dict)
-    last_scores: Dict[str, float] = Field(default_factory=dict)  # Their evaluation scores (for critics) or content scores (for writers)
+class LayerState(BaseModel):
+    """State for one of the 5 fixed layers."""
+    layer_id: Literal["research", "creative_writer", "generator", "critic", "safety"]
+    layer_name: str
+    current_prompt: str
+    prompt_version: int = Field(ge=0, default=0)
+    metrics: Dict[str, float] = Field(default_factory=dict)  # Layer-specific metrics
+    performance_history: List[float] = Field(default_factory=list)  # Historical average scores
 
 
 class ContentPerformance(BaseModel):
@@ -71,98 +71,78 @@ class ContentPerformance(BaseModel):
         return 0.6 * internal_avg + 0.4 * external_score
 
 
-class ScoreHistory(BaseModel):
-    """Historical performance scores."""
-    avg_overall: List[float] = Field(default_factory=list)
-    dims_mean: Dict[str, float] = Field(default_factory=dict)
+class PerformanceMetrics(BaseModel):
+    """Overall system performance metrics."""
+    iteration: int = Field(ge=0)
+    overall_metrics: Dict[str, float] = Field(
+        default_factory=dict,
+        description="System-wide metrics: clarity, novelty, shareability, credibility, safety, overall"
+    )
+    layers: Dict[str, LayerState] = Field(
+        default_factory=dict,
+        description="Performance data for each of the 5 layers"
+    )
     content_history: List[ContentPerformance] = Field(
         default_factory=list,
-        description="Performance data for each piece of content (most recent first)"
+        description="Recent content performance (most recent first)"
     )
-
-
-class TeamState(BaseModel):
-    """Complete team state snapshot."""
-    iteration: int = Field(ge=0)
-    agents: List[AgentState]
-    score_history: ScoreHistory
-    failures: List[str] = Field(default_factory=list)
-    core_roles: List[str] = Field(default_factory=lambda: ["HRValidation", "Explainer", "EngageCritic"])
-    # Bootstrap context (for initial team ideation)
-    project_goal: str = Field(
-        default="Create engaging, high-quality content across multiple dimensions",
-        description="High-level goal of the project/system"
-    )
-    target_audience: str = Field(
-        default="General audience seeking informative and engaging content",
-        description="Who is the content for?"
-    )
-    content_focus: str = Field(
-        default="General topics with emphasis on clarity, novelty, and shareability",
-        description="What kind of content should the team create?"
-    )
+    failures: List[str] = Field(default_factory=list, description="Recent errors or issues")
 
 
 # ===== OUTPUT SCHEMAS =====
 
-class HirePlan(BaseModel):
-    """Specification for hiring a new agent."""
-    slot: str = Field(description="Slot identifier like 'writer/main', 'media/main', 'critic/main'")
-    ref: str = Field(description="Archetype reference name from registry (e.g., 'Hooksmith', 'ImageComposer')")
-    patch: Dict = Field(default_factory=dict, description="Modifications to archetype system_prompt")
-    reason: str = Field(description="Numeric reason with metric threshold (e.g., 'shareability_mean < 0.55')")
+class InitialPrompt(BaseModel):
+    """Initial prompt specification for a layer (bootstrap scenario)."""
+    layer: Literal["research", "creative_writer", "generator", "critic", "safety"]
+    initial_prompt: str = Field(description="Complete system prompt for this layer")
+    rationale: str = Field(description="Why this prompt design for this layer")
 
 
-class SwapPlan(BaseModel):
-    """Specification for swapping an agent in a slot."""
-    slot: str = Field(description="Slot identifier to swap")
-    ref: str = Field(description="New archetype reference name")
-    patch: Dict = Field(default_factory=dict, description="Modifications to archetype system_prompt")
-    reason: str = Field(description="Numeric reason with metric threshold")
+class PromptImprovement(BaseModel):
+    """Specification for improving a layer's prompt."""
+    layer: Literal["research", "creative_writer", "generator", "critic", "safety"]
+    improvement_type: Literal["append", "prepend", "replace_section", "refine"]
+    modification: str = Field(description="Specific text to add/modify in the prompt")
+    reason: str = Field(description="Numeric reason with metric threshold (e.g., 'clarity 0.45 < 0.55')")
+    expected_impact: str = Field(description="What improvement this should bring")
 
 
-class MergePlan(BaseModel):
-    """Specification for merging two agents."""
-    slot: str = Field(description="Target slot for merged agent")
-    from_agents: List[str] = Field(description="List of agent refs to merge", alias="from")
-    to: str = Field(description="New merged agent reference name")
-    patch: Dict = Field(default_factory=dict, description="Modifications to merged system_prompt")
-    reason: str = Field(default="Agents too similar", description="Reason for merge")
-    
-    class Config:
-        populate_by_name = True
+class GlobalAdjustments(BaseModel):
+    """System-wide configuration adjustments."""
+    target_audience_update: Optional[str] = None
+    brand_voice: Optional[str] = None
+    topics_to_avoid: List[str] = Field(default_factory=list)
 
 
-class PruneItem(BaseModel):
-    """Specification for pruning an agent."""
-    slot: str = Field(description="Slot identifier to prune")
-    reason: str = Field(description="Numeric reason (e.g., 'utility < 0.35 for 3 iters')")
+class PerformanceThresholds(BaseModel):
+    """Metric thresholds for evaluation."""
+    clarity_min: float = Field(default=0.55, ge=0, le=1)
+    novelty_min: float = Field(default=0.55, ge=0, le=1)
+    shareability_min: float = Field(default=0.55, ge=0, le=1)
+    credibility_min: float = Field(default=0.60, ge=0, le=1)
+    safety_min: float = Field(default=0.80, ge=0, le=1)
 
 
-class UpgradePlan(BaseModel):
-    """Specification for upgrading an existing agent's prompt."""
-    slot: str = Field(description="Slot identifier to upgrade")
-    patch: Dict = Field(description="Modifications to system_prompt")
-    reason: str = Field(default="Performance improvement", description="Reason for upgrade")
-
-
-class PolicyUpdates(BaseModel):
-    """HR operational policies and thresholds."""
-    team_cap: int = Field(default=8, description="Maximum number of active agents")
-    utility_floor: float = Field(default=0.35, description="Minimum utility to avoid pruning")
-    sim_threshold: float = Field(default=0.8, description="Similarity threshold for merging")
-
-
-class HRDecision(BaseModel):
-    """Complete HR decision output (STRICT JSON)."""
-    hire_plan: List[HirePlan] = Field(default_factory=list)
-    swap_plan: List[SwapPlan] = Field(default_factory=list)
-    merge_plan: List[MergePlan] = Field(default_factory=list)
-    prune_list: List[PruneItem] = Field(default_factory=list)
-    upgrade_plan: List[UpgradePlan] = Field(default_factory=list)
-    policy_updates: PolicyUpdates = Field(default_factory=PolicyUpdates)
+class PromptOptimizationDecision(BaseModel):
+    """Complete prompt optimization output (STRICT JSON)."""
+    initial_prompts: List[InitialPrompt] = Field(
+        default_factory=list,
+        description="Initial prompts for all 5 layers (only for iteration 0 / bootstrap)"
+    )
+    prompt_improvements: List[PromptImprovement] = Field(
+        default_factory=list,
+        description="List of prompt modifications (max 3 per iteration)"
+    )
+    global_adjustments: GlobalAdjustments = Field(
+        default_factory=GlobalAdjustments,
+        description="System-wide configuration updates"
+    )
+    thresholds: PerformanceThresholds = Field(
+        default_factory=PerformanceThresholds,
+        description="Updated performance thresholds"
+    )
 
     def to_strict_json(self) -> str:
         """Export as strict JSON string."""
-        return self.model_dump_json(indent=2, exclude_none=True, by_alias=True)
+        return self.model_dump_json(indent=2, exclude_none=True)
 

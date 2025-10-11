@@ -115,290 +115,7 @@ class SubAgentTeam:
         }
 
 
-# ===== 서브 에이전트 호출 함수들 =====
-
-@weave.op()
-def call_writer_agents(team: SubAgentTeam, topic: str, num_variants: int = 3) -> List[Dict[str, Any]]:
-    """
-    Writer 에이전트들을 호출하여 콘텐츠 변형 생성
-    
-    Args:
-        team: 서브 에이전트 팀
-        topic: 콘텐츠 주제
-        num_variants: 생성할 변형 수
-    
-    Returns:
-        생성된 콘텐츠 후보 리스트
-    """
-    writers = team.get_agents_by_category("writer")
-    
-    if not writers:
-        print("⚠️ Writer 에이전트가 없습니다. 기본 생성 사용")
-        return []
-    
-    variants = []
-    
-    for i, writer in enumerate(writers):
-        if i >= num_variants:
-            break
-        
-        # Writer 에이전트에 콘텐츠 생성 요청
-        prompt = f"""
-주제: {topic}
-
-요구사항:
-- 180자 이하의 트위터 포스트 작성
-- 개발자 친화적 톤
-- 강력한 hook 포함
-- 공유하고 싶게 만드는 메시지
-
-JSON 형식으로 응답:
-{{
-  "text": "포스트 텍스트",
-  "media_prompt": "이미지 생성 프롬프트",
-  "hook_strategy": "사용한 hook 전략"
-}}
-"""
-        
-        try:
-            # ADK Agent 실행
-            response = writer.execute(prompt)
-            
-            # 응답 파싱 (JSON 추출)
-            result = parse_agent_response(response, writer.name)
-            if result:
-                variants.append(result)
-        
-        except Exception as e:
-            print(f"⚠️ {writer.name} 실행 오류: {e}")
-    
-    return variants
-
-
-@weave.op()
-def call_media_agents(team: SubAgentTeam, text: str, context: str) -> Dict[str, Any]:
-    """
-    Media 에이전트를 호출하여 미디어 프롬프트 생성
-    
-    Args:
-        team: 서브 에이전트 팀
-        text: 콘텐츠 텍스트
-        context: 컨텍스트 정보
-    
-    Returns:
-        미디어 생성 정보
-    """
-    media_agents = team.get_agents_by_category("media")
-    
-    if not media_agents:
-        return {
-            "media_prompt": "Modern tech illustration",
-            "mode": "image"
-        }
-    
-    media_agent = media_agents[0]
-    
-    prompt = f"""
-콘텐츠: {text}
-컨텍스트: {context}
-
-이 콘텐츠에 어울리는 미디어를 제안해주세요.
-
-JSON 형식으로 응답:
-{{
-  "media_prompt": "상세한 이미지 생성 프롬프트",
-  "mode": "image/gif/video",
-  "style": "스타일 설명",
-  "rationale": "선택 이유"
-}}
-"""
-    
-    try:
-        response = media_agent.execute(prompt)
-        result = parse_agent_response(response, media_agent.name)
-        return result if result else {"media_prompt": "Modern tech illustration", "mode": "image"}
-    
-    except Exception as e:
-        print(f"⚠️ {media_agent.name} 실행 오류: {e}")
-        return {"media_prompt": "Modern tech illustration", "mode": "image"}
-
-
-@weave.op()
-def call_critic_agents(team: SubAgentTeam, candidate: Dict[str, Any]) -> Dict[str, float]:
-    """
-    Critic 에이전트를 호출하여 콘텐츠 평가
-    
-    Args:
-        team: 서브 에이전트 팀
-        candidate: 평가할 후보
-    
-    Returns:
-        평가 점수 딕셔너리
-    """
-    critics = team.get_agents_by_category("critic")
-    
-    if not critics:
-        # 기본 평가 사용
-        return {
-            "clarity": 0.75,
-            "novelty": 0.7,
-            "shareability": 0.75,
-            "credibility": 0.75
-        }
-    
-    critic = critics[0]
-    
-    prompt = f"""
-다음 콘텐츠를 평가해주세요:
-
-텍스트: {candidate['text']}
-미디어: {candidate['media_prompt']}
-
-평가 기준 (0.0-1.0):
-- clarity: 메시지 명확성
-- novelty: 참신성, 독창성
-- shareability: 공유 가능성
-- credibility: 신뢰도
-
-JSON 형식으로 응답:
-{{
-  "clarity": 0.85,
-  "novelty": 0.75,
-  "shareability": 0.9,
-  "credibility": 0.8,
-  "feedback": "평가 피드백"
-}}
-"""
-    
-    try:
-        response = critic.execute(prompt)
-        result = parse_agent_response(response, critic.name)
-        
-        if result and all(k in result for k in ["clarity", "novelty", "shareability", "credibility"]):
-            return {
-                "clarity": float(result["clarity"]),
-                "novelty": float(result["novelty"]),
-                "shareability": float(result["shareability"]),
-                "credibility": float(result["credibility"])
-            }
-    
-    except Exception as e:
-        print(f"⚠️ {critic.name} 실행 오류: {e}")
-    
-    # 기본값 반환
-    return {
-        "clarity": 0.75,
-        "novelty": 0.7,
-        "shareability": 0.75,
-        "credibility": 0.75
-    }
-
-
-@weave.op()
-def call_safety_agents(team: SubAgentTeam, candidate: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Safety 에이전트를 호출하여 안전성 검증
-    
-    Args:
-        team: 서브 에이전트 팀
-        candidate: 검증할 후보
-    
-    Returns:
-        안전성 평가 결과
-    """
-    safety_agents = team.get_agents_by_category("safety")
-    
-    if not safety_agents:
-        return {"safety": 1.0, "passed": True, "issues": []}
-    
-    safety_agent = safety_agents[0]
-    
-    prompt = f"""
-다음 콘텐츠의 안전성을 검증해주세요:
-
-텍스트: {candidate['text']}
-미디어: {candidate['media_prompt']}
-
-검증 항목:
-- 브랜드 안전성
-- 부적절한 내용
-- 오해의 소지
-- 민감한 주제
-
-JSON 형식으로 응답:
-{{
-  "safety": 0.95,
-  "passed": true,
-  "issues": [],
-  "recommendations": []
-}}
-"""
-    
-    try:
-        response = safety_agent.execute(prompt)
-        result = parse_agent_response(response, safety_agent.name)
-        
-        if result and "safety" in result:
-            return {
-                "safety": float(result["safety"]),
-                "passed": result.get("passed", True),
-                "issues": result.get("issues", [])
-            }
-    
-    except Exception as e:
-        print(f"⚠️ {safety_agent.name} 실행 오류: {e}")
-    
-    # 기본값 (안전)
-    return {"safety": 0.95, "passed": True, "issues": []}
-
-
-@weave.op()
-def call_intelligence_agents(team: SubAgentTeam, iteration_data: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Intelligence 에이전트들을 호출하여 인사이트 생성
-    
-    Args:
-        team: 서브 에이전트 팀
-        iteration_data: 현재 반복 데이터
-    
-    Returns:
-        인사이트 및 추천사항
-    """
-    intelligence_agents = team.get_agents_by_category("intelligence")
-    
-    if not intelligence_agents:
-        return {"insights": [], "recommendations": []}
-    
-    insights = []
-    
-    for agent in intelligence_agents:
-        prompt = f"""
-현재 반복 데이터:
-{json.dumps(iteration_data, indent=2, ensure_ascii=False)}
-
-분석 요청:
-- 성능 트렌드
-- 개선 기회
-- 청중 반응 예측
-
-JSON 형식으로 응답:
-{{
-  "insights": ["인사이트 1", "인사이트 2"],
-  "recommendations": ["추천 1", "추천 2"]
-}}
-"""
-        
-        try:
-            response = agent.execute(prompt)
-            result = parse_agent_response(response, agent.name)
-            
-            if result:
-                insights.extend(result.get("insights", []))
-        
-        except Exception as e:
-            print(f"⚠️ {agent.name} 실행 오류: {e}")
-    
-    return {"insights": insights, "recommendations": []}
+# ===== 유틸리티 함수 =====
 
 
 def parse_agent_response(response: str, agent_name: str) -> Optional[Dict[str, Any]]:
@@ -434,4 +151,532 @@ def parse_agent_response(response: str, agent_name: str) -> Optional[Dict[str, A
     except Exception as e:
         print(f"⚠️ {agent_name}: 응답 처리 오류 - {e}")
         return None
+
+
+# ===== NEW LAYER AGENTS =====
+
+@weave.op()
+def create_research_agent() -> Agent:
+    """Research Layer 에이전트 생성"""
+    
+    system_prompt = """You are the Research layer. Your task is to identify trending topics, analyze audience interests, and pinpoint viral opportunities for content creation. Focus on relevance, timeliness, and data quality.
+
+Input: A broad topic or industry to investigate, target audience demographics, current events context.
+
+Instructions:
+1.  Identify at least 3 current trending topics relevant to the input topic/industry.
+2.  Analyze typical audience interests and pain points within the specified demographics related to these trends.
+3.  Propose unique angles or narratives that have high viral potential.
+4.  Specify the data sources you would use (e.g., social media trends, news aggregators, search engine data, forum discussions).
+
+Output MUST be a JSON object with the following structure:
+{
+  "trending_topics": [
+    {
+      "topic_name": "string",
+      "relevance_score": "float (0-1)",
+      "timeliness_score": "float (0-1)"
+    }
+  ],
+  "audience_insights": "string (summary of audience interests and pain points)",
+  "viral_potential_angles": [
+    {
+      "angle_summary": "string",
+      "potential_platforms": "array of strings",
+      "engagement_likelihood": "float (0-1)"
+    }
+  ],
+  "data_sources_used": "array of strings (e.g., 'Google Trends', 'Twitter Analytics')"
+}"""
+    
+    agent = Agent(
+        model='gemini-2.5-flash',
+        name='research_layer',
+        description='Research layer for identifying trends and viral opportunities',
+        instruction=system_prompt
+    )
+    
+    return agent
+
+
+@weave.op()
+def create_creative_writer_agent() -> Agent:
+    """Creative Writer Layer 에이전트 생성"""
+    
+    system_prompt = """You are the Creative Writer layer. Your task is to generate creative, engaging, and novel content ideas and angles based on the research provided. Prioritize novelty, creativity, and engagement potential.
+
+Input: JSON output from the Research layer, containing trending topics, audience insights, and viral potential angles.
+
+Instructions:
+1.  Review the research thoroughly to understand trends and audience.
+2.  Brainstorm at least 3 distinct content ideas that are novel and creative, building upon the provided viral angles.
+3.  For each idea, develop a compelling hook and a unique angle that stands out.
+4.  Consider different content formats (e.g., tweet thread, short video script, blog post concept).
+
+Output MUST be a JSON array of objects, each representing a content idea, with the following structure:
+[
+  {
+    "idea_id": "string (unique identifier)",
+    "title": "string (a catchy title for the content)",
+    "hook": "string (the opening line/concept to grab attention)",
+    "angle": "string (the unique perspective or twist)",
+    "target_platforms": "array of strings (e.g., 'Twitter', 'TikTok', 'Blog')",
+    "novelty_score": "float (0-1, how original is the idea?)",
+    "creativity_score": "float (0-1, how imaginative and well-developed is the idea?)",
+    "engagement_potential_score": "float (0-1, how likely is it to resonate and be shared?)"
+  }
+]"""
+    
+    agent = Agent(
+        model='gemini-2.5-flash',
+        name='creative_writer_layer',
+        description='Creative Writer layer for generating novel content ideas',
+        instruction=system_prompt
+    )
+    
+    return agent
+
+
+@weave.op()
+def create_generator_agent() -> Agent:
+    """Generator Layer 에이전트 생성"""
+    
+    system_prompt = """You are the Generator layer. Your task is to transform a selected creative idea into concrete, shareable content suitable for specified platforms. Emphasize clarity, shareability, and completeness.
+
+Input: A single content idea object (from the Creative Writer layer's output).
+
+Instructions:
+1.  Based on the 'target_platforms' for the selected idea, generate actual content pieces.
+2.  Adhere to platform-specific best practices (e.g., Twitter character limits, hashtag usage, engaging opening lines).
+3.  Ensure the content is clear, concise, and easy to understand.
+4.  Incorporate a clear call to action or prompt for engagement where appropriate.
+5.  Ensure the content is complete and delivers on the promise of the idea's hook and angle.
+
+Output MUST be a JSON object with the following structure:
+{
+  "generated_content_id": "string (unique identifier for this generation)",
+  "source_idea_id": "string (ID of the idea this content is based on)",
+  "content_pieces": [
+    {
+      "platform": "string (e.g., 'Twitter', 'Blog Post', 'LinkedIn')",
+      "format": "string (e.g., 'Text', 'Thread', 'Image Prompt')",
+      "content": "string (the actual content body)",
+      "character_count": "integer",
+      "hashtags": "array of strings",
+      "call_to_action": "string (if applicable)",
+      "clarity_score": "float (0-1)",
+      "shareability_score": "float (0-1)"
+    }
+  ],
+  "completeness_assessment": "string (brief summary of how well the content fulfills the idea)"
+}"""
+    
+    agent = Agent(
+        model='gemini-2.5-flash',
+        name='generator_layer',
+        description='Generator layer for creating shareable content',
+        instruction=system_prompt
+    )
+    
+    return agent
+
+
+@weave.op()
+def create_critic_agent() -> Agent:
+    """Critic Layer 에이전트 생성"""
+    
+    system_prompt = """You are the Critic layer. Your task is to evaluate the quality of the generated content across multiple dimensions before publishing. Your evaluation should be thorough, objective, and accurate.
+
+Input: JSON output from the Generator layer, containing generated content pieces.
+
+Instructions:
+1.  For each content piece, evaluate its accuracy, objectivity, and thoroughness.
+2.  Check for factual errors, misleading statements, or unsupported claims.
+3.  Assess if the content presents a balanced view or exhibits bias.
+4.  Determine if the content adequately covers the topic as promised by the idea.
+5.  Provide constructive feedback for improvement, even if the scores are high.
+
+Output MUST be a JSON object with the following structure:
+{
+  "evaluation_id": "string (unique identifier)",
+  "generated_content_id": "string (ID of the content being evaluated)",
+  "evaluations": [
+    {
+      "platform": "string",
+      "content_summary": "string (a brief summary of the content)",
+      "accuracy_score": "float (0-1, based on factual correctness)",
+      "objectivity_score": "float (0-1, based on neutrality and bias avoidance)",
+      "thoroughness_score": "float (0-1, based on completeness and depth)",
+      "overall_quality_score": "float (0-1, average or weighted average of the above)",
+      "feedback_points": "array of strings (specific suggestions for improvement)"
+    }
+  ]
+}"""
+    
+    agent = Agent(
+        model='gemini-2.5-flash',
+        name='critic_layer',
+        description='Critic layer for evaluating content quality',
+        instruction=system_prompt
+    )
+    
+    return agent
+
+
+@weave.op()
+def create_safety_agent() -> Agent:
+    """Safety Layer 에이전트 생성"""
+    
+    system_prompt = """You are the Safety layer. Your critical task is to ensure all content meets brand safety, ethical, and legal standards. Your assessment must determine if content is safe for publication.
+
+Input: JSON output from the Generator layer (content pieces) AND JSON output from the Critic layer (evaluation).
+
+Instructions:
+1.  Review content for any explicit or implicit violations of brand safety guidelines (e.g., profanity, sensitive topics, brand misrepresentation).
+2.  Assess ethical implications (e.g., potential for misinformation, harm, discrimination, exploitation).
+3.  Check for legal compliance risks (e.g., copyright infringement, defamation, privacy violations).
+4.  Assign a safety score, determine a risk level, and state compliance status.
+5.  If issues are found, clearly articulate the red flags and provide actionable recommendations for remediation or outright rejection.
+
+Output MUST be a JSON object with the following structure:
+{
+  "safety_assessment_id": "string (unique identifier)",
+  "generated_content_id": "string (ID of the content being assessed)",
+  "overall_safety_score": "float (0-1, higher is safer)",
+  "risk_level": "string ('low', 'medium', 'high', 'critical')",
+  "compliance_status": "string ('compliant', 'non-compliant', 'review_required')",
+  "red_flags": [
+    {
+      "category": "string (e.g., 'Brand Safety', 'Ethical', 'Legal')",
+      "description": "string (specific issue identified)",
+      "severity": "string ('minor', 'moderate', 'severe')"
+    }
+  ],
+  "recommendations": "array of strings (suggestions to fix issues or 'Reject Content')"
+}"""
+    
+    agent = Agent(
+        model='gemini-2.5-flash',
+        name='safety_layer',
+        description='Safety layer for ensuring brand safety and compliance',
+        instruction=system_prompt
+    )
+    
+    return agent
+
+
+@weave.op()
+def call_research_layer(topic: str, audience_demographics: str = "developers, tech enthusiasts") -> Dict[str, Any]:
+    """
+    Research Layer 호출
+    
+    Args:
+        topic: 조사할 주제
+        audience_demographics: 타겟 청중
+    
+    Returns:
+        Research layer 출력
+    """
+    agent = create_research_agent()
+    
+    prompt = f"""
+Topic: {topic}
+Target Audience: {audience_demographics}
+Current Context: Latest developments in AI and technology
+
+Please provide trending topics, audience insights, and viral angles for this topic.
+"""
+    
+    try:
+        print(f"🔍 Research Layer 실행 중...")
+        response = agent.execute(prompt)
+        result = parse_agent_response(response, "research_layer")
+        
+        if result:
+            print(f"✓ {len(result.get('trending_topics', []))}개의 트렌딩 토픽 발견")
+            return result
+        else:
+            print(f"⚠️ Research Layer JSON 파싱 실패, 기본값 사용")
+            return {
+                "trending_topics": [
+                    {"topic_name": topic, "relevance_score": 0.8, "timeliness_score": 0.7}
+                ],
+                "audience_insights": "Developers are interested in practical, actionable insights",
+                "viral_potential_angles": [
+                    {"angle_summary": "Behind-the-scenes look", "potential_platforms": ["Twitter", "LinkedIn"], "engagement_likelihood": 0.75}
+                ],
+                "data_sources_used": ["Google Trends", "Twitter"]
+            }
+    
+    except Exception as e:
+        print(f"❌ Research Layer 오류: {e}")
+        return {
+            "trending_topics": [
+                {"topic_name": topic, "relevance_score": 0.8, "timeliness_score": 0.7}
+            ],
+            "audience_insights": "Developers are interested in practical, actionable insights",
+            "viral_potential_angles": [
+                {"angle_summary": "Behind-the-scenes look", "potential_platforms": ["Twitter", "LinkedIn"], "engagement_likelihood": 0.75}
+            ],
+            "data_sources_used": ["Google Trends", "Twitter"]
+        }
+
+
+@weave.op()
+def call_creative_writer_layer(research_output: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Creative Writer Layer 호출
+    
+    Args:
+        research_output: Research layer의 출력
+    
+    Returns:
+        Creative Writer layer 출력
+    """
+    agent = create_creative_writer_agent()
+    
+    prompt = f"""
+Research Output:
+{json.dumps(research_output, indent=2, ensure_ascii=False)}
+
+Based on this research, please generate at least 3 creative content ideas.
+"""
+    
+    try:
+        print(f"✍️ Creative Writer Layer 실행 중...")
+        response = agent.execute(prompt)
+        result = parse_agent_response(response, "creative_writer_layer")
+        
+        if result and isinstance(result, list):
+            print(f"✓ {len(result)}개의 콘텐츠 아이디어 생성")
+            return {"ideas": result}
+        elif result and "ideas" in result:
+            print(f"✓ {len(result['ideas'])}개의 콘텐츠 아이디어 생성")
+            return result
+        else:
+            print(f"⚠️ Creative Writer Layer JSON 파싱 실패, 기본값 사용")
+            return {
+                "ideas": [
+                    {
+                        "idea_id": "idea_1",
+                        "title": f"Revolutionary approach to {research_output.get('trending_topics', [{}])[0].get('topic_name', 'AI')}",
+                        "hook": "What if we told you everything you know is about to change?",
+                        "angle": "Provocative revelation with practical insight",
+                        "target_platforms": ["Twitter", "LinkedIn"],
+                        "novelty_score": 0.8,
+                        "creativity_score": 0.75,
+                        "engagement_potential_score": 0.85
+                    }
+                ]
+            }
+    
+    except Exception as e:
+        print(f"❌ Creative Writer Layer 오류: {e}")
+        return {
+            "ideas": [
+                {
+                    "idea_id": "idea_1",
+                    "title": "Default creative idea",
+                    "hook": "Something interesting is happening",
+                    "angle": "Unique perspective",
+                    "target_platforms": ["Twitter"],
+                    "novelty_score": 0.7,
+                    "creativity_score": 0.7,
+                    "engagement_potential_score": 0.7
+                }
+            ]
+        }
+
+
+@weave.op()
+def call_generator_layer(content_idea: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Generator Layer 호출
+    
+    Args:
+        content_idea: 선택된 콘텐츠 아이디어
+    
+    Returns:
+        Generator layer 출력
+    """
+    agent = create_generator_agent()
+    
+    prompt = f"""
+Content Idea:
+{json.dumps(content_idea, indent=2, ensure_ascii=False)}
+
+Please generate actual shareable content for the specified platforms.
+"""
+    
+    try:
+        print(f"⚙️ Generator Layer 실행 중...")
+        response = agent.execute(prompt)
+        result = parse_agent_response(response, "generator_layer")
+        
+        if result and "content_pieces" in result:
+            print(f"✓ {len(result['content_pieces'])}개의 콘텐츠 조각 생성")
+            return result
+        else:
+            print(f"⚠️ Generator Layer JSON 파싱 실패, 기본값 사용")
+            return {
+                "generated_content_id": "gen_1",
+                "source_idea_id": content_idea.get("idea_id", "unknown"),
+                "content_pieces": [
+                    {
+                        "platform": "Twitter",
+                        "format": "Text",
+                        "content": f"{content_idea.get('hook', 'Check this out')} {content_idea.get('title', '')}",
+                        "character_count": len(content_idea.get('hook', '') + content_idea.get('title', '')),
+                        "hashtags": ["AI", "Tech"],
+                        "call_to_action": "Learn more",
+                        "clarity_score": 0.8,
+                        "shareability_score": 0.75
+                    }
+                ],
+                "completeness_assessment": "Content generated based on idea"
+            }
+    
+    except Exception as e:
+        print(f"❌ Generator Layer 오류: {e}")
+        return {
+            "generated_content_id": "gen_1",
+            "source_idea_id": content_idea.get("idea_id", "unknown"),
+            "content_pieces": [
+                {
+                    "platform": "Twitter",
+                    "format": "Text",
+                    "content": "Default generated content",
+                    "character_count": 25,
+                    "hashtags": ["Tech"],
+                    "call_to_action": None,
+                    "clarity_score": 0.7,
+                    "shareability_score": 0.7
+                }
+            ],
+            "completeness_assessment": "Default content"
+        }
+
+
+@weave.op()
+def call_critic_layer(generator_output: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Critic Layer 호출
+    
+    Args:
+        generator_output: Generator layer의 출력
+    
+    Returns:
+        Critic layer 출력
+    """
+    agent = create_critic_agent()
+    
+    prompt = f"""
+Generated Content:
+{json.dumps(generator_output, indent=2, ensure_ascii=False)}
+
+Please evaluate the quality of this content across accuracy, objectivity, and thoroughness.
+"""
+    
+    try:
+        print(f"🔎 Critic Layer 실행 중...")
+        response = agent.execute(prompt)
+        result = parse_agent_response(response, "critic_layer")
+        
+        if result and "evaluations" in result:
+            print(f"✓ {len(result['evaluations'])}개의 평가 완료")
+            return result
+        else:
+            print(f"⚠️ Critic Layer JSON 파싱 실패, 기본값 사용")
+            evaluations = []
+            for piece in generator_output.get("content_pieces", []):
+                evaluations.append({
+                    "platform": piece.get("platform", "Twitter"),
+                    "content_summary": piece.get("content", "")[:50],
+                    "accuracy_score": 0.8,
+                    "objectivity_score": 0.75,
+                    "thoroughness_score": 0.7,
+                    "overall_quality_score": 0.75,
+                    "feedback_points": ["Good clarity", "Could add more depth"]
+                })
+            
+            return {
+                "evaluation_id": "eval_1",
+                "generated_content_id": generator_output.get("generated_content_id", "unknown"),
+                "evaluations": evaluations
+            }
+    
+    except Exception as e:
+        print(f"❌ Critic Layer 오류: {e}")
+        return {
+            "evaluation_id": "eval_1",
+            "generated_content_id": generator_output.get("generated_content_id", "unknown"),
+            "evaluations": [
+                {
+                    "platform": "Twitter",
+                    "content_summary": "Default evaluation",
+                    "accuracy_score": 0.75,
+                    "objectivity_score": 0.75,
+                    "thoroughness_score": 0.75,
+                    "overall_quality_score": 0.75,
+                    "feedback_points": ["Default feedback"]
+                }
+            ]
+        }
+
+
+@weave.op()
+def call_safety_layer(generator_output: Dict[str, Any], critic_output: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Safety Layer 호출
+    
+    Args:
+        generator_output: Generator layer의 출력
+        critic_output: Critic layer의 출력
+    
+    Returns:
+        Safety layer 출력
+    """
+    agent = create_safety_agent()
+    
+    prompt = f"""
+Generated Content:
+{json.dumps(generator_output, indent=2, ensure_ascii=False)}
+
+Critic Evaluation:
+{json.dumps(critic_output, indent=2, ensure_ascii=False)}
+
+Please assess the safety of this content for brand safety, ethical, and legal compliance.
+"""
+    
+    try:
+        print(f"🛡️ Safety Layer 실행 중...")
+        response = agent.execute(prompt)
+        result = parse_agent_response(response, "safety_layer")
+        
+        if result and "overall_safety_score" in result:
+            print(f"✓ 안전성 평가 완료: {result.get('risk_level', 'unknown')} 위험도")
+            return result
+        else:
+            print(f"⚠️ Safety Layer JSON 파싱 실패, 기본값 사용")
+            return {
+                "safety_assessment_id": "safety_1",
+                "generated_content_id": generator_output.get("generated_content_id", "unknown"),
+                "overall_safety_score": 0.9,
+                "risk_level": "low",
+                "compliance_status": "compliant",
+                "red_flags": [],
+                "recommendations": ["Content is safe for publication"]
+            }
+    
+    except Exception as e:
+        print(f"❌ Safety Layer 오류: {e}")
+        return {
+            "safety_assessment_id": "safety_1",
+            "generated_content_id": generator_output.get("generated_content_id", "unknown"),
+            "overall_safety_score": 0.85,
+            "risk_level": "low",
+            "compliance_status": "compliant",
+            "red_flags": [],
+            "recommendations": ["Default safe assessment"]
+        }
 
