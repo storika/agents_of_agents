@@ -9,3 +9,6 @@ dependencies = [
     "google-generativeai>=0.8.5",
     "weave>=0.52.9",
 ]
+
+[tool.setuptools]
+packages = ["generate_image", "hr_validation_agent"]
