@@ -142,15 +142,41 @@ async def generate_twitter_caption(
     Returns:
         생성된 캡션 (≤280자)
     """
-    caption_prompt = f"""Write Twitter caption for '{topic}' in {locale} language.
-Tone: {tone} | Max: 280 chars | Hashtags: max {hashtags_allowed} | Emojis: 1-3
+    caption_prompt = f"""Create viral Twitter caption for '{topic}' in {locale}.
+Max: 280 chars | Tone: {tone} | Hashtags: ≤{hashtags_allowed} | Emojis: 1-3
 
-Structure: Hook (question/stat/contrast) → Value/emotion → Call-to-action
-Avoid: clickbait, hate, medical/financial claims, excessive hashtags/emojis
+VIRAL FORMULA:
+1. HOOK (choose ONE):
+   - Unexpected stat/fact that surprises
+   - Provocative question that makes people think
+   - Bold contrarian statement
+   - Relatable pain point or desire
+   
+2. EMOTIONAL TRIGGER:
+   - Curiosity, surprise, humor, or inspiration
+   - Use concrete imagery, not abstract concepts
+   - Create cognitive contrast or plot twist
+   
+3. VALUE/INSIGHT (1 line):
+   - Fresh perspective or actionable insight
+   - Make it quotable and screenshot-worthy
+   
+4. ENGAGEMENT CLOSER:
+   - Thought-provoking question
+   - Interactive prompt (tag, share, reply)
+   - Micro-CTA (not salesy)
 
-Image concept: {image_concept}
+WRITING STYLE:
+- Start strong, no filler words
+- Use power words: breakthrough, hidden, secret, proven, actually
+- Natural emojis for visual rhythm (not decoration)
+- Short punchy sentences
+- Leave space for replies (don't over-explain)
 
-Output caption only."""
+Image: {image_concept}
+
+AVOID: generic statements, obvious advice, "here's why", "let me tell you", excessive hype
+Output ONLY the caption."""
     
     response = client.models.generate_content(
         model='gemini-2.0-flash-001',
