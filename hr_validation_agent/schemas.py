@@ -106,86 +106,63 @@ class TeamState(BaseModel):
 # ===== OUTPUT SCHEMAS =====
 
 class HirePlan(BaseModel):
-    """Specification for hiring a new agent - ready to instantiate."""
-    name: str
-    role: Literal[
-        "writer.specialist",      # Creates content (tweets, threads)
-        "designer.specialist",    # Creates visuals, charts, memes  
-        "critic.specialist",      # Evaluates quality before posting
-        "analyzer.specialist",    # Analyzes trends, metrics, patterns
-        "coordinator.specialist", # Orchestrates workflows, schedules
-        "engager.specialist"      # Replies, networks, builds community
-    ]
-    system_prompt: str  # Complete ADK-compatible instruction
-    reason: str
-    
-    # Agent instantiation config (ready to use)
-    config: Dict = Field(
-        default_factory=lambda: {
-            "model": "gemini-2.5-flash",
-            "temperature": 0.7,
-            "max_tokens": 1024
-        },
-        description="LLM config for this agent"
-    )
-    tools: List[str] = Field(
-        default_factory=list,
-        description="Tool names this agent should have access to"
-    )
-    
-    def to_agent_spec(self) -> Dict:
-        """Convert to agent instantiation spec."""
-        return {
-            "name": self.name,
-            "role": self.role,
-            "instruction": self.system_prompt,
-            "model": self.config["model"],
-            "temperature": self.config.get("temperature", 0.7),
-            "max_tokens": self.config.get("max_tokens", 1024),
-            "tools": self.tools,
-            "metadata": {
-                "hire_reason": self.reason,
-                "created_by": "hr_validation_agent"
-            }
-        }
+    """Specification for hiring a new agent."""
+    slot: str = Field(description="Slot identifier like 'writer/main', 'media/main', 'critic/main'")
+    ref: str = Field(description="Archetype reference name from registry (e.g., 'Hooksmith', 'ImageComposer')")
+    patch: Dict = Field(default_factory=dict, description="Modifications to archetype system_prompt")
+    reason: str = Field(description="Numeric reason with metric threshold (e.g., 'shareability_mean < 0.55')")
+
+
+class SwapPlan(BaseModel):
+    """Specification for swapping an agent in a slot."""
+    slot: str = Field(description="Slot identifier to swap")
+    ref: str = Field(description="New archetype reference name")
+    patch: Dict = Field(default_factory=dict, description="Modifications to archetype system_prompt")
+    reason: str = Field(description="Numeric reason with metric threshold")
 
 
 class MergePlan(BaseModel):
     """Specification for merging two agents."""
-    a: str
-    b: str
-    reason: str
+    slot: str = Field(description="Target slot for merged agent")
+    from_agents: List[str] = Field(description="List of agent refs to merge", alias="from")
+    to: str = Field(description="New merged agent reference name")
+    patch: Dict = Field(default_factory=dict, description="Modifications to merged system_prompt")
+    reason: str = Field(default="Agents too similar", description="Reason for merge")
+    
+    class Config:
+        populate_by_name = True
 
 
 class PruneItem(BaseModel):
     """Specification for pruning an agent."""
-    name: str
-    reason: str
+    slot: str = Field(description="Slot identifier to prune")
+    reason: str = Field(description="Numeric reason (e.g., 'utility < 0.35 for 3 iters')")
 
 
-class PromptFeedback(BaseModel):
-    """Feedback for improving an agent's prompt."""
-    agent: str
-    suggestion: str
+class UpgradePlan(BaseModel):
+    """Specification for upgrading an existing agent's prompt."""
+    slot: str = Field(description="Slot identifier to upgrade")
+    patch: Dict = Field(description="Modifications to system_prompt")
+    reason: str = Field(default="Performance improvement", description="Reason for upgrade")
 
 
-class Policies(BaseModel):
+class PolicyUpdates(BaseModel):
     """HR operational policies and thresholds."""
-    team_cap: int = 8
-    utility_floor: float = 0.35
-    sim_threshold: float = 0.80
-    spawn_cooldown: int = 1
+    team_cap: int = Field(default=8, description="Maximum number of active agents")
+    utility_floor: float = Field(default=0.35, description="Minimum utility to avoid pruning")
+    sim_threshold: float = Field(default=0.8, description="Similarity threshold for merging")
 
 
 class HRDecision(BaseModel):
     """Complete HR decision output (STRICT JSON)."""
     hire_plan: List[HirePlan] = Field(default_factory=list)
+    swap_plan: List[SwapPlan] = Field(default_factory=list)
     merge_plan: List[MergePlan] = Field(default_factory=list)
     prune_list: List[PruneItem] = Field(default_factory=list)
-    prompt_feedback: List[PromptFeedback] = Field(default_factory=list)
-    policies: Policies = Field(default_factory=Policies)
+    upgrade_plan: List[UpgradePlan] = Field(default_factory=list)
+    policy_updates: PolicyUpdates = Field(default_factory=PolicyUpdates)
 
     def to_strict_json(self) -> str:
         """Export as strict JSON string."""
-        return self.model_dump_json(indent=2, exclude_none=True)
+        return self.model_dump_json(indent=2, exclude_none=True, by_alias=True)
 
