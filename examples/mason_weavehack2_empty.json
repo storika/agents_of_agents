@@ -1,0 +1,14 @@
+{
+  "iteration": 0,
+  "agents": [],
+  "score_history": {
+    "avg_overall": [],
+    "dims_mean": {},
+    "content_history": []
+  },
+  "failures": [],
+  "core_roles": ["HRValidation"],
+  "project_goal": "Make Mason viral on Twitter during WeaveHack2 by creating engaging, high-quality content about AI agents and the competition",
+  "target_audience": "AI/ML developers, tech founders, WeaveHack2 participants, AI enthusiasts on Twitter",
+  "content_focus": "WeaveHack2 progress updates, insights on building AI agents, viral tech takes, surprising discoveries, behind-the-scenes of agent development"
+}

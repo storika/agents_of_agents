@@ -1,0 +1,17 @@
+# Agents-for-Agents HR/Validation Agent Dependencies
+
+# Core Framework
+google-adk>=0.1.0
+google-generativeai>=0.8.0
+
+# Data Validation
+pydantic>=2.0.0
+
+# Weave (for observability)
+weave>=0.50.0
+
+# OpenTelemetry (for ADK integration)
+opentelemetry-sdk>=1.20.0
+opentelemetry-exporter-otlp-proto-http>=1.20.0
+python-dotenv>=1.0.0
+
