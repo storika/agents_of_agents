@@ -4,7 +4,7 @@ CMO (Chief Marketing Orchestrator) Agent - ADK Implementation with Weave Integra
 
 import json
 import os
-from pathlib import Path
+from typing import List, Dict, Any
 from dotenv import load_dotenv
 import weave
 
@@ -31,7 +31,69 @@ from cmo_agent.tools import (
     save_iteration_metrics
 )
 
-from cmo_agent.schemas import ContentCandidate, CMOOutput
+# Import sub-agent management
+from cmo_agent.sub_agents import (
+    SubAgentTeam,
+    call_writer_agents,
+    call_critic_agents,
+    call_safety_agents
+)
+
+
+# ===== GLOBAL SUB-AGENT TEAM =====
+# CMO의 서브 에이전트 팀 (전역으로 유지)
+_global_sub_agent_team: SubAgentTeam = None
+
+
+@weave.op()
+def initialize_sub_agents(hire_plan: List[Dict[str, Any]]) -> str:
+    """
+    HR Agent의 hire_plan을 기반으로 서브 에이전트 팀 초기화
+    
+    Args:
+        hire_plan: HR Agent가 생성한 고용 계획
+    
+    Returns:
+        초기화 상태 메시지
+    """
+    global _global_sub_agent_team
+    
+    print("\n" + "="*70)
+    print("🤖 서브 에이전트 팀 초기화")
+    print("="*70 + "\n")
+    
+    try:
+        _global_sub_agent_team = SubAgentTeam()
+        _global_sub_agent_team.apply_hire_plan(hire_plan)
+        
+        agents_list = _global_sub_agent_team.list_agents()
+        
+        result = {
+            "status": "success",
+            "team_size": len(agents_list),
+            "agents": agents_list,
+            "message": f"✅ {len(agents_list)}명의 서브 에이전트가 준비되었습니다."
+        }
+        
+        return json.dumps(result, indent=2, ensure_ascii=False)
+    
+    except Exception as e:
+        return json.dumps({
+            "status": "error",
+            "message": f"서브 에이전트 초기화 실패: {str(e)}"
+        }, indent=2, ensure_ascii=False)
+
+
+@weave.op()
+def get_sub_agent_team() -> SubAgentTeam:
+    """서브 에이전트 팀 가져오기"""
+    global _global_sub_agent_team
+    
+    if _global_sub_agent_team is None:
+        # 기본 팀 생성 (테스트용)
+        _global_sub_agent_team = SubAgentTeam()
+    
+    return _global_sub_agent_team
 
 
 # ===== CMO ORCHESTRATION FUNCTION =====
@@ -40,7 +102,8 @@ from cmo_agent.schemas import ContentCandidate, CMOOutput
 def orchestrate_content_creation(
     iteration: int = 0,
     topic: str = "AI agents",
-    num_candidates: int = 3
+    num_candidates: int = 3,
+    use_sub_agents: bool = False
 ) -> str:
     """
     콘텐츠 생성 전체 프로세스 오케스트레이션
@@ -49,6 +112,7 @@ def orchestrate_content_creation(
         iteration: 현재 반복 횟수
         topic: 콘텐츠 주제
         num_candidates: 생성할 후보 수 (3-6 권장)
+        use_sub_agents: 실제 서브 에이전트 사용 여부 (False=시뮬레이션)
     
     Returns:
         JSON 형식의 CMO 실행 결과
@@ -68,40 +132,104 @@ def orchestrate_content_creation(
         print(f"\n2️⃣ Generate Stage - {num_candidates}개 후보 생성 중...")
         candidates = []
         
-        for i in range(num_candidates):
-            # 각 토픽에서 후보 생성
-            selected_topic = research_result['topics'][i % len(research_result['topics'])]
-            candidate_json = generate_content_candidate(
-                topic=selected_topic,
-                tone=research_result['tone_style']
-            )
-            candidate_dict = json.loads(candidate_json)
-            candidates.append(candidate_dict)
-            print(f"   ✓ 후보 {i+1}: {candidate_dict['text'][:60]}...")
+        if use_sub_agents:
+            # 실제 서브 에이전트 사용
+            print("   🤖 서브 에이전트 Writer 팀 호출 중...")
+            team = get_sub_agent_team()
+            
+            # Writer 에이전트들로부터 변형 생성
+            writer_variants = call_writer_agents(team, topic, num_candidates)
+            
+            if writer_variants:
+                candidates.extend(writer_variants)
+                print(f"   ✓ Writer 에이전트가 {len(writer_variants)}개 후보 생성")
+            
+            # 부족한 후보는 시뮬레이션으로 채우기
+            remaining = num_candidates - len(candidates)
+            if remaining > 0:
+                print(f"   ⚠️ {remaining}개 추가 후보를 시뮬레이션으로 생성")
+                for i in range(remaining):
+                    selected_topic = research_result['topics'][i % len(research_result['topics'])]
+                    candidate_json = generate_content_candidate(
+                        topic=selected_topic,
+                        tone=research_result['tone_style']
+                    )
+                    candidate_dict = json.loads(candidate_json)
+                    candidates.append(candidate_dict)
+        else:
+            # 시뮬레이션 모드
+            for i in range(num_candidates):
+                # 각 토픽에서 후보 생성
+                selected_topic = research_result['topics'][i % len(research_result['topics'])]
+                candidate_json = generate_content_candidate(
+                    topic=selected_topic,
+                    tone=research_result['tone_style']
+                )
+                candidate_dict = json.loads(candidate_json)
+                candidates.append(candidate_dict)
+                print(f"   ✓ 후보 {i+1}: {candidate_dict['text'][:60]}...")
         
         # === 3️⃣ EVALUATE STAGE ===
         print(f"\n3️⃣ Evaluate Stage - 평가 중...")
         evaluated_candidates = []
         
-        for i, candidate in enumerate(candidates):
-            # Critic + Safety 에이전트 호출
-            scores_json = evaluate_content(
-                text=candidate['text'],
-                media_prompt=candidate['media_prompt']
-            )
-            scores = json.loads(scores_json)
+        if use_sub_agents:
+            team = get_sub_agent_team()
             
-            # Safety check
-            if scores['safety'] < 0.8:
-                print(f"   ✗ 후보 {i+1}: 안전성 기준 미달 (safety={scores['safety']})")
-                continue
-            
-            candidate['scores'] = scores
-            evaluated_candidates.append(candidate)
-            
-            print(f"   ✓ 후보 {i+1}: overall={scores['overall']:.2f} "
-                  f"(clarity={scores['clarity']:.2f}, novelty={scores['novelty']:.2f}, "
-                  f"shareability={scores['shareability']:.2f})")
+            for i, candidate in enumerate(candidates):
+                # Critic 에이전트 호출
+                critic_scores = call_critic_agents(team, candidate)
+                
+                # Safety 에이전트 호출
+                safety_result = call_safety_agents(team, candidate)
+                
+                # 점수 병합
+                scores = {**critic_scores, "safety": safety_result["safety"]}
+                
+                # Overall 계산
+                weights = {
+                    "clarity": 0.25,
+                    "novelty": 0.25,
+                    "shareability": 0.30,
+                    "credibility": 0.10,
+                    "safety": 0.10
+                }
+                overall = sum(scores.get(metric, 0.0) * weight for metric, weight in weights.items())
+                scores["overall"] = round(overall, 2)
+                
+                # Safety check
+                if not safety_result.get("passed", True) or scores['safety'] < 0.8:
+                    print(f"   ✗ 후보 {i+1}: 안전성 기준 미달 (safety={scores['safety']})")
+                    print(f"      이슈: {safety_result.get('issues', [])}")
+                    continue
+                
+                candidate['scores'] = scores
+                evaluated_candidates.append(candidate)
+                
+                print(f"   ✓ 후보 {i+1}: overall={scores['overall']:.2f} "
+                      f"(clarity={scores['clarity']:.2f}, novelty={scores['novelty']:.2f}, "
+                      f"shareability={scores['shareability']:.2f})")
+        else:
+            # 시뮬레이션 모드
+            for i, candidate in enumerate(candidates):
+                # Critic + Safety 에이전트 호출 (시뮬레이션)
+                scores_json = evaluate_content(
+                    text=candidate['text'],
+                    media_prompt=candidate['media_prompt']
+                )
+                scores = json.loads(scores_json)
+                
+                # Safety check
+                if scores['safety'] < 0.8:
+                    print(f"   ✗ 후보 {i+1}: 안전성 기준 미달 (safety={scores['safety']})")
+                    continue
+                
+                candidate['scores'] = scores
+                evaluated_candidates.append(candidate)
+                
+                print(f"   ✓ 후보 {i+1}: overall={scores['overall']:.2f} "
+                      f"(clarity={scores['clarity']:.2f}, novelty={scores['novelty']:.2f}, "
+                      f"shareability={scores['shareability']:.2f})")
         
         # 점수 기준 정렬
         evaluated_candidates.sort(key=lambda x: x['scores']['overall'], reverse=True)
@@ -216,7 +344,7 @@ def run_cmo_iteration(config_json: str) -> str:
         # 이전 메트릭 로드 (선택적)
         last_iteration_file = config.get("last_iteration_file")
         if last_iteration_file:
-            last_metrics = get_last_iteration_metrics(last_iteration_file)
+            _ = get_last_iteration_metrics(last_iteration_file)
             print(f"[INFO] 이전 메트릭 로드: {last_iteration_file}")
         
         # 메인 오케스트레이션 실행
@@ -333,6 +461,7 @@ For most requests, you should call orchestrate_content_creation() or run_cmo_ite
         x_publish,
         get_last_iteration_metrics,
         save_iteration_metrics,
+        initialize_sub_agents,
         orchestrate_content_creation,
         run_cmo_iteration
     ],

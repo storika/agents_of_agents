@@ -1,0 +1,24 @@
+{
+  "iteration": 0,
+  "timestamp": "2025-10-11T15:24:34.298035",
+  "selected_candidate": {
+    "text": "AI agents 개발자 경험 개선로 팀을 자동화하는 방법",
+    "media_prompt": "3D isometric illustration of AI agents 개발자 경험 개선, modern tech aesthetic, vibrant colors",
+    "mode": "gif",
+    "expected_engagement": 0.84,
+    "scores": {
+      "clarity": 0.9,
+      "novelty": 0.8,
+      "shareability": 0.85,
+      "credibility": 0.9,
+      "safety": 0.98,
+      "overall": 0.87
+    }
+  },
+  "predicted_score": 0.87,
+  "engagement": {
+    "likes": 0,
+    "reposts": 0,
+    "comments": 0
+  }
+}

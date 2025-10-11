@@ -89,8 +89,7 @@ def generate_content_candidate(
 @weave.op()
 def evaluate_content(
     text: str,
-    media_prompt: str,
-    evaluation_criteria: Dict[str, Any] = None
+    media_prompt: str
 ) -> str:
     """
     콘텐츠 평가 (Critic + Safety 에이전트 시뮬레이션)
@@ -98,7 +97,6 @@ def evaluate_content(
     Args:
         text: 평가할 텍스트
         media_prompt: 미디어 프롬프트
-        evaluation_criteria: 평가 기준
     
     Returns:
         JSON 형식의 평가 점수
