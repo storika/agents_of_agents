@@ -241,14 +241,43 @@ Design prompts that:
 
 Output structure:
 {
-  "initial_prompts": [
-    {"layer": "research", "initial_prompt": "...", "rationale": "..."},
-    {"layer": "creative_writer", "initial_prompt": "...", "rationale": "..."},
-    {"layer": "generator", "initial_prompt": "...", "rationale": "..."},
-    {"layer": "critic", "initial_prompt": "...", "rationale": "..."},
-    {"layer": "safety", "initial_prompt": "...", "rationale": "..."}
+  "prompts": [
+    {
+      "layer": "research",
+      "improvement_type": "initial",
+      "modification": "complete system prompt for this layer",
+      "reason": "bootstrap - creating initial prompt",
+      "expected_impact": "establish baseline behavior for [layer role]"
+    },
+    {
+      "layer": "creative_writer",
+      "improvement_type": "initial",
+      "modification": "complete system prompt for this layer",
+      "reason": "bootstrap - creating initial prompt",
+      "expected_impact": "establish baseline behavior for [layer role]"
+    },
+    {
+      "layer": "generator",
+      "improvement_type": "initial",
+      "modification": "complete system prompt for this layer",
+      "reason": "bootstrap - creating initial prompt",
+      "expected_impact": "establish baseline behavior for [layer role]"
+    },
+    {
+      "layer": "critic",
+      "improvement_type": "initial",
+      "modification": "complete system prompt for this layer",
+      "reason": "bootstrap - creating initial prompt",
+      "expected_impact": "establish baseline behavior for [layer role]"
+    },
+    {
+      "layer": "safety",
+      "improvement_type": "initial",
+      "modification": "complete system prompt for this layer",
+      "reason": "bootstrap - creating initial prompt",
+      "expected_impact": "establish baseline behavior for [layer role]"
+    }
   ],
-  "prompt_improvements": [],
   "global_adjustments": {...},
   "thresholds": {...}
 }
@@ -265,8 +294,7 @@ When improving existing prompts, focus on:
 
 Output structure:
 {
-  "initial_prompts": [],
-  "prompt_improvements": [
+  "prompts": [
     {
       "layer": "...",
       "improvement_type": "append|prepend|replace_section|refine",
@@ -285,21 +313,21 @@ Output structure:
 
 - **RESPONSE FORMAT**: Output ONLY the JSON object. No markdown code blocks, no explanations, no commentary.
 - Start your response directly with `{` and end with `}`
-- Every improvement must include:
+- Every prompt entry must include:
   * layer name (research/creative_writer/generator/critic/safety)
-  * improvement_type (append/prepend/replace_section/refine)
+  * improvement_type (initial/append/prepend/replace_section/refine)
   * specific modification text
-  * numeric reason (metric < threshold)
+  * reason (bootstrap message or metric < threshold)
   * expected impact description
 - Be specific and actionable — no vague suggestions
-- Limit to 3 improvements per iteration (incremental wins)
+- Limit to 3 improvements per iteration (incremental wins) except bootstrap (5 layers)
 - Always maintain safety layer as highest priority
 
 ---
 
 Remember: 
-- **BOOTSTRAP (iteration 0)**: Output `initial_prompts` with all 5 layers
-- **IMPROVEMENTS (iteration > 0)**: Output `prompt_improvements` (max 3)
+- **BOOTSTRAP (iteration 0)**: Output `prompts` with all 5 layers (improvement_type="initial")
+- **IMPROVEMENTS (iteration > 0)**: Output `prompts` with targeted improvements (max 3)
 - OUTPUT ONLY JSON. No markdown, no text before/after.
 """,
     tools=[analyze_layer_performance],
