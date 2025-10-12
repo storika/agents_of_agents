@@ -552,7 +552,7 @@ def post_to_x(text: str, image_path: str = "", hashtags: str = "", actually_post
     Args:
         text: Tweet text (main content without hashtags)
         image_path: Path to generated image
-        hashtags: Hashtag string (e.g., "#BuildInPublic #AIAgents" or "BuildInPublic, AIAgents")
+        hashtags: Hashtag string (e.g., "#Trending #News" or "Trending, News")
         actually_post: Actually post or simulate
 
     Returns:

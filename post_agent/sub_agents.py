@@ -736,7 +736,7 @@ Provide your analysis in the specified JSON format.
                         "relevance_score": 0.8,
                         "timeliness_score": 0.7,
                         "source": "Fallback",
-                        "hashtags": ["AIAgents", "BuildInPublic"]
+                        "hashtags": ["Trending"]
                     }
                 ],
                 "audience_insights": f"{audience_demographics} are interested in practical, valuable content and authentic insights",
@@ -761,20 +761,20 @@ Provide your analysis in the specified JSON format.
         return {
             "trending_topics": [
                 {
-                    "topic_name": topic if topic else "AI Agents",
+                    "topic_name": topic if topic else "trending topic",
                     "relevance_score": 0.75,
                     "timeliness_score": 0.65,
                     "source": "Error Fallback",
-                    "hashtags": ["AI"]
+                    "hashtags": ["Trending"]
                 }
             ],
-            "audience_insights": "Developers value practical insights and real-world examples",
+            "audience_insights": "Audience values authentic insights and real-world examples",
             "viral_potential_angles": [
                 {
-                    "angle_summary": "Practical AI implementation",
+                    "angle_summary": "Practical implementation",
                     "potential_platforms": ["X"],
                     "engagement_likelihood": 0.7,
-                    "hook_template": "Here's what I learned building with AI:",
+                    "hook_template": "Here's what I learned:",
                     "why_viral": "Learning-focused content performs well"
                 }
             ],
@@ -833,7 +833,7 @@ Based on this research, please generate at least 3 creative content ideas.
                 "ideas": [
                     {
                         "idea_id": "idea_1",
-                        "title": f"Revolutionary approach to {research_output.get('trending_topics', [{}])[0].get('topic_name', 'AI')}",
+                        "title": f"Revolutionary approach to {research_output.get('trending_topics', [{}])[0].get('topic_name', 'trending topics')}",
                         "hook": "What if we told you everything you know is about to change?",
                         "angle": "Provocative revelation with practical insight",
                         "target_platforms": ["Twitter", "LinkedIn"],
@@ -913,7 +913,7 @@ Please generate actual shareable content for the specified platforms.
                         "format": "Text",
                         "content": f"{content_idea.get('hook', 'Check this out')} {content_idea.get('title', '')}",
                         "character_count": len(content_idea.get('hook', '') + content_idea.get('title', '')),
-                        "hashtags": ["AI", "Tech"],
+                        "hashtags": ["Trending"],
                         "call_to_action": "Learn more",
                         "clarity_score": 0.8,
                         "shareability_score": 0.75
@@ -933,7 +933,7 @@ Please generate actual shareable content for the specified platforms.
                     "format": "Text",
                     "content": "Default generated content",
                     "character_count": 25,
-                    "hashtags": ["Tech"],
+                    "hashtags": [],
                     "call_to_action": None,
                     "clarity_score": 0.7,
                     "shareability_score": 0.7

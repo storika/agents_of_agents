@@ -169,7 +169,7 @@ When user requests content creation (e.g., "create a post", "generate content"):
    - Call post_to_x() tool with:
      * text: selected tweet text (without hashtags)
      * image_path: EXACT file path (for image OR video - both use same parameter)
-     * hashtags: hashtag string (e.g., "BuildInPublic, AIAgents")
+     * hashtags: hashtag string (e.g., "Trending, News")
      * actually_post: True
    - Returns tweet_id and URL if successful
    - Show live tweet URL to user
@@ -179,7 +179,7 @@ OUTPUT FORMAT:
   "status": "approved",
   "selected_content": {{
     "text": "Tweet text here...",
-    "hashtags": ["BuildInPublic", "AIAgents"],
+    "hashtags": ["Trending", "News"],
     "media_prompt": "Visual concept description...",
     "platform": "X",
     "character_count": 125
