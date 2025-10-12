@@ -121,7 +121,7 @@ def load_current_cmo_prompts() -> str:
 
 
 def create_hr_input_from_posts(
-    recent_posts_json: str,
+    recent_posts_json: str = "[]",
     iteration: int = 1
 ) -> str:
     """

@@ -79,7 +79,7 @@ from hr_validation_agent.tools_prompt_loader import (
 )
 
 # Import tools
-from hr_validation_agent.tools import measure_tweet_engagement
+from hr_validation_agent.tools import measure_tweet_engagement, get_calls_for_hr_validation
 
 
 # ===== FIXED 5-LAYER ARCHITECTURE =====
@@ -558,8 +558,6 @@ def fetch_performance_data_from_weave(limit: int = 50) -> str:
             "content_history": []
         }
     """
-    from hr_validation_agent.tools import get_calls_for_hr_validation
-
     # Get calls from Weave
     calls_data = get_calls_for_hr_validation(limit=limit, op_name_filter="execute_tool call_post_agent")
     
@@ -601,41 +599,99 @@ def fetch_performance_data_from_weave(limit: int = 50) -> str:
 
 # ===== ADK ROOT AGENT with Weave Tracking =====
 
-# Step 1: Analyzer Agent
-analyzer_agent = Agent(
+# Step 1: Analyzer Agent (Sequential - 4 sub-steps)
+
+# Sub-step 1.0: Fetch performance data from Weave
+fetch_weave_data_agent = Agent(
     model='gemini-2.5-flash',
-    name='analyzer',
+    name='fetch_weave_data',
+    description='Fetches recent call data from Weave',
+    instruction="""You MUST call get_calls_for_hr_validation() function NOW!
+
+CRITICAL: DO NOT just explain. ACTUALLY CALL THE FUNCTION!
+
+This function fetches recent performance data from Weave.
+Call it with:
+
+get_calls_for_hr_validation(limit=50, op_name_filter=None)
+
+Or just:
+get_calls_for_hr_validation()
+
+DO IT NOW!""",
+    tools=[get_calls_for_hr_validation]
+)
+
+# Sub-step 1.1: Load current prompts
+load_prompts_agent = Agent(
+    model='gemini-2.5-flash',
+    name='load_prompts',
+    description='Loads current CMO prompts',
+    instruction="""You MUST call load_current_cmo_prompts() function NOW!
+
+CRITICAL: DO NOT just explain. ACTUALLY CALL THE FUNCTION!
+
+This function loads current prompts from cmo_agent/sub_agents.py.
+It takes no arguments - just call it:
+
+load_current_cmo_prompts()
+
+DO IT NOW!""",
+    tools=[load_current_cmo_prompts]
+)
+
+# Sub-step 1.2: Create HR input from posts
+create_hr_input_agent = Agent(
+    model='gemini-2.5-flash',
+    name='create_hr_input',
+    description='Creates HR input JSON from user posts',
+    instruction="""You MUST call create_hr_input_from_posts() function now!
+
+CRITICAL: DO NOT just explain or give examples. ACTUALLY CALL THE FUNCTION!
+
+The function takes:
+1. recent_posts_json: The original user input (JSON string with posts data)
+2. iteration: Set to 1
+
+Example call:
+create_hr_input_from_posts(
+    recent_posts_json='[{"content_id": "...", "internal_scores": {...}, ...}]',
+    iteration=1
+)
+
+The user input from the sequential workflow will be available to you.
+Use that exact input and pass it to the function.
+
+DO IT NOW - call the function and return its result!""",
+    tools=[create_hr_input_from_posts]
+)
+
+# Sub-step 1.3: Analyze layer performance
+analyze_performance_agent = Agent(
+    model='gemini-2.5-flash',
+    name='analyze_performance',
     description='Analyzes layer performance metrics',
-    instruction="""You are the Analyzer. MANDATORY WORKFLOW:
+    instruction="""You MUST call analyze_layer_performance() function NOW!
 
-STEP 1: ALWAYS start by calling load_current_cmo_prompts()
-   → This loads all current prompts from cmo_agent/sub_agents.py
-   → You MUST do this first before any analysis
+CRITICAL: DO NOT just explain. ACTUALLY CALL THE FUNCTION!
 
-STEP 2: Check input format
-   - If input is raw posts array (not full HR JSON):
-     → Call create_hr_input_from_posts(recent_posts_json, iteration)
-   - If input is already complete HR JSON:
-     → Use it directly
+The function takes one argument:
+- performance_json: The complete HR JSON from the previous step (you received this from create_hr_input_agent)
 
-STEP 3: Call analyze_layer_performance(complete_hr_json)
-   → Pass the JSON string AS-IS from previous steps
-   → DO NOT modify or reformat the JSON
-   → Analyzes all layer metrics
-   → Identifies improvements needed
+Example call:
+analyze_layer_performance(performance_json='{"iteration": 1, "layers": {...}, ...}')
 
-STEP 4: Output the analysis results
+Use the JSON output from the previous agent and pass it to this function.
 
-CRITICAL RULES:
-- MUST call load_current_cmo_prompts() first
-- Pass JSON strings directly to functions WITHOUT modification
-- Do NOT try to parse, edit, or reformat the JSON
-- The JSON is already properly formatted and escaped""",
-    tools=[
-        analyze_layer_performance,
-        create_hr_input_from_posts,
-        load_current_cmo_prompts
-    ]
+DO IT NOW!""",
+    tools=[analyze_layer_performance]
+)
+
+# Combine into sequential analyzer
+analyzer_agent = SequentialAgent(
+    name='analyzer_sequential',
+    sub_agents=[fetch_weave_data_agent, load_prompts_agent, create_hr_input_agent, analyze_performance_agent],
+    description='Sequential analyzer: Fetch Weave data → Load prompts → Create HR input → Analyze performance'
 )
 
 # Step 2: Evaluator Agent
@@ -643,18 +699,22 @@ evaluator_agent = Agent(
     model='gemini-2.5-flash',
     name='evaluator',
     description='Evaluates content engagement if data exists',
-    instruction="""You are the Evaluator. Try to call evaluate_content_engagement with the input JSON.
+    instruction="""You MUST call evaluate_content_engagement() function NOW!
+
+CRITICAL: DO NOT just explain. ACTUALLY CALL THE FUNCTION!
+
+The function takes:
+- content_engagement_json: The input from previous steps (passed automatically in sequential workflow)
+
+Call it like this:
+evaluate_content_engagement(content_engagement_json='...')
 
 The tool will:
-- Check if actual engagement data exists in the layers
-- If yes: Analyze engagement patterns and return insights
-- If no or if JSON parsing fails: Return error message
+- Check if actual engagement data exists
+- If yes: Return engagement analysis
+- If no or if parsing fails: Return error (that's OK, workflow continues)
 
-IMPORTANT:
-- Pass the JSON string AS-IS without modification
-- If the tool returns an error (JSON parsing failed), that's OK
-- Just report the result and continue
-- The workflow can proceed even if evaluation fails""",
+DO IT NOW - call the function!""",
     tools=[evaluate_content_engagement]
 )
 
@@ -663,27 +723,43 @@ improver_agent = Agent(
     model='gemini-2.5-flash',
     name='improver',
     description='Creates and applies prompt improvements',
-    instruction="""You are the Improver. Review the analysis and evaluation results from previous agents.
+    instruction="""You MUST create improvement JSON and call apply_prompt_improvements() function!
 
-The analyzer provided performance metrics for each layer.
-The evaluator may have provided engagement analysis, or an error if data/parsing failed.
+WORKFLOW:
+1. Review analysis results from previous agents (analyzer + evaluator)
+2. Generate a PromptOptimizationDecision JSON
+3. Call apply_prompt_improvements() with that JSON
 
-Your task:
-1. Identify layers with scores below thresholds (use analyzer results primarily)
-2. For each underperforming layer, create a COMPLETE improved system prompt
-3. Call apply_prompt_improvements with the generated JSON
+JSON FORMAT (you must create this):
+{
+  "prompts": [
+    {
+      "layer": "research" or "creative_writer" or "generator" or "critic" or "safety",
+      "new_prompt": "COMPLETE full system prompt text here (not just changes!)",
+      "reason": "specific metrics/issues identified",
+      "expected_impact": "quantitative predictions"
+    }
+  ],
+  "thresholds": {
+    "clarity": 0.55,
+    "novelty": 0.55,
+    "shareability": 0.55,
+    "credibility": 0.60,
+    "safety": 0.80
+  },
+  "global_adjustments": {}
+}
 
-NOTE: If evaluator failed (JSON parsing error), focus on analyzer metrics only.
+THEN CALL:
+apply_prompt_improvements(hr_decisions_json='<your JSON as string>')
 
-Generate a PromptOptimizationDecision JSON with:
-- prompts: array of {layer, new_prompt, reason, expected_impact}
-- thresholds: {clarity: 0.55, novelty: 0.55, shareability: 0.55, credibility: 0.60, safety: 0.80}
-- global_adjustments: {target_audience_update, brand_voice, topics_to_avoid} (optional)
+CRITICAL RULES:
+- Each new_prompt MUST be COMPLETE (not just changes)
+- Properly escape all special characters (\\n for newlines, \\" for quotes)
+- Actually CALL apply_prompt_improvements() function - don't just output JSON!
+- Focus on layers with scores below thresholds
 
-Each new_prompt MUST be a COMPLETE, SELF-CONTAINED system prompt (not just changes).
-
-CRITICAL: When calling apply_prompt_improvements, pass the JSON as a properly formatted string.
-Make sure all special characters in new_prompt are properly escaped for JSON.""",
+DO IT NOW!""",
     tools=[
         apply_prompt_improvements,
         list_cmo_versions,
@@ -699,273 +775,5 @@ root_agent_sequential = SequentialAgent(
     description='Sequential HR validation: Analyze → Evaluate → Improve & Apply',
 )
 
-# Legacy single agent (for backward compatibility)
-root_agent_legacy = Agent(
-    model='gemini-2.5-flash',
-    name='hr_validation_agent_legacy',
-    description='Meta-agent that improves prompts for a 5-layer content creation system.',
-    tools=[fetch_performance_data_from_weave, analyze_layer_performance, evaluate_content_engagement, measure_tweet_engagement],
-    instruction="""You are PromptOptimizer — the meta-level manager for a 5-layer content creation system.
-
-CRITICAL: You MUST respond with ONLY valid JSON. No text before or after the JSON object.
-
-**WORKFLOW:**
-1. **ALWAYS start by calling fetch_performance_data_from_weave()** to get current performance data
-2. **CHECK: Does content_history have empty actual_performance fields?**
-   - If YES: **REQUIRED - Call measure_tweet_engagement()** to get REAL Twitter engagement metrics
-   - This provides actual likes, retweets, replies, views to validate prompt effectiveness
-   - If NO: Content already has real performance data, proceed to analysis
-3. Use the returned data to analyze and make prompt improvement decisions
-4. Optionally call analyze_layer_performance() or evaluate_content_engagement() for deeper analysis
-5. Return your prompt improvement decisions as JSON
-
-**CRITICAL**: ALWAYS call measure_tweet_engagement() when actual_performance is empty or missing.
-You CANNOT make data-driven decisions without REAL engagement metrics from Twitter.
-
-Your role:
-- Analyze performance metrics for each layer
-- Improve system prompts to maximize content quality
-- Never change the 5-layer architecture (Research, Creative Writer, Generator, Critic, Safety)
-- Focus on incremental prompt improvements based on REAL data from measure_tweet_engagement()
-
----
-
-## FIXED 5-LAYER ARCHITECTURE
-
-The system has exactly 5 layers that work sequentially:
-
-1. **Research** - Gathers trending topics, analyzes audience, identifies viral opportunities
-   Metrics: relevance, timeliness, data_quality
-
-2. **Creative Writer** - Generates creative, engaging, novel content ideas and angles
-   Metrics: novelty, creativity, engagement_potential
-
-3. **Generator** - Transforms ideas into concrete content (tweets, threads, posts)
-   Metrics: clarity, shareability, completeness
-
-4. **Critic** - Evaluates content quality across dimensions before publishing
-   Metrics: accuracy, objectivity, thoroughness
-
-5. **Safety** - Ensures content meets brand safety, ethical, legal standards
-   Metrics: safety_score, risk_level, compliance
-
----
-
-## INPUTS
-
-**Option 1: Direct user request (no input data)**
-When the user simply asks you to improve the system, **call fetch_performance_data_from_weave()** first to get current data.
-
-**Option 2: User provides explicit data**
-You will receive a JSON with:
-1. **layers** - Each layer contains:
-   - `current_version`: Active prompt version number
-   - `metrics`: Layer-specific performance metrics
-   - `prompt_history`: Array of all prompt versions (with `is_active` flag)
-2. **overall_metrics** - System-wide performance metrics
-3. **content_history** - Recent content with actual performance data
-
-**BOOTSTRAP MODE (iteration 0)**: If `prompt_history` is empty or no active prompts exist, you MUST create initial prompts for all 5 layers.
-
----
-
-## AVAILABLE TOOLS
-
-**fetch_performance_data_from_weave(limit)** — Fetch current performance data from Weave
-- Input: limit (number of recent calls to fetch, default 50)
-- Output: JSON with current system state including layers, metrics, and performance data
-- **USE THIS FIRST** to get up-to-date performance information
-
-**analyze_layer_performance(performance_json)** — Analyze metrics and identify weak layers
-- Input: Performance data for all 5 layers
-- Output: Analysis with layers needing improvement
-
-**evaluate_content_engagement(content_engagement_json)** — Evaluate prompt-engagement correlations
-- Input: Layer prompts + actual content with real engagement metrics
-- Output: Pattern analysis showing which prompt characteristics lead to high engagement
-- Use this when you have real-world engagement data (likes, retweets, shares, views)
-- Identifies which layers contribute most to viral content
-- Analyzes internal score dimensions that correlate with high engagement
-
-**measure_tweet_engagement(twitter_handle, max_wait_minutes)** — Measure real engagement metrics from Twitter
-- Input: Twitter handle to analyze (defaults to "Mason_Storika" if not provided), optional max wait time
-- Output: Comprehensive engagement data including likes, retweets, replies, views, and top performing tweets
-- **WHEN TO USE**: Call this IMMEDIATELY when content_history items have empty actual_performance fields
-- **WHY**: You need REAL metrics (not just internal_scores) to make data-driven prompt improvements
-- **WHAT TO DO WITH RESULTS**:
-  1. Compare internal_scores vs actual engagement (likes, retweets, views)
-  2. Identify which prompts correlate with high engagement
-  3. Use evaluate_content_engagement() to find patterns
-  4. Improve prompts based on what ACTUALLY works on Twitter
-- Can take up to max_wait_minutes to complete (polls Apify every 10 seconds)
-- Smart caching: Results cached for 1 hour to avoid unnecessary API calls
-
----
-
-## OBJECTIVE
-
-Maximize overall content performance while maintaining:
-- clarity ≥ 0.55
-- novelty ≥ 0.55  
-- shareability ≥ 0.55
-- credibility ≥ 0.60
-- safety ≥ 0.80
-
----
-
-## DECISION RULES
-
-Layer-specific improvements:
-- **Research layer** low → Improve data sources, trending topic identification, audience analysis depth
-- **Creative Writer layer** low → Enhance creative constraints, add example formats, boost novelty techniques
-- **Generator layer** low → Add clarity rules, structure templates, shareability patterns
-- **Critic layer** low → Refine evaluation criteria, scoring rubrics, bias checks
-- **Safety layer** low → Strengthen risk categories, compliance checks, brand guidelines
-
-**IMPORTANT**: Always provide COMPLETE NEW PROMPTS, not modifications or patches.
-Your output will directly replace the existing prompt, so ensure:
-1. The new prompt is self-contained and complete
-2. It preserves any working elements from the old prompt
-3. It adds specific improvements based on performance data
-4. It follows the layer's core responsibilities
-
----
-
-## OUTPUT (STRICT JSON)
-
-**BOOTSTRAP MODE (iteration 0 or no existing prompts):**
-
-When creating initial prompts, design comprehensive system prompts for each layer:
-
-For each layer, consider:
-- **Research**: What data sources? How to identify trends? What output format?
-- **Creative Writer**: What creative techniques? How to ensure novelty? What constraints?
-- **Generator**: What formatting rules? Character limits? Engagement optimization tactics?
-- **Critic**: What evaluation dimensions? Scoring rubrics? How to provide feedback?
-- **Safety**: What red lines? Risk assessment criteria? Approval/rejection logic?
-
-Design prompts that:
-1. Are specific and actionable
-2. Include clear input/output formats (prefer JSON)
-3. Incorporate brand voice and audience considerations
-4. Set measurable quality standards
-5. Are optimized for the target metrics of each layer
-
-Output structure:
-{
-  "prompts": [
-    {
-      "layer": "research",
-      "new_prompt": "complete system prompt for this layer",
-      "reason": "bootstrap - creating initial prompt",
-      "expected_impact": "establish baseline behavior for research layer"
-    },
-    {
-      "layer": "creative_writer",
-      "new_prompt": "complete system prompt for this layer",
-      "reason": "bootstrap - creating initial prompt",
-      "expected_impact": "establish baseline behavior for creative writer layer"
-    },
-    {
-      "layer": "generator",
-      "new_prompt": "complete system prompt for this layer",
-      "reason": "bootstrap - creating initial prompt",
-      "expected_impact": "establish baseline behavior for generator layer"
-    },
-    {
-      "layer": "critic",
-      "new_prompt": "complete system prompt for this layer",
-      "reason": "bootstrap - creating initial prompt",
-      "expected_impact": "establish baseline behavior for critic layer"
-    },
-    {
-      "layer": "safety",
-      "new_prompt": "complete system prompt for this layer",
-      "reason": "bootstrap - creating initial prompt",
-      "expected_impact": "establish baseline behavior for safety layer"
-    }
-  ],
-  "global_adjustments": {...},
-  "thresholds": {...}
-}
-
----
-
-**IMPROVEMENT MODE (iteration > 0 with existing prompts):**
-
-When improving existing prompts:
-1. Analyze weak metrics from performance data
-2. Review current prompt and identify what to preserve vs. improve
-3. Generate COMPLETE NEW PROMPT that incorporates improvements
-4. Maximum 3 layer improvements per iteration (focus on biggest issues)
-
-Output structure:
-{
-  "prompts": [
-    {
-      "layer": "creative_writer",
-      "new_prompt": "You are the Creative Writer layer. Your task is to generate creative, engaging, and novel content ideas for X (Twitter)...\n\n[COMPLETE FULL PROMPT HERE - this will REPLACE the old prompt entirely]",
-      "reason": "shareability 0.48 < threshold 0.55; novelty 0.72 borderline; actual engagement 0%",
-      "expected_impact": "increase shareability by 0.15+ through stronger hooks and emotional triggers; boost actual engagement rate to 2-5%"
-    },
-    {
-      "layer": "generator",
-      "new_prompt": "You are the Generator layer...\n\n[COMPLETE FULL PROMPT HERE]",
-      "reason": "shareability 0.48 < threshold; 0% engagement despite good clarity",
-      "expected_impact": "improve call-to-action strength and viral mechanics to drive engagement"
-    }
-  ],
-  "global_adjustments": {...},
-  "thresholds": {...}
-}
-
----
-
-## STYLE
-
-- **RESPONSE FORMAT**: Output ONLY the JSON object. No markdown code blocks, no explanations, no commentary.
-- Start your response directly with `{` and end with `}`
-- Every prompt entry must include:
-  * layer name (research/creative_writer/generator/critic/safety)
-  * new_prompt (COMPLETE system prompt text that replaces the old one)
-  * reason (specific metrics/issues identified)
-  * expected impact (quantitative predictions where possible)
-- **new_prompt must be COMPLETE and READY TO USE** — include all instructions, format specs, examples
-- Be specific and actionable — no vague suggestions
-- Limit to 3 layer improvements per iteration except bootstrap (5 layers)
-- Always maintain safety layer as highest priority
-
----
-
-## AUTO-APPLY TOOL
-
-**Tool: apply_prompt_improvements** (formerly create_cmo_version_from_hr_output)
-- Takes your JSON decisions and applies them to cmo_agent/sub_agents.py
-- Backs up current version as cmo_agent_vX/
-- Makes changes live for ADK to use immediately
-
-Call this AFTER outputting your JSON decisions!
-
----
-
-Remember: 
-- **BOOTSTRAP (iteration 0)**: Output `prompts` with all 5 layers, each with complete `new_prompt`
-- **IMPROVEMENTS (iteration > 0)**: Output `prompts` for 1-3 layers needing improvement, each with complete `new_prompt`
-- OUTPUT ONLY JSON. No markdown, no text before/after.
-- **USE evaluate_content_engagement** when real engagement data is available to identify prompt-performance patterns
-- Each `new_prompt` should be a COMPLETE, SELF-CONTAINED system prompt (not a diff or modification)
-
-**MANDATORY WORKFLOW (DO ALL STEPS IN ORDER):**
-
-Step 1: Call analyze_layer_performance(input_json)
-Step 2: If engagement data exists, call evaluate_content_engagement(engagement_data_json)
-Step 3: Based on analysis, OUTPUT your JSON decisions (the prompts with new_prompt, reason, expected_impact)
-Step 4: Call apply_prompt_improvements(hr_decisions_json=<your_json_from_step3_as_string>)
-       → This updates cmo_agent/sub_agents.py automatically
-
-IMPORTANT: Step 3 outputs JSON, Step 4 applies it to actual files. Do NOT skip Step 4!
-"""
-)
-
-# Default to sequential agent
+# Default to sequential agent (analyze → evaluate → improve)
 root_agent = root_agent_sequential
