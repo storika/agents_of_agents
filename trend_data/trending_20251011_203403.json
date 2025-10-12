@@ -1,0 +1,1662 @@
+{
+  "pipeline_metadata": {
+    "pipeline_timestamp": "2025-10-11T20:34:03.204347",
+    "pipeline_timestamp_readable": "2025-10-11 20:34:03",
+    "pipeline_version": "1.0",
+    "pipeline_description": "Comprehensive trending data collection from Google Trends and Twitter",
+    "collection_interval_hours": 3
+  },
+  "data_sources": {
+    "google_trends": {
+      "collected": false,
+      "file": null,
+      "trends_count": 0,
+      "data": null
+    },
+    "twitter_trends": {
+      "collected": true,
+      "file": "/Users/mason/workspace/agents_of_agents/trend_research_pipeline/.temp/twitter_trends/twitter_trending_tavily_20251011_203443.json",
+      "data": {
+        "scrape_timestamp": "2025-10-11T20:34:43.863834",
+        "scrape_timestamp_readable": "2025-10-11 20:34:43",
+        "total_tabs_scraped": 4,
+        "method": "tavily_api",
+        "tabs": {
+          "trending": {
+            "tab": "trending",
+            "query": "trending on twitter today",
+            "timestamp": "2025-10-11T20:34:28.807416",
+            "timestamp_readable": "2025-10-11 20:34:28",
+            "trending_count": 20,
+            "trending_topics": [
+              {
+                "rank": 1,
+                "topic_name": "Trend For Prem",
+                "url": "https://x.com/trendforprem/status/1977189495910129768",
+                "category": "trending",
+                "raw_text": "Trend For Prem\n... REVAMP EP8 #RevampSeriesEP8. Screenshot of Twitter trends interface displaying results for 11/10/25 at 08: 1:48 AM · Oct 12, 2025. ·. 2,159. Views. 17.",
+                "timestamp": "2025-10-11T20:34:28.807156",
+                "source": "tavily"
+              },
+              {
+                "rank": 2,
+                "topic_name": "Trend for SANTA",
+                "url": "https://x.com/TrendforSanta/status/1977197834035515898",
+                "category": "trending",
+                "raw_text": "Trend for SANTA\nScreenshot of Twitter trends page showing Perfect10Liners as trending in Thailand with 50K posts, top. 2:21 AM · Oct 12, 2025. ·. 479. Views. 1.",
+                "timestamp": "2025-10-11T20:34:28.807195",
+                "source": "tavily",
+                "engagement_hint": "high"
+              },
+              {
+                "rank": 3,
+                "topic_name": "12:25AM (GMT +7) BOUNPREM REVAMP EP8",
+                "url": "https://x.com/PreciousBPTrend/status/1977062939980185948",
+                "category": "trending",
+                "raw_text": "12:25AM (GMT +7) BOUNPREM REVAMP EP8\nScreenshot of Twitter trends interface for Thailand showing top hashtags section with RevampSeriesEP8 ranked number 1.",
+                "timestamp": "2025-10-11T20:34:28.807207",
+                "source": "tavily"
+              },
+              {
+                "rank": 4,
+                "topic_name": "Louise Thanwarat CL",
+                "url": "https://x.com/nonglottesmiley/status/1977208293107155156",
+                "category": "trending",
+                "raw_text": "Louise Thanwarat CL\n▪️Use text only until the tag enters the trending list ▪️Alternate between tweet ... 3:02 AM · Oct 12, 2025. ·. 137. Views. 9.",
+                "timestamp": "2025-10-11T20:34:28.807214",
+                "source": "tavily",
+                "engagement_hint": "high"
+              },
+              {
+                "rank": 5,
+                "topic_name": "#PatriotsWin",
+                "url": "https://twitter.com/search?q=%23PatriotsWin&src=hashtag_click",
+                "category": "trending",
+                "raw_text": "#PatriotsWin - Search / X\nDid The Patriots Win Today? @DidPatsWinToday. Follow. Click to Follow ... New Orleans Saints on October 12, 2025, at the Caesars Superdome. This marks",
+                "timestamp": "2025-10-11T20:34:28.807249",
+                "source": "tavily"
+              },
+              {
+                "rank": 6,
+                "topic_name": "Atlanta Hawks on X: \"Moving without the ball ❗️ https://t.co ...",
+                "url": "https://twitter.com/ATLHawks/status/1977173586499498467",
+                "category": "trending",
+                "raw_text": "Atlanta Hawks on X: \"Moving without the ball ❗️ https://t.co ...\nPlayers in white and red uniforms move dynamically on a basketball court during a game,. 0:05. 12:44 AM · Oct 12, 2025. ·. 5,062. Views. 4. 4.",
+                "timestamp": "2025-10-11T20:34:28.807261",
+                "source": "tavily"
+              },
+              {
+                "rank": 7,
+                "topic_name": "Dov Kleiman on X: \"𝗧𝗥𝗘𝗡𝗗𝗜𝗡𝗚: This family has gone viral ...",
+                "url": "https://twitter.com/NFL_DovKleiman/status/1976808717409825266",
+                "category": "trending",
+                "raw_text": "Dov Kleiman on X: \"𝗧𝗥𝗘𝗡𝗗𝗜𝗡𝗚: This family has gone viral ...\nTRENDING: This family has gone viral for one of the most extraordinary man caves you will ever see. Every Lions fan's dream cave.",
+                "timestamp": "2025-10-11T20:34:28.807284",
+                "source": "tavily",
+                "engagement_hint": "high"
+              },
+              {
+                "rank": 8,
+                "topic_name": "Stefen Rosner",
+                "url": "https://twitter.com/stefen_rosner/status/1977185548881006795/",
+                "category": "trending",
+                "raw_text": "Stefen Rosner\n@ethan_sears. ·. 1h. Matthew Schaefer is currently leading the Islanders in TOI. Already has over 20 minutes. 1:32 AM · Oct 12, 2025. ·. 6,636. Views. 6.",
+                "timestamp": "2025-10-11T20:34:28.807295",
+                "source": "tavily"
+              },
+              {
+                "rank": 9,
+                "topic_name": "Rangers on MSG on X: \"Road win goalie hugs!!! Mike Sullivan ...",
+                "url": "https://twitter.com/RangersMSGN/status/1977189191684665373",
+                "category": "trending",
+                "raw_text": "Rangers on MSG on X: \"Road win goalie hugs!!! Mike Sullivan ...\nRoad win goalie hugs!!! Mike Sullivan returns to Pittsburgh and his Rangers earn a decisive 6-1 win over the Penguins. @NYRangers | #NYR.",
+                "timestamp": "2025-10-11T20:34:28.807304",
+                "source": "tavily"
+              },
+              {
+                "rank": 10,
+                "topic_name": "\"the 2025\"",
+                "url": "https://twitter.com/search?src=trend_click&vertical=trends&q=%22the+2025%22",
+                "category": "trending",
+                "raw_text": "\"the 2025\" - Search / X\nFrancesca Albanese, Greta Thunberg, and Dr. Hussam Abu Safiya should be nominated for the 2025 Nobel Peace Prize for their tireless dedication to humanity. @",
+                "timestamp": "2025-10-11T20:34:28.807311",
+                "source": "tavily"
+              },
+              {
+                "rank": 11,
+                "topic_name": "Build Tweets on X: \"🔔 BUILD TREND SCHEDULE ‼️ Starts in ...",
+                "url": "https://twitter.com/build_tweets/status/1976210087631802682",
+                "category": "trending",
+                "raw_text": "Build Tweets on X: \"🔔 BUILD TREND SCHEDULE ‼️ Starts in ...\nBUILD TREND SCHEDULE ‼️ Starts in 2hours‼️ Trend starts : 5:45PM BUILD TIKTOK LIVE COLLECTION #️⃣LiveBuildxIssue LIVE starts : 6PM.",
+                "timestamp": "2025-10-11T20:34:28.807318",
+                "source": "tavily"
+              },
+              {
+                "rank": 12,
+                "topic_name": "Major League Soccer on X: \"New banner in the rafters ...",
+                "url": "https://twitter.com/MLS/status/1977187370127474901",
+                "category": "trending",
+                "raw_text": "Major League Soccer on X: \"New banner in the rafters ...\nNew banner in the rafters. @SoundersFC unveil their @LeaguesCup banner ... 1:39 AM · Oct 12, 2025. ·. 11.7K. Views. 3. 4.",
+                "timestamp": "2025-10-11T20:34:28.807325",
+                "source": "tavily"
+              },
+              {
+                "rank": 13,
+                "topic_name": "Trend for SkyNani",
+                "url": "https://x.com/skynanitrending/status/1977191743960600667",
+                "category": "trending",
+                "raw_text": "Trend for SkyNani\n... First image is a promotional poster for Based on 2 Stories EP3 featuring Gemini Norawit and. 1:57 AM · Oct 12, 2025. ·. 438. Views.",
+                "timestamp": "2025-10-11T20:34:28.807332",
+                "source": "tavily"
+              },
+              {
+                "rank": 14,
+                "topic_name": "Pittsburgh Penguins on X: \"TAKE A BOW, KID 🙌 https://t.co ...",
+                "url": "https://twitter.com/penguins/status/1977164268412743867",
+                "category": "trending",
+                "raw_text": "Pittsburgh Penguins on X: \"TAKE A BOW, KID 🙌 https://t.co ...\nHockey game footage from a Pittsburgh Penguins versus New York Rangers match on an ice rink. 0:21. Ben Kindel Scores First NHL Goal. 12:07 AM · Oct 12, 2025.",
+                "timestamp": "2025-10-11T20:34:28.807340",
+                "source": "tavily"
+              },
+              {
+                "rank": 15,
+                "topic_name": "Matchroom Boxing on X: \"Heavyweight action in the chief ...",
+                "url": "https://twitter.com/MatchroomBoxing/status/1977192498406805547",
+                "category": "trending",
+                "raw_text": "Matchroom Boxing on X: \"Heavyweight action in the chief ...\nHeavyweight action in the chief support 12-0 Alexis Barriere takes on The Gladiator Guido ... 2:00 AM · Oct 12, 2025. ·. 6,206. Views. 2.",
+                "timestamp": "2025-10-11T20:34:28.807348",
+                "source": "tavily"
+              },
+              {
+                "rank": 16,
+                "topic_name": "Trending Raps on X: \"One Take with dxrop🎤📈 song: “michael ...",
+                "url": "https://twitter.com/TrendingRaps/status/1974210442139467851",
+                "category": "trending",
+                "raw_text": "Trending Raps on X: \"One Take with dxrop🎤📈 song: “michael ...\nOne Take with dxrop song: “michael jackson”. A person wearing a black beanie and headphones performs in front of a microphone, dressed.",
+                "timestamp": "2025-10-11T20:34:28.807356",
+                "source": "tavily"
+              },
+              {
+                "rank": 17,
+                "topic_name": "Pittsburgh Penguins",
+                "url": "https://twitter.com/penguins/status/1977163435621093688",
+                "category": "trending",
+                "raw_text": "Pittsburgh Penguins\nHockey player Ben Kindel in black and gold Pittsburgh Penguins uniform with number 88 skates on. 12:04 AM · Oct 12, 2025. ·. 22.8K. Views. 36.",
+                "timestamp": "2025-10-11T20:34:28.807363",
+                "source": "tavily"
+              },
+              {
+                "rank": 18,
+                "topic_name": "Jeff Kassouf",
+                "url": "https://twitter.com/JeffKassouf/status/1977180171183833537",
+                "category": "trending",
+                "raw_text": "Jeff Kassouf\nTheir 62 points is a new #NWSL best with two games to play. https://t.co/ ... Current set new NWSL single-season points record · From espn.com · 1:11 AM",
+                "timestamp": "2025-10-11T20:34:28.807370",
+                "source": "tavily"
+              },
+              {
+                "rank": 19,
+                "topic_name": "NHL on X: \"Aliaksei Protas is so casual with it on the ...",
+                "url": "https://twitter.com/NHL/status/1977172929944166879",
+                "category": "trending",
+                "raw_text": "NHL on X: \"Aliaksei Protas is so casual with it on the ...\nVideo clip from an NHL hockey game between Washington Capitals and New York Rangers, showing. 0:39. 12:42 AM · Oct 12, 2025. ·. 40.9K. Views. 12.",
+                "timestamp": "2025-10-11T20:34:28.807377",
+                "source": "tavily"
+              },
+              {
+                "rank": 20,
+                "topic_name": "Atlanta Hawks on X: \"KP with a nice pass and Zacch with a ...",
+                "url": "https://twitter.com/ATLHawks/status/1977174767502299264",
+                "category": "trending",
+                "raw_text": "Atlanta Hawks on X: \"KP with a nice pass and Zacch with a ...\nBasketball game footage on a court with blue center circle and red Hawks players in white. 0:11. 12:49 AM · Oct 12, 2025. ·. 5,322. Views. 2. 12.",
+                "timestamp": "2025-10-11T20:34:28.807384",
+                "source": "tavily"
+              }
+            ],
+            "success": true
+          },
+          "news": {
+            "tab": "news",
+            "query": "breaking news twitter trending",
+            "timestamp": "2025-10-11T20:34:32.959140",
+            "timestamp_readable": "2025-10-11 20:34:32",
+            "trending_count": 20,
+            "trending_topics": [
+              {
+                "rank": 1,
+                "topic_name": "Breaking News (@BreakingNews) ...",
+                "url": "https://x.com/breakingnews",
+                "category": "news",
+                "raw_text": "Breaking News (@BreakingNews) ...\nBREAKING: Israel's government approves part of a peace plan to free hostages still held by Hamas. Trump says he will travel to Egypt for an official signing.",
+                "timestamp": "2025-10-11T20:34:32.958957",
+                "source": "tavily"
+              },
+              {
+                "rank": 2,
+                "topic_name": "What's Trending (@WhatsTrending) ...",
+                "url": "https://x.com/whatstrending",
+                "category": "news",
+                "raw_text": "What's Trending (@WhatsTrending) ...\nThe biggest headlines in entertainment, digital and more. What's Trending delivers the latest video news for all things pop culture.",
+                "timestamp": "2025-10-11T20:34:32.958991",
+                "source": "tavily",
+                "engagement_hint": "high"
+              },
+              {
+                "rank": 3,
+                "topic_name": "Trendlistz",
+                "url": "https://x.com/trendlistz",
+                "category": "news",
+                "raw_text": "Trendlistz\nOur new website - a realtime Twitter trending list, with insights about the latest hashtags & topics- is here: https://trendlistz.com Try it out!",
+                "timestamp": "2025-10-11T20:34:32.959000",
+                "source": "tavily",
+                "engagement_hint": "high"
+              },
+              {
+                "rank": 4,
+                "topic_name": "CNN Breaking News (@cnnbrk) / X",
+                "url": "https://x.com/cnnbrk",
+                "category": "news",
+                "raw_text": "CNN Breaking News (@cnnbrk) / X\nTrump says his administration has \"identified funds\" to pay military troops next week as the government shutdown continues.",
+                "timestamp": "2025-10-11T20:34:32.959005",
+                "source": "tavily"
+              },
+              {
+                "rank": 5,
+                "topic_name": "what are the current twitter trends",
+                "url": "https://twitter.com/i/grok/share/4QESCbngru2mYb2mau3xcKvXh",
+                "category": "news",
+                "raw_text": "what are the current twitter trends\nCultural and Political Trends: The blend of political humor, cultural events, and educational shifts reflects a diverse range of interests and discussions on",
+                "timestamp": "2025-10-11T20:34:32.959011",
+                "source": "tavily"
+              },
+              {
+                "rank": 6,
+                "topic_name": "#breaking",
+                "url": "https://twitter.com/search?q=%23breaking&src=hash%22%3E",
+                "category": "news",
+                "raw_text": "#breaking - Search / X\n#BREAKING: Suicide Bomber video from inside Police Training Centre in Dera Ismail Khan of KPK, Pakistan. Over 7 Pakistani soldiers killed, 13 injured. If this",
+                "timestamp": "2025-10-11T20:34:32.959017",
+                "source": "tavily"
+              },
+              {
+                "rank": 7,
+                "topic_name": "#BreakingNews",
+                "url": "https://twitter.com/search?q=%23BreakingNews&src=hash&f=user",
+                "category": "news",
+                "raw_text": "#BreakingNews - Search / X\nLive updates on incidents and breaking news in Brighton, Hove & Sussex, UK. Tweet or DM your photos, videos, and news tips.",
+                "timestamp": "2025-10-11T20:34:32.959022",
+                "source": "tavily"
+              },
+              {
+                "rank": 8,
+                "topic_name": "Trendsmap",
+                "url": "https://x.com/trendsmap",
+                "category": "news",
+                "raw_text": "Trendsmap\nWe have been providing unique analysis of Twitter data for 14 years. However Twitter have just made fundamental changes to how businesses can access data.",
+                "timestamp": "2025-10-11T20:34:32.959026",
+                "source": "tavily"
+              },
+              {
+                "rank": 9,
+                "topic_name": "#breakingnews",
+                "url": "https://x.com/search?q=%23breakingnews",
+                "category": "news",
+                "raw_text": "#breakingnews - Search / X\nBreaking news alerts and updates from the BBC. For news, features, analysis follow. @BBCWorld ; (international) or. @BBCNews ; (UK). Latest sport news. @BBCSport.",
+                "timestamp": "2025-10-11T20:34:32.959031",
+                "source": "tavily"
+              },
+              {
+                "rank": 10,
+                "topic_name": "#Breaking #News",
+                "url": "https://twitter.com/search?q=%23Breaking%20%23News&src=typed_query&f=user",
+                "category": "news",
+                "raw_text": "#Breaking #News - Search / X\nYour source for unfiltered BREAKING news, politics, and real-time alerts. Notifications on = No missed headlines.",
+                "timestamp": "2025-10-11T20:34:32.959035",
+                "source": "tavily"
+              },
+              {
+                "rank": 11,
+                "topic_name": "#Breaking #News",
+                "url": "https://twitter.com/search?q=%23Breaking%20%23News&f=user",
+                "category": "news",
+                "raw_text": "#Breaking #News - Search / X\nYour source for unfiltered BREAKING news, politics, and real-time alerts. Notifications on = No missed headlines.",
+                "timestamp": "2025-10-11T20:34:32.959040",
+                "source": "tavily"
+              },
+              {
+                "rank": 12,
+                "topic_name": "The Funniest Trends (@FunniestTrends) ...",
+                "url": "https://x.com/funniesttrends",
+                "category": "news",
+                "raw_text": "The Funniest Trends (@FunniestTrends) ...\nTwitter's #1 funniest trending pics, we follow and start the biggest and best trends on Twitter so you never miss a laugh!",
+                "timestamp": "2025-10-11T20:34:32.959044",
+                "source": "tavily",
+                "engagement_hint": "high"
+              },
+              {
+                "rank": 13,
+                "topic_name": "Reuters",
+                "url": "https://twitter.com/Reuters",
+                "category": "news",
+                "raw_text": "Reuters\nTop and breaking news, pictures and videos from Reuters. For breaking business news, follow @ReutersBiz. Our daily podcast is here: https://t.co/KO0QFy0d3a.",
+                "timestamp": "2025-10-11T20:34:32.959048",
+                "source": "tavily"
+              },
+              {
+                "rank": 14,
+                "topic_name": "CP24",
+                "url": "https://x.com/cp24",
+                "category": "news",
+                "raw_text": "CP24\nCP24 is Toronto & the GTA's #1 source for breaking news. For breaking news alerts on your phone, download our app: https://t.co/pGf88z8tnI.",
+                "timestamp": "2025-10-11T20:34:32.959053",
+                "source": "tavily"
+              },
+              {
+                "rank": 15,
+                "topic_name": "Trending topics",
+                "url": "https://twitter.com/search?q=Trending%20topics&src=typed_query",
+                "category": "news",
+                "raw_text": "Trending topics - Search / X\nSo far today the trending topics have included Radio Shack, Monica Lewinsky and Aeropostale. Did someone finally invent a time machine?",
+                "timestamp": "2025-10-11T20:34:32.959057",
+                "source": "tavily",
+                "engagement_hint": "high"
+              },
+              {
+                "rank": 16,
+                "topic_name": "CTV News (@CTVNews) / X",
+                "url": "https://x.com/ctvnews",
+                "category": "news",
+                "raw_text": "CTV News (@CTVNews) / X\nHeavy rain in Mexico sets off floods and landslides, killing at least 41 · 5 ; Diane Keaton, Oscar-winning star of 'Annie Hall' and 'The Godfather,' dies at 79,",
+                "timestamp": "2025-10-11T20:34:32.959061",
+                "source": "tavily"
+              },
+              {
+                "rank": 17,
+                "topic_name": "CBC News (@CBCNews) / X",
+                "url": "https://x.com/cbcnews",
+                "category": "news",
+                "raw_text": "CBC News (@CBCNews) / X\nThe Bank of Canada lowered its key interest rate by 25 basis points to 2.5 per cent on Wednesday, marking its first cut since March.",
+                "timestamp": "2025-10-11T20:34:32.959070",
+                "source": "tavily"
+              },
+              {
+                "rank": 18,
+                "topic_name": "BREAKING NEWS",
+                "url": "https://twitter.com/search?q=BREAKING+NEWS",
+                "category": "news",
+                "raw_text": "BREAKING NEWS - Search / X\nBREAKING: Vladimir Putin says the Nobel Peace Prize has completely lost its credibility after failing to award it to President Trump.",
+                "timestamp": "2025-10-11T20:34:32.959094",
+                "source": "tavily"
+              },
+              {
+                "rank": 19,
+                "topic_name": "X Trends FAQ – trending hashtags and topics",
+                "url": "https://help.x.com/en/using-x/x-trending-faqs",
+                "category": "news",
+                "raw_text": "X Trends FAQ – trending hashtags and topics - Help Center\nTrends are determined by an algorithm and, by default, are tailored for you based on who you follow, your interests, and your location.",
+                "timestamp": "2025-10-11T20:34:32.959105",
+                "source": "tavily"
+              },
+              {
+                "rank": 20,
+                "topic_name": "Top Trending Events (@events_trending) / X",
+                "url": "https://twitter.com/events_trending",
+                "category": "news",
+                "raw_text": "Top Trending Events (@events_trending) / X\nhttp://Toptrending.events is on about Holidays to events which trends from social media to people heart. So buckle up and DM if you want help :).",
+                "timestamp": "2025-10-11T20:34:32.959110",
+                "source": "tavily",
+                "engagement_hint": "high"
+              }
+            ],
+            "success": true
+          },
+          "sports": {
+            "tab": "sports",
+            "query": "sports trending twitter today",
+            "timestamp": "2025-10-11T20:34:37.640498",
+            "timestamp_readable": "2025-10-11 20:34:37",
+            "trending_count": 20,
+            "trending_topics": [
+              {
+                "rank": 1,
+                "topic_name": "SportsCenter",
+                "url": "https://x.com/sportscenter",
+                "category": "sports",
+                "raw_text": "SportsCenter\n7h. Today. @AuburnFootball. retires Cam Netwon's No. 2 LEGEND.. Collage of multiple photos showing Cam Newton in Auburn Tigers football uniform number 2",
+                "timestamp": "2025-10-11T20:34:37.640342",
+                "source": "tavily"
+              },
+              {
+                "rank": 2,
+                "topic_name": "All Sports News (@AllSports_News) ...",
+                "url": "https://twitter.com/AllSports_News",
+                "category": "sports",
+                "raw_text": "All Sports News (@AllSports_News) ...\nTweeting and retweeting the latest scores, news, and stats from MLB, NBA, NFL, NHL, and college sports. For the fun, not the fame. #ASN.",
+                "timestamp": "2025-10-11T20:34:37.640364",
+                "source": "tavily"
+              },
+              {
+                "rank": 3,
+                "topic_name": "Toronto Blue Jays (@BlueJays) / X",
+                "url": "https://x.com/bluejays",
+                "category": "sports",
+                "raw_text": "Toronto Blue Jays (@BlueJays) / X\nOct 10. Nathan Lukes appreciation tweet: Spent a decade in the Minors Made the Opening Day roster in 2025 Had 65 RBIs during the season HUGE",
+                "timestamp": "2025-10-11T20:34:37.640370",
+                "source": "tavily"
+              },
+              {
+                "rank": 4,
+                "topic_name": "The Sporting News (@sportingnews) / ...",
+                "url": "https://x.com/sportingnews",
+                "category": "sports",
+                "raw_text": "The Sporting News (@sportingnews) / ...\nThe Sporting News · @sportingnews. ·. 3h. Curt Cignetti was big mad. Video clip from a college football game broadcast on CBS Sports shows Indiana Hoosiers",
+                "timestamp": "2025-10-11T20:34:37.640375",
+                "source": "tavily"
+              },
+              {
+                "rank": 5,
+                "topic_name": "USA TODAY Sports (@usatodaysports) ...",
+                "url": "https://x.com/usatodaysports",
+                "category": "sports",
+                "raw_text": "USA TODAY Sports (@usatodaysports) ...\nUSA TODAY Sports's posts ; 18h. The Las Vegas Aces win the WNBA title in a historic sweep of the Phoenix Mercury after 97-86 victory in game 4 of the WNBA Finals",
+                "timestamp": "2025-10-11T20:34:37.640384",
+                "source": "tavily"
+              },
+              {
+                "rank": 6,
+                "topic_name": "Sky Sports (@SkySports) / X",
+                "url": "https://x.com/skysports",
+                "category": "sports",
+                "raw_text": "Sky Sports (@SkySports) / X\nReal Madrid star Jude Bellingham has opened up on his personal mental health as he looks to improve support levels across elite sport.",
+                "timestamp": "2025-10-11T20:34:37.640389",
+                "source": "tavily"
+              },
+              {
+                "rank": 7,
+                "topic_name": "Premier League (@premierleague) / X",
+                "url": "https://twitter.com/premierleague",
+                "category": "sports",
+                "raw_text": "Premier League (@premierleague) / X\nWe are delighted to announce the signing of Kota Takai from J1 League side Kawasaki Frontale, subject to international clearance and work permit ✍️.",
+                "timestamp": "2025-10-11T20:34:37.640394",
+                "source": "tavily"
+              },
+              {
+                "rank": 8,
+                "topic_name": "Shams Charania (@ShamsCharania) ...",
+                "url": "https://twitter.com/ShamsCharania",
+                "category": "sports",
+                "raw_text": "Shams Charania (@ShamsCharania) ...\nThe Philadelphia 76ers are signing former Spurs and Hawks forward Dominick Barlow on a two-way NBA contract, Life Sports Agency CEO Todd Ramasar tells ESPN.",
+                "timestamp": "2025-10-11T20:34:37.640401",
+                "source": "tavily"
+              },
+              {
+                "rank": 9,
+                "topic_name": "FOX Sports",
+                "url": "https://twitter.com/foxsports/",
+                "category": "sports",
+                "raw_text": "FOX Sports\nYou heard it here first from @kevinburkhardt, @AROD, @davidortiz and @derekjeter! @FOXSports has secured the U.S. rights to the 2026 World Baseball Classic",
+                "timestamp": "2025-10-11T20:34:37.640405",
+                "source": "tavily"
+              },
+              {
+                "rank": 10,
+                "topic_name": "FOX Soccer (@FOXSoccer) / X",
+                "url": "https://twitter.com/FOXSoccer",
+                "category": "sports",
+                "raw_text": "FOX Soccer (@FOXSoccer) / X\nForever an iconic Tottenham duo Harry Kane shares a heartfelt message for his former Spurs teammate Son Heung-min, following Son's transfer to LAFC.",
+                "timestamp": "2025-10-11T20:34:37.640410",
+                "source": "tavily"
+              },
+              {
+                "rank": 11,
+                "topic_name": "Sports",
+                "url": "https://x.com/sports",
+                "category": "sports",
+                "raw_text": "Sports\n... A'ja Wilson scored a Finals career-high last game with 34 PTS. Today she has 29 with 6 minutes to go! LVA-PHX | ESPN | WNBA Finals |. @YouTubeTV. 6. 36. 239.",
+                "timestamp": "2025-10-11T20:34:37.640414",
+                "source": "tavily"
+              },
+              {
+                "rank": 12,
+                "topic_name": "betting trends",
+                "url": "https://twitter.com/search?q=betting%20trends",
+                "category": "sports",
+                "raw_text": "betting trends - Search / X\nCody Brown, a betting influencer with over 570,000 followers on X, successfully completed a 12-leg NFL parlay on FanDuel during Week 5 games on October 5, 2025,",
+                "timestamp": "2025-10-11T20:34:37.640420",
+                "source": "tavily"
+              },
+              {
+                "rank": 13,
+                "topic_name": "Marquee Sports Network (@WatchMarquee) ...",
+                "url": "https://twitter.com/watchmarquee/",
+                "category": "sports",
+                "raw_text": "Marquee Sports Network (@WatchMarquee) ...\nMarquee Sports Network's posts ; Tony Andracki · @TonyAndracki23 · 7h · Beyond the Box Score: Wrigley crowd a difference-maker for Cubs vs. Brewers | Cubs News.",
+                "timestamp": "2025-10-11T20:34:37.640424",
+                "source": "tavily"
+              },
+              {
+                "rank": 14,
+                "topic_name": "Sportsnet",
+                "url": "https://x.com/sportsnet",
+                "category": "sports",
+                "raw_text": "Sportsnet\nOct 9. ON TO THE NEXT ROUND ➡️ FOR THE FIRST TIME IN NINE YEARS, THE BLUE JAYS ADVANCE TO THE ALCS! · 5K ; 4m. The #UFCRio co-main event has begun! : Stream",
+                "timestamp": "2025-10-11T20:34:37.640431",
+                "source": "tavily"
+              },
+              {
+                "rank": 15,
+                "topic_name": "#sports",
+                "url": "https://twitter.com/search?q=%23sports&src=typd",
+                "category": "sports",
+                "raw_text": "#sports - Search / X\n17 of the Super Eagles have landed in our South African Camp Ahead of the World Cup Qualification Match Against Lesotho. Come on Eagles We are rooting for",
+                "timestamp": "2025-10-11T20:34:37.640438",
+                "source": "tavily"
+              },
+              {
+                "rank": 16,
+                "topic_name": "Highlights by Joe Osborne (@JTFOz ...",
+                "url": "https://twitter.com/JTFOz/highlights",
+                "category": "sports",
+                "raw_text": "Highlights by Joe Osborne (@JTFOz ...\nNFL Trends You Need to Know for the 2025 Season I've been tracking betting trends from last season and beyond. Here's eight of my favorites to keep an",
+                "timestamp": "2025-10-11T20:34:37.640443",
+                "source": "tavily"
+              },
+              {
+                "rank": 17,
+                "topic_name": "Daily Mail Sport (@MailSport) / X",
+                "url": "https://twitter.com/MailSport",
+                "category": "sports",
+                "raw_text": "Daily Mail Sport (@MailSport) / X\nDaily Mail Sport. @MailSport. Your home for the latest news, videos and viral moments from the world of sport! 🎙️. linktr.ee/mailsport Joined February 2010.",
+                "timestamp": "2025-10-11T20:34:37.640448",
+                "source": "tavily",
+                "engagement_hint": "high"
+              },
+              {
+                "rank": 18,
+                "topic_name": "Rick Westhead (@rwesthead) / X",
+                "url": "https://x.com/rwesthead",
+                "category": "sports",
+                "raw_text": "Rick Westhead (@rwesthead) / X\nA trial date in the case could be set as soon as October 2025 after the Blackhawks argued unsuccessfully that the case should be dismissed because of",
+                "timestamp": "2025-10-11T20:34:37.640456",
+                "source": "tavily"
+              },
+              {
+                "rank": 19,
+                "topic_name": "#2025CanadaGames",
+                "url": "https://twitter.com/search?q=%232025CanadaGames&src=hashtag_click",
+                "category": "sports",
+                "raw_text": "#2025CanadaGames - Search / X\nThis promotional post from GoTeamAB highlights wrestling at the 2025 Canada Games in St. John. 0:06.",
+                "timestamp": "2025-10-11T20:34:37.640472",
+                "source": "tavily"
+              },
+              {
+                "rank": 20,
+                "topic_name": "tush push",
+                "url": "https://twitter.com/search?src=trend_click&vertical=trends&q=tush+push",
+                "category": "sports",
+                "raw_text": "tush push - Search / X\nThe sequence, involving quarterback Jalen Hurts being pushed forward by teammates, prompted backlash from fans, analysts like Dave Portnoy and Chase Daniel, and",
+                "timestamp": "2025-10-11T20:34:37.640477",
+                "source": "tavily"
+              }
+            ],
+            "success": true
+          },
+          "entertainment": {
+            "tab": "entertainment",
+            "query": "entertainment viral twitter",
+            "timestamp": "2025-10-11T20:34:41.858754",
+            "timestamp_readable": "2025-10-11 20:34:41",
+            "trending_count": 20,
+            "trending_topics": [
+              {
+                "rank": 1,
+                "topic_name": "The Conversation: Everyday entertainment",
+                "url": "https://marketing.x.com/en/insights/twitter-conversation-report-everyday-entertainment",
+                "category": "entertainment",
+                "raw_text": "The Conversation: Everyday entertainment\nAward shows get the spotlight, but people on Twitter are constantly talking about all kinds of entertainment. Movies, TV, cooking, sports — they're watching",
+                "timestamp": "2025-10-11T20:34:41.858683",
+                "source": "tavily"
+              },
+              {
+                "rank": 2,
+                "topic_name": "The Viral News Live (@TheViralNewsLiv) ...",
+                "url": "https://twitter.com/theviralnewsliv",
+                "category": "entertainment",
+                "raw_text": "The Viral News Live (@TheViralNewsLiv) ...\nThe Viral News is India's best True Hindi News Channel. The Viral News channel covers latest news in politics, entertainment, bollywood, business and sports.",
+                "timestamp": "2025-10-11T20:34:41.858697",
+                "source": "tavily",
+                "engagement_hint": "high"
+              },
+              {
+                "rank": 3,
+                "topic_name": "#Entertainment·Trending",
+                "url": "https://twitter.com/search?q=%23Entertainment%C2%B7Trending&src=hashtag_click&f=user",
+                "category": "entertainment",
+                "raw_text": "#Entertainment·Trending - Search / ...\nBreaking news, celebrity gossip, entertainment, trending topics, viral videos and more.",
+                "timestamp": "2025-10-11T20:34:41.858701",
+                "source": "tavily",
+                "engagement_hint": "high"
+              },
+              {
+                "rank": 4,
+                "topic_name": "Newsweek Entertainment (@NewsweekCulture) / ...",
+                "url": "https://twitter.com/NewsweekCulture",
+                "category": "entertainment",
+                "raw_text": "Newsweek Entertainment (@NewsweekCulture) / ...\nThe latest entertainment news. From film and TV to music and stage, Newsweek ... Jenna Ortega appearing annoyed with fan at \"Wednesday\" premiere goes viral.",
+                "timestamp": "2025-10-11T20:34:41.858703",
+                "source": "tavily",
+                "engagement_hint": "high"
+              },
+              {
+                "rank": 5,
+                "topic_name": "Twitt34 (@_Twitt34) / X",
+                "url": "https://x.com/_twitt34",
+                "category": "entertainment",
+                "raw_text": "Twitt34 (@_Twitt34) / X\nThe latest trending topics from Twitter in various countries at ease. Find news, entertainment, cultural and political issues that matters http://Twitt34.com.",
+                "timestamp": "2025-10-11T20:34:41.858705",
+                "source": "tavily",
+                "engagement_hint": "high"
+              },
+              {
+                "rank": 6,
+                "topic_name": "X Trends FAQ – trending hashtags and topics",
+                "url": "https://help.x.com/en/using-x/x-trending-faqs",
+                "category": "entertainment",
+                "raw_text": "X Trends FAQ – trending hashtags and topics - Help Center\nAbove some Trends you may see a category such as “Politics,” “Music,” or “Entertainment.” This is automatically selected based on what the Posts in the Trend",
+                "timestamp": "2025-10-11T20:34:41.858708",
+                "source": "tavily"
+              },
+              {
+                "rank": 7,
+                "topic_name": "What's Trending (@WhatsTrending) ...",
+                "url": "https://x.com/whatstrending",
+                "category": "entertainment",
+                "raw_text": "What's Trending (@WhatsTrending) ...\nWhat's Trending (@WhatsTrending) / X\n\nDon’t miss what’s happening\n\nPeople on X are the first to know.\n\nLog in\n\nSign up\n\n[](\n\nWhat's Trending\n\n77.1K posts\n\nSee new posts\n\nImage 1\n\nImage 2: Opens profile photo\n\nFollow\n\nClick to Follow WhatsTrending\n\nWhat's Trending\n\n@WhatsTrending\n\nThe biggest headlines in entertainment, digital and more. What’s Trending delivers the latest video news for all things pop culture.\n\nMedia & News Company Los Angeles, CAwhatstrending.comJoined September 2008 [...] BLACKPINK. that’s it. that’s the tweet.\n\nImage 18: Image\n\n109\n\n4.3K\n\n19K\n\n[](\n\nImage 19\n\nWhat's Trending\n\n@WhatsTrending\n\n·\n\nAug 11, 2018\n\nThrough real conversation and his trademark humor, \n\n@ShaneDawson\n\n has singlehandedly changed the YouTube game for the better\n\nImage 20\n\n35\n\n1.3K\n\n15K\n\n[](\n\nNew to X?\n\nSign up now to get your own personalized timeline!\n\nSign up with Apple\n\nCreate account\n\nBy signing up, you agree to the Terms of Service and Privacy Policy, including Cookie Use. [...] #WednesdayWisdom throwback to #BTS’s inspirational message to love yourself Image 9: ❤️#UNICEF\n\nImage 10\n\n149\n\n15K\n\n39K\n\n[](\n\nImage 11\n\nWhat's Trending\n\n@WhatsTrending\n\n·\n\nMar 29, 2019\n\nWhat is the #PersonaChallenge?? \n\n@bts_bighit\n\nImage 12\n\n167\n\n8.6K\n\n24K\n\n[](\n\nImage 13\n\nWhat's Trending\n\n@WhatsTrending\n\n·\n\nApr 8, 2019\n\nImage 14: ‼️\n\n@BTS_twt\n\n and \n\n@halsey\n\n tease their upcoming collabImage 15: ‼️\n\nImage 16\n\n27\n\n7.8K\n\n20K\n\n[](\n\nImage 17\n\nWhat's Trending\n\n@WhatsTrending\n\n·\n\nFeb 12, 2021",
+                "timestamp": "2025-10-11T20:34:41.858712",
+                "source": "tavily",
+                "engagement_hint": "high"
+              },
+              {
+                "rank": 8,
+                "topic_name": "#TrendingTopics",
+                "url": "https://twitter.com/search?q=%23TrendingTopics&src=typd&f=user",
+                "category": "entertainment",
+                "raw_text": "#TrendingTopics - Search / X\nEntertainment . Sports . Trending topics . Amazing threads. Whatsapp ... Social Media, Twitter, Facebook, Trending Topics and Hashtags all around the web!",
+                "timestamp": "2025-10-11T20:34:41.858717",
+                "source": "tavily",
+                "engagement_hint": "high"
+              },
+              {
+                "rank": 9,
+                "topic_name": "Gossip Served Cold (@teaservedcold) / ...",
+                "url": "https://twitter.com/teaservedcold",
+                "category": "entertainment",
+                "raw_text": "Gossip Served Cold (@teaservedcold) / ...\nTeaServedCold☕ Gossip Over Ice© Follow us for all of your Celebrity GOSSIP, Entertainment NEWS, and Global Issues.",
+                "timestamp": "2025-10-11T20:34:41.858719",
+                "source": "tavily"
+              },
+              {
+                "rank": 10,
+                "topic_name": "#gossip lang:ja",
+                "url": "https://twitter.com/search?q=%23gossip%20lang%3Aja&f=user&vertical=default",
+                "category": "entertainment",
+                "raw_text": "#gossip lang:ja - Search / X\nEntertainment News, Celebrity Gossip, Viral Videos. | Have a post infringed ... Your number one source of Kenyan Entertainment News, Music & Drama",
+                "timestamp": "2025-10-11T20:34:41.858722",
+                "source": "tavily",
+                "engagement_hint": "high"
+              },
+              {
+                "rank": 11,
+                "topic_name": "Explore > Trending",
+                "url": "https://x.com/explore/tabs/trending",
+                "category": "entertainment",
+                "raw_text": "Explore > Trending\nTrending worldwide. #KluivertOut. 27.1K posts ; Trending worldwide. الوفد القطري. 7,690 posts ; Music · Trending. #シューイチ. 13.6K posts ; Entertainment · Trending.",
+                "timestamp": "2025-10-11T20:34:41.858723",
+                "source": "tavily",
+                "engagement_hint": "high"
+              },
+              {
+                "rank": 12,
+                "topic_name": "Explore / X",
+                "url": "https://x.com/explore/tabs/sports",
+                "category": "entertainment",
+                "raw_text": "Explore / X\nExplore ; Music · Trending. #あっちこっちAぇǃ. 7,863 posts ; Entertainment · Trending. おやーんず. 2,616 posts ; Politics · Trending. #AwamStandsWith804. 43.9K posts.",
+                "timestamp": "2025-10-11T20:34:41.858733",
+                "source": "tavily",
+                "engagement_hint": "high"
+              },
+              {
+                "rank": 13,
+                "topic_name": "Explore / X",
+                "url": "https://twitter.com/explore/tabs/trending/",
+                "category": "entertainment",
+                "raw_text": "Explore / X\nFor You. See new posts. Explore. Entertainment · Trending. 広末涼子. 3,140 posts. Trending worldwide. #FORTFTSOnlyYouPressCon. 2,237 posts.",
+                "timestamp": "2025-10-11T20:34:41.858735",
+                "source": "tavily",
+                "engagement_hint": "high"
+              },
+              {
+                "rank": 14,
+                "topic_name": "Explore / X",
+                "url": "https://x.com/explore/tabs/entertainment_unified",
+                "category": "entertainment",
+                "raw_text": "Explore / X\nOnly on X · Trending. #NOWFESTxDICE. 7,247 posts. Music · Trending. #リトグリ_Voice. 1,034 posts. Entertainment · Trending. ライアーゲーム. Trending worldwide.",
+                "timestamp": "2025-10-11T20:34:41.858737",
+                "source": "tavily",
+                "engagement_hint": "high"
+              },
+              {
+                "rank": 15,
+                "topic_name": "#Celebs",
+                "url": "https://twitter.com/search?q=%23Celebs&src=typed_query&f=user",
+                "category": "entertainment",
+                "raw_text": "#Celebs - Search / X\nIn a world of CELEBRITY gossip and celebrity news, when CELEBS go viral, you'll find all the gossip and news at http://celebs.com",
+                "timestamp": "2025-10-11T20:34:41.858739",
+                "source": "tavily",
+                "engagement_hint": "high"
+              },
+              {
+                "rank": 16,
+                "topic_name": "worldwide celebrity news 🌐 (@worldwide_et) / ...",
+                "url": "https://twitter.com/worldwide_et",
+                "category": "entertainment",
+                "raw_text": "worldwide celebrity news 🌐 (@worldwide_et) / ...\n#Cristianoronaldo buys an island in the Pacific and decides to live with him and his family until the end of the current Corona virus crisis. And Cristiano",
+                "timestamp": "2025-10-11T20:34:41.858742",
+                "source": "tavily"
+              },
+              {
+                "rank": 17,
+                "topic_name": "#xCeleb",
+                "url": "https://twitter.com/search?q=%23xCeleb&src=hashtag_click&f=user",
+                "category": "entertainment",
+                "raw_text": "#xCeleb - Search / X\nPosting Celeb News/Gossip especially XXX information. Send us stories with pics/videos for $$$. Dms will be kept private!!",
+                "timestamp": "2025-10-11T20:34:41.858744",
+                "source": "tavily"
+              },
+              {
+                "rank": 18,
+                "topic_name": "Trends / X",
+                "url": "https://x.com/i/trends",
+                "category": "entertainment",
+                "raw_text": "Trends / X\nTrends. Rushmore. LIVE. Trending worldwide. #KluivertOut. 16.8K posts. Sports · Trending. Wasit. 12.3K posts. Trending worldwide. الوفد القطري. 2,573 posts.",
+                "timestamp": "2025-10-11T20:34:41.858745",
+                "source": "tavily",
+                "engagement_hint": "high"
+              },
+              {
+                "rank": 19,
+                "topic_name": "what are the current twitter trends",
+                "url": "https://twitter.com/i/grok/share/4QESCbngru2mYb2mau3xcKvXh",
+                "category": "entertainment",
+                "raw_text": "what are the current twitter trends\n#Kamunism has been mentioned as a trending topic, which seems to be a blend of \"Kamala\" and \"Communism,\" likely sparking political discussions or humor. There's",
+                "timestamp": "2025-10-11T20:34:41.858747",
+                "source": "tavily",
+                "engagement_hint": "high"
+              },
+              {
+                "rank": 20,
+                "topic_name": "#trending #twitter",
+                "url": "https://twitter.com/search?q=%23trending%20%23twitter&src=typed_query&f=user",
+                "category": "entertainment",
+                "raw_text": "#trending #twitter - Search / X\nTracking Twitter Trends! Get to know what topics and hashtags are trending across 400+ locations worldwide.",
+                "timestamp": "2025-10-11T20:34:41.858749",
+                "source": "tavily",
+                "engagement_hint": "high"
+              }
+            ],
+            "success": true
+          }
+        },
+        "summary": {
+          "total_trending_topics": 80,
+          "successful_tabs": 4,
+          "failed_tabs": 0
+        }
+      }
+    },
+    "trending_posts": {
+      "collected": true,
+      "file": "/Users/mason/workspace/agents_of_agents/trend_research_pipeline/.temp/post_analysis/trending_posts_analysis_20251011_203522.json",
+      "data": {
+        "analysis_timestamp": "2025-10-11T20:35:22.687563",
+        "analysis_timestamp_readable": "2025-10-11 20:35:22",
+        "keywords_analyzed": 10,
+        "input_files": {
+          "google_trends_csv": null,
+          "twitter_trends_json": "/Users/mason/workspace/agents_of_agents/trend_research_pipeline/.temp/twitter_trends/twitter_trending_tavily_20251011_203443.json"
+        },
+        "results": [
+          {
+            "keyword": "Trend For Prem",
+            "keyword_metadata": {
+              "keyword": "Trend For Prem",
+              "category": "trending",
+              "post_count": "",
+              "tab": "trending",
+              "source": "twitter_trending",
+              "url": "https://x.com/trendforprem/status/1977189495910129768"
+            },
+            "tavily_search": {
+              "keyword": "Trend For Prem",
+              "source": "tavily",
+              "results_count": 10,
+              "results": [
+                {
+                  "url": "https://x.com/trendforprem/status/1972944857544188247",
+                  "title": "Trend For Prem",
+                  "content": "Trend For Prem · @trendforprem · Parody account. – 600K ✓ Worldwide no.6 #MuTeLuvNotMyFatherEP2 #prem_space.",
+                  "score": 0.5663309,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/trendforprem/status/1977148774129758210",
+                  "title": "Trend For Prem",
+                  "content": "Trend For Prem. @trendforprem. Parody account. For safety you can copy and paste🥺 BOUNPREM REVAMP EP8 #RevampSeriesEP8.",
+                  "score": 0.5488434,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/trendforprem/status/1976977814076506285",
+                  "title": "Trend For Prem",
+                  "content": "Trend For Prem · @trendforprem · Parody account. – 100✓ Thailand no.2 BOUNPREM REVAMP EP8 #RevampSeriesEP8.",
+                  "score": 0.53925073,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/trendforprem/status/1977002544867295461",
+                  "title": "Trend For Prem",
+                  "content": "Trend For Prem · @trendforprem · Parody account. – Trending now Worldwide no.6 BOUNPREM REVAMP EP8 #RevampSeriesEP8.",
+                  "score": 0.5367749,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/trendforprem/status/1977041146800226675",
+                  "title": "Trend For Prem",
+                  "content": "Trend For Prem · @trendforprem · Parody account. – 500K ✓ Worldwide no.1 Hashtag 507K Keyword 368.9K BOUNPREM REVAMP EP8 #RevampSeriesEP8.",
+                  "score": 0.52948296,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/trendforprem/status/1976974201883103737",
+                  "title": "Trend For Prem",
+                  "content": "Trend For Prem · @trendforprem · Parody account. – Trending now BOUNPREM REVAMP EP8 66.7K | no.9 #RevampSeriesEP8 75.8K | no.4.",
+                  "score": 0.52334785,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/trendforprem/status/1977011164497559776",
+                  "title": "Trend For Prem",
+                  "content": "Trend For Prem · @trendforprem · Parody account. - Trending now - Worldwide no.2 BOUNPREM REVAMP EP8 #RevampSeriesEP8.",
+                  "score": 0.5185224,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/trendforprem/status/1977062482473894352",
+                  "title": "Trend For Prem",
+                  "content": "Trend For Prem · @trendforprem · Parody account. – 600K ✓ Hashtag 600.5K Keyword 435.1K BOUNPREM REVAMP EP8 #RevampSeriesEP8.",
+                  "score": 0.51032627,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/trendforprem/status/1977189495910129768",
+                  "title": "Trend For Prem",
+                  "content": "Trend For Prem · @trendforprem · Parody account. – 800K✓ Hashtag 801.9K Keyword 594.3K BOUNPREM REVAMP EP8 #RevampSeriesEP8.",
+                  "score": 0.5090084,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/trendforprem/status/1977192498637553880",
+                  "title": "Trend For Prem",
+                  "content": "Trend For Prem · @trendforprem · Parody account. ผมอยากมีชีวิตสงบๆกับคนที่ผมรัก คุณทำเพื่อผมได้มั้ย BOUNPREM REVAMP EP8 #RevampSeriesEP8.",
+                  "score": 0.5081298,
+                  "raw_content": null
+                }
+              ]
+            },
+            "total_posts_found": 10
+          },
+          {
+            "keyword": "Trend for SANTA",
+            "keyword_metadata": {
+              "keyword": "Trend for SANTA",
+              "category": "trending",
+              "post_count": "",
+              "tab": "trending",
+              "source": "twitter_trending",
+              "url": "https://x.com/TrendforSanta/status/1977197834035515898"
+            },
+            "tavily_search": {
+              "keyword": "Trend for SANTA",
+              "source": "tavily",
+              "results_count": 10,
+              "results": [
+                {
+                  "url": "https://x.com/TrendforSanta/status/1977133195301965918",
+                  "title": "Trend for SANTA",
+                  "content": "Trend for SANTA · @TrendforSanta. what a naughty kid ‍♀️ PERTHSANTA P10L VN FANMEET #Perfect10LinersFMinVietnam #Santapp. Three men stand",
+                  "score": 0.53400564,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/TrendforSanta/status/1977197834035515898",
+                  "title": "Trend for SANTA",
+                  "content": "Trend for SANTA · @TrendforSanta. TREND UPDATE ll #Perfect10Liners #PerthSanta #เพิร์ธแซนต้า #PerthTanapon #Santapp · @Ppsanta · @perthppe.",
+                  "score": 0.522617,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/TrendforSanta/status/1977136290073395600",
+                  "title": "Trend for SANTA",
+                  "content": "Trend for SANTA · @TrendforSanta. TREND UPDATE ll #Perfect10Liners #PerthSanta #เพิร์ธแซนต้า #PerthTanapon #Santapp · @Ppsanta · @perthppe.",
+                  "score": 0.522617,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/TrendforSanta/status/1977006468969955720",
+                  "title": "Trend for SANTA",
+                  "content": "Trend for SANTA · @TrendforSanta. Half a million! 500K of pure love, joy, and memories we built together. Thank you for making this journey",
+                  "score": 0.52203226,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/TrendforSanta/status/1977032753364582712",
+                  "title": "Trend for SANTA",
+                  "content": "Trend for SANTA · @TrendforSanta. they deserve only good things in life ✨ PERTHSANTA P10L VN FANMEET #Perfect10LinersFMinVietnam. Two men in",
+                  "score": 0.5172057,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/TrendforSanta/status/1976612916091830350",
+                  "title": "Trend for SANTA - X",
+                  "content": "Young man with dark hair stands frontally against plain background wearing sheer white jacket covered in.",
+                  "score": 0.49714416,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/TrendforSanta/status/1977074865237794908",
+                  "title": "Trend for SANTA",
+                  "content": "Trend for SANTA · @TrendforSanta. 600K and still going strong! Every milestone feels even more special because you're part of it PERTHSANTA",
+                  "score": 0.49113917,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/TrendforSanta/status/1977021783216955777",
+                  "title": "Trend for SANTA",
+                  "content": "Trend for SANTA · @TrendforSanta. TRENDING #3 WORLDWIDE ⚙️ TRENDING #3 WORLDWIDE ⚙️ TRENDING #3 WORLDWIDE ⚙️ PERTHSANTA P10L VN",
+                  "score": 0.46672463,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/TrendforSanta/status/1977055083755192488",
+                  "title": "Trend for SANTA",
+                  "content": "Trend for SANTA · @TrendforSanta. 13k more to get the 600k! PERTHSANTA P10L VN FANMEET #Perfect10LinersFMinVietnam. Dark blue graphic with white",
+                  "score": 0.46614134,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/TrendforSanta/status/1977087734146842996",
+                  "title": "Trend for SANTA",
+                  "content": "Trend for SANTA · @TrendforSanta · #PerthSanta trending no.9 in thailand ... Screenshot of Twitter trends interface with Show trends dropdown set",
+                  "score": 0.464392,
+                  "raw_content": null
+                }
+              ]
+            },
+            "total_posts_found": 10
+          },
+          {
+            "keyword": "12:25AM (GMT +7) BOUNPREM REVAMP EP8",
+            "keyword_metadata": {
+              "keyword": "12:25AM (GMT +7) BOUNPREM REVAMP EP8",
+              "category": "trending",
+              "post_count": "",
+              "tab": "trending",
+              "source": "twitter_trending",
+              "url": "https://x.com/PreciousBPTrend/status/1977062939980185948"
+            },
+            "tavily_search": {
+              "keyword": "12:25AM (GMT +7) BOUNPREM REVAMP EP8",
+              "source": "tavily",
+              "results_count": 3,
+              "results": [
+                {
+                  "url": "https://x.com/yotsuba0487/status/1977064875332714575",
+                  "title": "มิวYotsuba🥦❤🩵 on X",
+                  "content": "Trending Summary Update 12.10.2025 l ⌚12:25AM (GMT +7) BOUNPREM REVAMP EP8 $RevampSeriesEP8 #1 Worldwide + #1 in 10 Countries!",
+                  "score": 0.7011614,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/angel13_sj",
+                  "title": "angel13_sj - May MiniGirl メイ ミニガル",
+                  "content": "12:25AM (GMT +7) BOUNPREM REVAMP EP8 #RevampSeriesEP8 #1 Worldwide + #1 ... ไม่แน่ใจว่า 12.00AM นี่มันเป็นเที่ยงคืนของวันที่11 หรือ 12 ต้องเลือกวันที่เท่าไหร่กันนะ BOUNPREM REVAMP",
+                  "score": 0.6342494,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/PreciousBPTrend/status/1977062939980185948",
+                  "title": "12:25AM (GMT +7) BOUNPREM REVAMP EP8",
+                  "content": "Trending Summary Update 12.10.2025 l ⌚12:25AM (GMT +7) BOUNPREM REVAMP EP8 #RevampSeriesEP8 #1 Worldwide + #1 in 10 Countries!",
+                  "score": 0.60274047,
+                  "raw_content": null
+                }
+              ]
+            },
+            "total_posts_found": 3
+          },
+          {
+            "keyword": "Louise Thanwarat CL",
+            "keyword_metadata": {
+              "keyword": "Louise Thanwarat CL",
+              "category": "trending",
+              "post_count": "",
+              "tab": "trending",
+              "source": "twitter_trending",
+              "url": "https://x.com/nonglottesmiley/status/1977208293107155156"
+            },
+            "tavily_search": {
+              "keyword": "Louise Thanwarat CL",
+              "source": "tavily",
+              "results_count": 10,
+              "results": [
+                {
+                  "url": "https://x.com/nonglottesmiley/status/1976990606489694240",
+                  "title": "Louise Thanwarat CL",
+                  "content": "Louise Thanwarat CL ♡ · @nonglottesmiley · Fan account. Charlotte Austin as Ray, a young, wealthy partner in the company's ownership. ENGLOT",
+                  "score": 0.52962893,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/nonglottesmiley/status/1976989487986323652",
+                  "title": "Louise Thanwarat CL",
+                  "content": "Louise Thanwarat CL ♡ · @nonglottesmiley · Fan account. ▪️Focus to interact with big accounts. ▪️Repost to increase more reach. ▪️Press",
+                  "score": 0.51413256,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/nonglottesmiley/status/1975548899575406889",
+                  "title": "Louise Thanwarat CL",
+                  "content": "Louise Thanwarat CL ♡ · @nonglottesmiley · Fan account. Her beauty is so breathtaking #CharlotteLiveWithAtipa #ชาล็อตออสติน #CharlotteAustin.",
+                  "score": 0.507251,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/nonglottesmiley/status/1977208015871951287",
+                  "title": "Louise Thanwarat CL",
+                  "content": "Louise Thanwarat CL ♡ · @nonglottesmiley · Fan account. Meet Charlotte Austin and Engfa Waraha at the special screening of Tron Ares at Siam",
+                  "score": 0.50446826,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/nonglottesmiley/status/1976992735753388467",
+                  "title": "Louise Thanwarat CL",
+                  "content": "Louise Thanwarat CL ♡ · @nonglottesmiley · Fan account. Our lovely Ray of sunshine ☺️ ENGLOT UNLIMITED SERIES EP1 #UnlimitedLoveEP1 #ชาล็อต",
+                  "score": 0.50388235,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/nonglottesmiley/status/1976994107861221538",
+                  "title": "Louise Thanwarat CL",
+                  "content": "Louise Thanwarat CL ♡ · @nonglottesmiley · Fan account. Unlimited Love - This Company has no limit ENGLOT UNLIMITED SERIES EP1",
+                  "score": 0.49318945,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/nonglottesmiley/status/1975721910521786409",
+                  "title": "Louise Thanwarat CL",
+                  "content": "Louise Thanwarat CL ♡ · @nonglottesmiley · Fan account. Start your morning with a smile. Think positive, stay happy, and keep smiling. Have a",
+                  "score": 0.486015,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/nonglottesmiley/status/1971921661604860235",
+                  "title": "Louise Thanwarat CL",
+                  "content": "Louise Thanwarat CL ♡ · @nonglottesmiley · Fan account. Simply report all the malicious posts, then report and block the account, or just",
+                  "score": 0.4833807,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/nonglottesmiley/status/1974525447410258049",
+                  "title": "Louise Thanwarat CL",
+                  "content": "Louise Thanwarat CL ♡ · @nonglottesmiley · Fan account. It's not always rainbows and sunshine, but I've got an umbrella big enough to shield our",
+                  "score": 0.45973158,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/nonglottesmiley/status/1977208293107155156",
+                  "title": "Louise Thanwarat CL",
+                  "content": "Louise Thanwarat CL ♡ · @nonglottesmiley · Fan account. How to train tags? ▪️Use text only until the tag enters the trending list ▪️",
+                  "score": 0.45072258,
+                  "raw_content": null
+                }
+              ]
+            },
+            "total_posts_found": 10
+          },
+          {
+            "keyword": "#PatriotsWin",
+            "keyword_metadata": {
+              "keyword": "#PatriotsWin",
+              "category": "trending",
+              "post_count": "",
+              "tab": "trending",
+              "source": "twitter_trending",
+              "url": "https://twitter.com/search?q=%23PatriotsWin&src=hashtag_click"
+            },
+            "tavily_search": {
+              "keyword": "#PatriotsWin",
+              "source": "tavily",
+              "results_count": 10,
+              "results": [
+                {
+                  "url": "https://www.sotwe.com/hashtag/PatriotsWin",
+                  "title": "PatriotsWin - Twitter Hashtag",
+                  "content": "The New England Patriots defeated the Buffalo Bills 23-20 in their Week 5 matchup at Highmark Stadium. This game took place yesterday, October 5, 2025.",
+                  "score": 0.6072213,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/hashtag/patriotswin?src=hashtag_click",
+                  "title": "#patriotswin - Search / X",
+                  "content": "The New England Patriots defeated the Carolina Panthers 42-13 on Sunday at Gillette Stadium, improving to 2-2 while the Panthers fell to 1-3.",
+                  "score": 0.60274047,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://twitter.com/search?q=%23PatriotsWin&src=hashtag_click",
+                  "title": "#PatriotsWin - Search / X",
+                  "content": "The New Orleans Saints will host the New England Patriots on Sunday at the Caesars Superdome in a Week 6 NFL matchup that recalls their 34-0 victory in 2021,",
+                  "score": 0.5637388,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://www.instagram.com/p/DPdBYICDmH-/",
+                  "title": "PATRIOTS WIN! The @patriots beat ...",
+                  "content": "PATRIOTS WIN! The @patriots beat the @buffalobills. It was a slow start to the game for both teams as the Pats took a 6-3 lead into halftime",
+                  "score": 0.52670854,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://www.facebook.com/TodayAmericaNews/videos/patriots-take-down-the-final-undefeated-teampatriotswingiantslayersundefeatednom/1127245402721431/",
+                  "title": "Patriots take down the final undefeated team - #PatriotsWin",
+                  "content": "Patriots take down the final undefeated team #PatriotsWin #GiantSlayers #UndefeatedNoMore #SundayShock #gamechanger #BeatTheBest #",
+                  "score": 0.49626526,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://twitter.com/search?q=%23PatriotsWIN.&src=hash&vertical=default",
+                  "title": "#PatriotsWIN. - Search / X",
+                  "content": "The latest posts on #PatriotsWIN.. Read what people are saying and join the conversation.",
+                  "score": 0.4858686,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://www.facebook.com/PenquisValleyAthletics/posts/patriotswin-%EF%B8%8F/1386585659857731/",
+                  "title": "#PatriotsWin ⚽️",
+                  "content": "Congratulations MS soccer teams on your victories tonight! Girls finish the regular season with a 6-4 record and the boys finish the regular",
+                  "score": 0.45304462,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://www.facebook.com/ArtistJasonBoucher/posts/what-a-win-go-patspatriots-gopats-patsnation-newenglandpatriots-patriotswin-patr/1377248781068121/",
+                  "title": "What a win 💪🏼🔥💪🏼🔥 GO PATS!#Patriots #GoPats ...",
+                  "content": "What a win GO PATS!#Patriots #GoPats #PatsNation #NewEnglandPatriots #PatriotsWin #PatriotsFootball #PatriotsFans #BostonStrong",
+                  "score": 0.44145688,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://www.facebook.com/photo.php?fbid=1386543719861925&id=100055189315696&set=a.543820817467557",
+                  "title": "Congratulations HS girls! Next game tomorrow @ Dexter.",
+                  "content": "Congratulations HS boys! Next game Monday vs. Bucksport. #PatriotsWin ⚽️ · Tammy Vail and 5 others · 6 ; Good luck HS boys! #GoPatriots ⚽️ · Elizabeth",
+                  "score": 0.43813655,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://www.tiktok.com/tag/patriotswin",
+                  "title": "PatriotsWin",
+                  "content": "The Patriots offense just does not look good at all, scoring a total of 13 points combined. in their last three games. The defense does keep the opponent score",
+                  "score": 0.4315129,
+                  "raw_content": null
+                }
+              ]
+            },
+            "total_posts_found": 10
+          },
+          {
+            "keyword": "Atlanta Hawks on X: \"Moving without the ball ❗️ https://t.co ...",
+            "keyword_metadata": {
+              "keyword": "Atlanta Hawks on X: \"Moving without the ball ❗️ https://t.co ...",
+              "category": "trending",
+              "post_count": "",
+              "tab": "trending",
+              "source": "twitter_trending",
+              "url": "https://twitter.com/ATLHawks/status/1977173586499498467"
+            },
+            "tavily_search": {
+              "keyword": "Atlanta Hawks on X: \"Moving without the ball ❗️ https://t.co ...",
+              "source": "tavily",
+              "results_count": 5,
+              "results": [
+                {
+                  "url": "https://twitter.com/ATLHawks/status/1977173586499498467",
+                  "title": "Atlanta Hawks on X: \"Moving without the ball ❗️ https://t.co ...",
+                  "content": "Atlanta Hawks · @ATLHawks. Moving without the ball ❗️. Players in white and red uniforms move dynamically on a basketball court during a game,.",
+                  "score": 0.8170061,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/atlhawks",
+                  "title": "Atlanta Hawks (@ATLHawks) / X",
+                  "content": "... picture · Atlanta Hawks · @ATLHawks. ·. 2h. Moving without the ball ❗️. Players in white and red uniforms move dynamically on a basketball court during a game,.",
+                  "score": 0.8016413,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://twitter.com/atlhawks/?lang=de",
+                  "title": "Atlanta Hawks",
+                  "content": "... Profilbild · Atlanta Hawks · @ATLHawks. ·. 1 Std. Moving without the ball ❗️. Players in white and red uniforms move dynamically on a basketball court during a",
+                  "score": 0.7373288,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://twitter.com/search?f=users&q=Rashad%20Nance",
+                  "title": "Rashad Nance - Search / X",
+                  "content": "The latest posts on Rashad Nance. Read what people are saying and join the conversation.",
+                  "score": 0.047837958,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://twitter.com/search?q=Davon%20K%20Brown",
+                  "title": "Davon K Brown - Search / X",
+                  "content": "The latest posts on Davon K Brown. Read what people are saying and join the conversation.",
+                  "score": 0.04282224,
+                  "raw_content": null
+                }
+              ]
+            },
+            "total_posts_found": 5
+          },
+          {
+            "keyword": "Dov Kleiman on X: \"𝗧𝗥𝗘𝗡𝗗𝗜𝗡𝗚: This family has gone viral ...",
+            "keyword_metadata": {
+              "keyword": "Dov Kleiman on X: \"𝗧𝗥𝗘𝗡𝗗𝗜𝗡𝗚: This family has gone viral ...",
+              "category": "trending",
+              "post_count": "",
+              "tab": "trending",
+              "source": "twitter_trending",
+              "url": "https://twitter.com/NFL_DovKleiman/status/1976808717409825266"
+            },
+            "tavily_search": {
+              "keyword": "Dov Kleiman on X: \"𝗧𝗥𝗘𝗡𝗗𝗜𝗡𝗚: This family has gone viral ...",
+              "source": "tavily",
+              "results_count": 9,
+              "results": [
+                {
+                  "url": "https://x.com/avoidtimtation",
+                  "title": "Tim (@AvoidTIMtation) / X",
+                  "content": "Dov Kleiman. @NFL_DovKleiman. ·. 23h. TRENDING: This family has gone viral for one of the most extraordinary man caves you will ever see. Every Lions",
+                  "score": 0.81025416,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/lukesampe",
+                  "title": "Luke Sampe (@LukeSampe) / X",
+                  "content": "Dov Kleiman. @NFL_DovKleiman. ·. 21h. TRENDING: This family has gone viral for one of the most extraordinary man caves you will ever see. Every Lions",
+                  "score": 0.80771893,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/smdolan",
+                  "title": "smdolan - sean don",
+                  "content": "Dov Kleiman · @NFL_DovKleiman. ·. 5h. TRENDING: This family has gone viral for one of the most extraordinary man caves you will ever see. Every Lions",
+                  "score": 0.7823471,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/NFL_DovKleiman/status/1956360523974316272",
+                  "title": "Dov Kleiman - X",
+                  "content": "TRENDING: Eagles center Cam Jurgens has gone viral for practicing his blocking skills against BULLS on his farm in Nebraska.",
+                  "score": 0.77751994,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/NFL_DovKleiman/status/1976808717409825266",
+                  "title": "Dov Kleiman on X: \"𝗧𝗥𝗘𝗡𝗗𝗜𝗡𝗚: This family has gone viral ...",
+                  "content": "TRENDING: This family has gone viral for one of the most extraordinary man caves you will ever see. Every Lions fan's dream cave.",
+                  "score": 0.7722049,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/cincylys/status/1977030924731924978",
+                  "title": "\"My future husband & I will have one of these. So he has to ...",
+                  "content": "Dov Kleiman. @NFL_DovKleiman. ·. 17h. TRENDING: This family has gone viral for one of the most extraordinary man caves you will ever see.",
+                  "score": 0.75659186,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/prmade313raised/status/1977030576554361096",
+                  "title": "\"Yea this is cute but who got that one bomb ass Lions man ...",
+                  "content": "Dov Kleiman. @NFL_DovKleiman. ·. 18h. TRENDING: This family has gone viral for one of the most extraordinary man caves you will ever see.",
+                  "score": 0.74961954,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://twitter.com/THEUNCFAMILY/status/1904132588463145285",
+                  "title": "The Carolina Family",
+                  "content": "Dov Kleiman · @NFL_DovKleiman. ·. Mar 23. TRENDING: Ohio State RB Quinshon Judkins has gone viral for his MASSIVE frame Many people think he is the",
+                  "score": 0.7402687,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://twitter.com/search?q=Brandon+Kabahizi",
+                  "title": "Brandon Kabahizi - Search / X",
+                  "content": "Dov Kleiman. @NFL_DovKleiman. ·. Jul 2. TRENDING: Brandon Jacobs' teenage son has gone viral for being a MASSIVE human being. Brandon is 6-foot-4,",
+                  "score": 0.7355091,
+                  "raw_content": null
+                }
+              ]
+            },
+            "total_posts_found": 9
+          },
+          {
+            "keyword": "Stefen Rosner",
+            "keyword_metadata": {
+              "keyword": "Stefen Rosner",
+              "category": "trending",
+              "post_count": "",
+              "tab": "trending",
+              "source": "twitter_trending",
+              "url": "https://twitter.com/stefen_rosner/status/1977185548881006795/"
+            },
+            "tavily_search": {
+              "keyword": "Stefen Rosner",
+              "source": "tavily",
+              "results_count": 10,
+              "results": [
+                {
+                  "url": "https://muckrack.com/stefenrosner",
+                  "title": "Stefen Rosner's Profile | NYI Hockey Now Journalist",
+                  "content": "Stefen Rosner is the lead Islanders beat reporter for The Hockey News, Rosner is a credentialed beat reporter in his second season on the beat.",
+                  "score": 0.6133529,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://substack.com/@stefenrosner",
+                  "title": "Stefen Rosner",
+                  "content": "Stefen Rosner. @stefenrosner. Stefen Rosner's avatar. Islanders beat report NHL.com, The Hockey News. The Elmonters. See subscribers. Subscribe Message.",
+                  "score": 0.5518883,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/stefen_rosner",
+                  "title": "Stefen Rosner (@stefen_rosner) / ...",
+                  "content": "Islanders/NHL beat reporter for @NHLdotcom @thehockeynews @theelmonters @theRGMedia | STEF-IN | @suny_cortland alum.",
+                  "score": 0.5030035,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://www.linkedin.com/in/stefen-rosner",
+                  "title": "Stefen Rosner - Beat Reporter Covering the New York ...",
+                  "content": "Passionate worker, focused in the field of sport journalism/media. Skilled in Public Speaking, Management, Teamwork, and Leadership.",
+                  "score": 0.4558047,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://mobile.twitter.com/stefen_rosner/status/1977013540134470136",
+                  "title": "Stefen Rosner",
+                  "content": "Stefen Rosner · @stefen_rosner. Ritchie is on the ice ahead of #Isles morning skate. 2:08 PM · Oct 11, 2025. ·. 1,858. Views.",
+                  "score": 0.44463772,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/stefen_rosner/status/1977019734643421648",
+                  "title": "Stefen Rosner on X",
+                  "content": "Ilya Sorokin in starter's crease at #Isles morning skate. Will start vs. #ALLCAPS after allowing four goals on 28 shots in 4-3 loss to #LetsGoPens on",
+                  "score": 0.44217938,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://www.instagram.com/stefenrosner/",
+                  "title": "Stefen Rosner (@stefenrosner)",
+                  "content": "1.3K+ followers · 967 following · 59 posts · @stefenrosner: “@ny_islanders Beat Reporter”",
+                  "score": 0.43943515,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/stefen_rosner/status/1977014004444008635",
+                  "title": "Stefen Rosner",
+                  "content": "Stefen Rosner · @stefen_rosner. Ritchie, Boqvist, and MacLean are shooting on the goalies before morning skate. Would take that as Gatcomb",
+                  "score": 0.42993253,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://twitter.com/stefen_rosner/status/1977185548881006795/",
+                  "title": "Stefen Rosner",
+                  "content": "Stefen Rosner · @stefen_rosner. He's giving Roy no choice but to play him as much as possible. He's earned every minute.",
+                  "score": 0.42148095,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://thehockeynews.com/nhl/new-york-islanders/author/stefen-rosner",
+                  "title": "stefenrosner@THNews - New York Islanders",
+                  "content": "stefenrosner@THNews author page on New York Islanders.",
+                  "score": 0.42090955,
+                  "raw_content": null
+                }
+              ]
+            },
+            "total_posts_found": 10
+          },
+          {
+            "keyword": "Rangers on MSG on X: \"Road win goalie hugs!!! Mike Sullivan ...",
+            "keyword_metadata": {
+              "keyword": "Rangers on MSG on X: \"Road win goalie hugs!!! Mike Sullivan ...",
+              "category": "trending",
+              "post_count": "",
+              "tab": "trending",
+              "source": "twitter_trending",
+              "url": "https://twitter.com/RangersMSGN/status/1977189191684665373"
+            },
+            "tavily_search": {
+              "keyword": "Rangers on MSG on X: \"Road win goalie hugs!!! Mike Sullivan ...",
+              "source": "tavily",
+              "results_count": 4,
+              "results": [
+                {
+                  "url": "https://twitter.com/RangersMSGN/status/1977189191684665373",
+                  "title": "Rangers on MSG on X: \"Road win goalie hugs!!! Mike Sullivan ...",
+                  "content": "Road win goalie hugs!!! Mike Sullivan returns to Pittsburgh and his Rangers earn a decisive 6-1 win over the Penguins. @NYRangers | #NYR.",
+                  "score": 0.7859175,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/trilbynotthehat",
+                  "title": "trilbynotthehat - Trilby",
+                  "content": "Miller gave Mike Sullivan the game puck for his first win as #NYR coach. \"He ... Rangers on MSG · @RangersMSGN. ·. Oct 10. Goalie hugs for Igor Shesterkin",
+                  "score": 0.6625569,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://twitter.com/search?q=%23NoQuitInNewYork&src=hashtag_click&f=live",
+                  "title": "#NoQuitInNewYork - Search / X",
+                  "content": "It was always Mike Sullivan! @NYRangers · #NYR #Blueshirts #NoQuitInNewYork #Rangerstown #RangersHockey #LetsgoRangers #Madisonsquaregarden. Hug Monster Inc GIF.",
+                  "score": 0.54346967,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://x.com/Zak4B",
+                  "title": "Zak (@Zak4B) / X",
+                  "content": "Mike Sullivan on his first win as Rangers head coach: \"It's an incredible honor to be the head coach of the New York Rangers. To get the first win,",
+                  "score": 0.45871297,
+                  "raw_content": null
+                }
+              ]
+            },
+            "total_posts_found": 4
+          },
+          {
+            "keyword": "\"the 2025\"",
+            "keyword_metadata": {
+              "keyword": "\"the 2025\"",
+              "category": "trending",
+              "post_count": "",
+              "tab": "trending",
+              "source": "twitter_trending",
+              "url": "https://twitter.com/search?src=trend_click&vertical=trends&q=%22the+2025%22"
+            },
+            "tavily_search": {
+              "keyword": "\"the 2025\"",
+              "source": "tavily",
+              "results_count": 10,
+              "results": [
+                {
+                  "url": "https://www.youtube.com/watch?v=RgjzurZwpzE",
+                  "title": "The 2025 Physics Nobel Prize: Quite A Surprise",
+                  "content": "The 2025 Physics Nobel Prize: Quite A Surprise\nSabine Hossenfelder\n1730000 subscribers\n9833 likes\n257319 views\n7 Oct 2025\nUse my special offer for Nautilus https://joinnautilus.com/SABINE to get 15% off your membership!\n\nThe 2025 Physics Nobel Prize was awarded for macroscopic quantum tunneling. What is this and what is it good for. I have a brief summary.\n\n🤓 Check out my new quiz app ➜  http://quizwithit.com/ \n📚 Buy my book ➜ https://amzn.to/3HSAWJW\n💌 Support me on Donorbox ➜ https://donorbox.org/swtg\n📝 Transcripts and written news on Substack ➜ https://sciencewtg.substack.com/\n👉 Transcript with links to references on Patreon ➜ https://www.patreon.com/Sabine\n📩 Free weekly science newsletter  ➜ https://sabinehossenfelder.com/newsletter/\n👂 Audio only podcast ➜  https://open.spotify.com/show/0MkNfXlKnMPEUMEeKQYmYC\n🔗 Join this channel to get access to perks ➜ \nhttps://www.youtube.com/channel/UC1yNl2E66ZzKApQdRuTQ4tw/join\n\n#sciencenews #science #physics\n785 comments\n",
+                  "score": 0.200699,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://thehub.ca/2025/06/11/david-coletto-four-myths-and-one-truth-about-the-2025-federal-election/",
+                  "title": "David Coletto: Four myths (and one truth) about the 2025 ...",
+                  "content": "Elections are messy, emotional, and complex, and the 2025 Canadian federal election was no exception. In the weeks since the results came in",
+                  "score": 0.19530267,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://canadians.org/analysis/the-2025-election-what-comes-next/",
+                  "title": "The 2025 Election – What Comes Next",
+                  "content": "The 2025 federal election was a roller-coaster ride like no other in living memory. Just a few months ago, it seemed that Pierre Poilievre was guaranteed to be",
+                  "score": 0.17724085,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://www.lincoln.com/luxury-suvs/aviator/2025",
+                  "title": "Introducing The New 2025 Lincoln Aviator® Three-Row ...",
+                  "content": "The PowerFold third-row seat of the 2025 Lincoln Aviator® three-row large luxury SUV comfortably seats two passengers and can be easily folded flat with the",
+                  "score": 0.16803654,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://www.youtube.com/watch?v=aouZTDvc23Y",
+                  "title": "The 2025 Toyota Tacoma SR5 is the BEST midsize truck VALUE",
+                  "content": "The 2025 Toyota Tacoma SR5 is the BEST midsize truck VALUE · Comments.",
+                  "score": 0.16668928,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://www.youtube.com/watch?v=UbpIswZKV1M",
+                  "title": "The 2025 Rookie Running Back Class is Elite | Film Review ...",
+                  "content": "The 2025 Rookie Running Back Class is Elite | Film Review Research Session. 23K views · 1 day ago #NFL #Football #AmericanFootball ...more",
+                  "score": 0.1485779,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://www.subaru.com/vehicles/wrx/2025.html",
+                  "title": "2025 Subaru WRX | 4-Door AWD Sports Car",
+                  "content": "The 2025 WRX has the perfect balance of high performance and everyday comfort. Test drive a WRX today and experience pure rally-inspired driving excitement.",
+                  "score": 0.14813372,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://www.youtube.com/watch?v=wrRBGaUwJiQ",
+                  "title": "Announcement of the 2025 Nobel Peace Prize",
+                  "content": "Announcement of the 2025 Nobel Peace Prize\nNobel Prize\n755000 subscribers\n3861 likes\n141291 views\n10 Oct 2025\nThe Nobel Peace Prize 2025 was awarded to Maria Corina Machado \"for her tireless work promoting democratic rights for the people of Venezuela and for her struggle to achieve a just and peaceful transition from dictatorship to democracy.\"\n\nThe Nobel Peace Prize was announced at the Norwegian Nobel Institute in Oslo, Norway.\n\n© Norsk rikskringkasting AS (NRK).\n\n#NobelPrize \n\nLive stream terms of use: https://www.nobelprize.org/prizes/about/live-streams-terms-of-use/\n\n",
+                  "score": 0.13286321,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://www.youtube.com/watch?v=_SxrGz3_0BE",
+                  "title": "The 2025 Ford Mustang Mach-E® SUV | Feel at Home",
+                  "content": "Choose what you want to listen to with Apple CarPlay® and Android Auto™ compatibility* on the 2025 Ford Mustang Mach-E® SUV.",
+                  "score": 0.13065127,
+                  "raw_content": null
+                },
+                {
+                  "url": "https://canadianautodealer.ca/2025/10/the-2025-laureate-finalists/",
+                  "title": "The 2025 Laureate Finalists",
+                  "content": "**Most important success factor:** The most important factors that led to my success in the automotive retail business are my discipline and drive — I love coming to work! **Most important success factor:** The most important factor that led to my success in the automotive retail business is a combination of dedication, passion for cars, and strong people skills. **Most important success factor:** The most important factor that led to my success in the automotive retail business is the strength of the relationships built — with my family, our amazing team and our community. **What I like most about the business:** What I love most about automotive retail is the human relationships — both with our customers and our staff.",
+                  "score": 0.12683949,
+                  "raw_content": null
+                }
+              ]
+            },
+            "total_posts_found": 10
+          }
+        ],
+        "summary": {
+          "total_keywords_analyzed": 10,
+          "total_posts_extracted": 81,
+          "tavily_results": 81
+        }
+      }
+    }
+  },
+  "pipeline_summary": {
+    "total_steps": 4,
+    "successful_steps": 2,
+    "failed_steps": 1,
+    "errors": [
+      "Google Trends scraping failed"
+    ],
+    "duration_seconds": 79.489755
+  },
+  "key_insights": {
+    "top_google_trends": [],
+    "top_twitter_trends": [
+      {
+        "keyword": "Trend For Prem",
+        "tab": "trending",
+        "post_count": ""
+      },
+      {
+        "keyword": "Trend for SANTA",
+        "tab": "trending",
+        "post_count": ""
+      },
+      {
+        "keyword": "12:25AM (GMT +7) BOUNPREM REVAMP EP8",
+        "tab": "trending",
+        "post_count": ""
+      },
+      {
+        "keyword": "Breaking News (@BreakingNews) ...",
+        "tab": "news",
+        "post_count": ""
+      },
+      {
+        "keyword": "What's Trending (@WhatsTrending) ...",
+        "tab": "news",
+        "post_count": ""
+      },
+      {
+        "keyword": "Trendlistz",
+        "tab": "news",
+        "post_count": ""
+      },
+      {
+        "keyword": "SportsCenter",
+        "tab": "sports",
+        "post_count": ""
+      },
+      {
+        "keyword": "All Sports News (@AllSports_News) ...",
+        "tab": "sports",
+        "post_count": ""
+      },
+      {
+        "keyword": "Toronto Blue Jays (@BlueJays) / X",
+        "tab": "sports",
+        "post_count": ""
+      },
+      {
+        "keyword": "The Conversation: Everyday entertainment",
+        "tab": "entertainment",
+        "post_count": ""
+      }
+    ],
+    "most_discussed_keywords": [],
+    "total_posts_analyzed": 81,
+    "keywords_analyzed": 10
+  }
+}

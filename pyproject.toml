@@ -12,6 +12,7 @@ dependencies = [
     "python-dotenv>=1.1.1",
     "schedule>=1.2.2",
     "tavily-python>=0.7.12",
+    "tweepy>=4.16.0",
     "weave>=0.52.9",
 ]
 

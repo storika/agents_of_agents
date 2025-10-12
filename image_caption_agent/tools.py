@@ -76,8 +76,11 @@ async def generate_twitter_image(
         retry: 재시도 여부 (True면 프롬프트를 축약)
     
     Returns:
-        Base64로 인코딩된 이미지 또는 실패 메시지
+        파일 경로를 포함한 딕셔너리
     """
+    import os
+    from datetime import datetime
+    
     # 프롬프트 준비
     if retry:
         # 재시도 시 콘셉트를 더 단순하게
@@ -107,16 +110,33 @@ async def generate_twitter_image(
                 'reason': 'No image generated in response'
             }
 
-        # 이미지를 artifact에 저장 (토큰 절약)
+        # artifacts 디렉토리 생성
+        artifacts_dir = 'artifacts'
+        os.makedirs(artifacts_dir, exist_ok=True)
+        
+        # 타임스탬프를 포함한 고유 파일명 생성
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f'generated_image_{timestamp}.png'
+        file_path = os.path.join(artifacts_dir, filename)
+        
+        # 1. 실제 파일 시스템에 저장 (X API 업로드용)
+        with open(file_path, 'wb') as f:
+            f.write(image_bytes)
+        
+        print(f"[INFO] 이미지 파일 저장됨: {file_path}")
+        
+        # 2. ADK artifact에도 저장 (UI/로깅용)
         await tool_context.save_artifact(
-            'twitter_image.png',
+            filename,
             types.Part.from_bytes(data=image_bytes, mime_type='image/png'),
         )
 
         return {
             'status': 'success',
-            'detail': 'Image saved to artifacts as twitter_image.png (3:4 portrait)',
-            'filename': 'twitter_image.png'
+            'detail': f'Image saved to {file_path} (3:4 portrait)',
+            'filename': filename,
+            'file_path': file_path,  # 명시적인 파일 경로 반환
+            'concept_used': concept
         }
 
     except Exception as e:

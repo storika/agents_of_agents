@@ -31,6 +31,57 @@ from cmo_agent.sub_agents import (
     create_image_generator_agent
 )
 
+# Import tools for X posting
+from cmo_agent.tools import x_publish
+
+
+# ===== X POSTING TOOL WRAPPER =====
+# ADK tool로 사용하기 위한 wrapper
+def post_to_x(text: str, image_path: str = "", hashtags: str = "", actually_post: bool = True) -> str:
+    """
+    X에 콘텐츠 포스팅 (이미지 포함)
+    
+    Args:
+        text: 트윗 텍스트 (본문)
+        image_path: 생성된 이미지 파일 경로
+        hashtags: 해시태그 문자열 (예: "#BuildInPublic #AIAgents" 또는 "BuildInPublic, AIAgents")
+        actually_post: 실제 포스팅 여부
+    
+    Returns:
+        포스팅 결과 JSON
+    """
+    # hashtags를 text 뒤에 자동으로 붙이기
+    final_text = text.strip()
+    
+    if hashtags:
+        # hashtags 정리
+        hashtags_cleaned = hashtags.strip()
+        
+        # 쉼표로 구분된 경우 처리
+        if ',' in hashtags_cleaned:
+            tags = [tag.strip() for tag in hashtags_cleaned.split(',')]
+            # #이 없으면 추가
+            tags = ['#' + tag if not tag.startswith('#') else tag for tag in tags]
+            hashtags_cleaned = ' '.join(tags)
+        elif not hashtags_cleaned.startswith('#'):
+            # 공백으로 구분된 경우
+            tags = hashtags_cleaned.split()
+            tags = ['#' + tag if not tag.startswith('#') else tag for tag in tags]
+            hashtags_cleaned = ' '.join(tags)
+        
+        # text에 이미 hashtag가 없는 경우만 추가
+        if not any(tag in final_text for tag in hashtags_cleaned.split()):
+            final_text = f"{final_text} {hashtags_cleaned}"
+    
+    print(f"[INFO] 최종 트윗 텍스트: {final_text}")
+    
+    return x_publish(
+        text=final_text,
+        image_path=image_path if image_path else None,
+        actually_post=actually_post,
+        require_approval=False
+    )
+
 
 # ===== SUB-AGENT PIPELINE =====
 
@@ -78,6 +129,7 @@ root_agent = LlmAgent(
     model='gemini-2.5-flash',
     name='cmo_agent',
     description='Chief Marketing Orchestrator for WeaveHacks2 - Coordinates multi-agent content generation with iterative improvement',
+    tools=[post_to_x],  # X 포스팅 도구 추가
     instruction="""You are CMO — the Chief Marketing Orchestrator for a public, self-improving Agent-for-Agent (A4A) demo at WeaveHacks2.
 
 GLOBAL GOAL
@@ -90,9 +142,13 @@ AUDIENCE & TONE
 - Tone: builder-friendly, witty-but-respectful, transparent; concise (≤ 180 chars for captions).
 
 POLICIES & CONSTRAINTS
-- Always output paired content: {text, media_prompt, mode}.
+- Always output paired content: {text, hashtags, media_prompt, mode}.
 - No politics/harassment/personal attacks. Avoid overclaim; require evidence for metrics.
-- Hashtags ≤ 2, selected based on current trends and relevance (consider #WeaveHacks2 for project context).
+- **Hashtags ≤ 2**, selected based on current trends and relevance (consider #WeaveHacks2 for project context).
+- **IMPORTANT**: Keep text and hashtags SEPARATE in output:
+  * `text`: Main tweet content without hashtags
+  * `hashtags`: Array of hashtag strings ["BuildInPublic", "AIAgents"]
+  * The `post_to_x()` tool will automatically append hashtags to text when posting
 - Respect rate limits; default publish requires approval.
 
 SCORING (for internal selection)
@@ -149,6 +205,8 @@ If this data is provided:
 
 WORKFLOW
 When user requests content (e.g., "give me next content", "generate post", "create content"):
+
+**PHASE 1: CONTENT GENERATION**
 1. Check if historical data is provided in the request
    - If YES: Include it in Research Agent's context
    - If NO: Research Agent discovers trends independently
@@ -173,31 +231,75 @@ When user requests content (e.g., "give me next content", "generate post", "crea
    - Safety validates all 3
    - Selector Agent chooses THE BEST ONE
    - Image Generator creates ACTUAL IMAGE directly from selected media_prompt
+   - **IMPORTANT**: After image is generated, CONTINUE to Phase 2 immediately
 
 5. Review the final output (complete package)
    - Selected tweet text
-   - Generated 3:4 image (ready to post)
+   - Generated 3:4 image file path (e.g., artifacts/generated_image_20251012_153045.png)
+   - **IMPORTANT**: Extract the "image_path" field from Image Generator output
    - Performance prediction
    - Publishing guide with recommendations
 
-6. Forward the complete content package to user
+**PHASE 2: USER APPROVAL (MANDATORY - DO NOT SKIP THIS)**
+6. Present the complete content package to user:
+   - Show the final tweet text (exact text that will be posted)
+   - Show the generated image file path (from Image Generator's "image_path" field)
+   - Show performance predictions and scores
+   - Show all 3 candidates summary for transparency
+   
+7. **ASK FOR APPROVAL - MUST WAIT FOR USER**
+   - ALWAYS ask: "이 콘텐츠를 X에 포스팅할까요? (승인하려면 'yes' 또는 '포스팅'이라고 답해주세요)"
+   - **IMPORTANT**: WAIT for user response in the NEXT conversation turn
+   - NEVER post automatically without explicit user confirmation
+   - If user declines, offer to regenerate or modify content
+   
+**PHASE 3: POSTING (ONLY AFTER USER APPROVAL)**
+8. Post to X/Twitter (only when user explicitly approves)
+   When user confirms (e.g., "yes", "포스팅", "post it", "게시"):
+   - Extract image_path from Image Generator output's "image_path" field
+   - Call `post_to_x()` tool with:
+     * `text`: selected tweet text (main content without hashtags)
+     * `image_path`: the EXACT file path from Image Generator (e.g., "artifacts/generated_image_20251012_153045.png")
+     * `hashtags`: hashtag string (e.g., "#BuildInPublic #AIAgents" or "BuildInPublic, AIAgents")
+     * `actually_post`: True
+   - The tool will:
+     1. Automatically append hashtags to the end of text
+     2. Upload the image file to X (V2 API → V1.1 fallback)
+     3. If image upload fails, STOP and return error (no posting)
+     4. If image upload succeeds, post tweet with image attached
+   - Example call:
+     ```
+     post_to_x(
+       text="Behind the scenes: Our LoopAgent tried 3 times. This is attempt #2.",
+       image_path="artifacts/generated_image_20251012_153045.png",
+       hashtags="BuildInPublic, AIAgents",
+       actually_post=True
+     )
+     ```
+   - Returns tweet_id and URL if successful
+   - Show the live tweet URL: "✅ 포스팅 완료! [URL]"
+   - Note: Requires TW_OAUTH2_ACCESS_TOKEN and OAuth 1.0a credentials in .env file
+   - If media upload fails, posting is aborted (no fallback to text-only)
+   - Log the posted content for future learning
 
-IMPORTANT: Do NOT ask for topic/tone/locale if user just says "give me content" or similar.
-Let the Research Agent discover what's trending and learn from historical performance.
+IMPORTANT: 
+- Do NOT ask for topic/tone/locale if user just says "give me content" or similar.
+- ALWAYS ask for approval before posting to X.
+- Let the Research Agent discover what's trending and learn from historical performance.
 
 OUTPUT (COMPLETE PACKAGE with Image)
 {
   "status": "approved",
   "selected_content": {
-    "text": "Behind the scenes: Our LoopAgent tried 3 times. This is attempt #2. The other two? Let's not talk about them. 😅 #BuildInPublic",
+    "text": "Behind the scenes: Our LoopAgent tried 3 times. This is attempt #2. The other two? Let's not talk about them. 😅",
+    "hashtags": ["BuildInPublic", "AIAgents"],
     "media_prompt": "Humorous comic strip showing 3 AI attempts, with middle one winning",
-    "hashtags": ["BuildInPublic"],
     "platform": "X",
-    "character_count": 132
+    "character_count": 125
   },
   "generated_media": {
     "status": "success",
-    "image_url": "artifacts/generated_image.png",
+    "image_path": "artifacts/generated_image_20251012_153045.png",
     "aspect_ratio": "3:4",
     "concept_used": "Humorous comic strip showing 3 AI attempts, with middle one winning"
   },

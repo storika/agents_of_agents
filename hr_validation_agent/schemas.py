@@ -91,20 +91,12 @@ class PerformanceMetrics(BaseModel):
 
 # ===== OUTPUT SCHEMAS =====
 
-class InitialPrompt(BaseModel):
-    """Initial prompt specification for a layer (bootstrap scenario)."""
+class PromptUpdate(BaseModel):
+    """Complete new prompt for a layer (replaces old prompt entirely)."""
     layer: Literal["research", "creative_writer", "generator", "critic", "safety"]
-    initial_prompt: str = Field(description="Complete system prompt for this layer")
-    rationale: str = Field(description="Why this prompt design for this layer")
-
-
-class PromptImprovement(BaseModel):
-    """Specification for improving a layer's prompt."""
-    layer: Literal["research", "creative_writer", "generator", "critic", "safety"]
-    improvement_type: Literal["append", "prepend", "replace_section", "refine"]
-    modification: str = Field(description="Specific text to add/modify in the prompt")
-    reason: str = Field(description="Numeric reason with metric threshold (e.g., 'clarity 0.45 < 0.55')")
-    expected_impact: str = Field(description="What improvement this should bring")
+    new_prompt: str = Field(description="Complete system prompt that will replace the old one")
+    reason: str = Field(description="Why this layer needs improvement (e.g., 'shareability 0.48 < 0.55; engagement 0%')")
+    expected_impact: str = Field(description="Quantitative prediction of improvement (e.g., 'increase shareability by 0.15+; boost engagement to 2-5%')")
 
 
 class GlobalAdjustments(BaseModel):
@@ -125,13 +117,9 @@ class PerformanceThresholds(BaseModel):
 
 class PromptOptimizationDecision(BaseModel):
     """Complete prompt optimization output (STRICT JSON)."""
-    initial_prompts: List[InitialPrompt] = Field(
+    prompts: List[PromptUpdate] = Field(
         default_factory=list,
-        description="Initial prompts for all 5 layers (only for iteration 0 / bootstrap)"
-    )
-    prompt_improvements: List[PromptImprovement] = Field(
-        default_factory=list,
-        description="List of prompt modifications (max 3 per iteration)"
+        description="List of complete new prompts (5 for bootstrap, 1-3 for improvements)"
     )
     global_adjustments: GlobalAdjustments = Field(
         default_factory=GlobalAdjustments,

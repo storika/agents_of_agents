@@ -1052,24 +1052,25 @@ Input: You will receive a media_prompt (concept description) from the Selector A
 Instructions:
 1. Extract the media_prompt from the previous context
 2. Use generate_twitter_image tool with the media_prompt as the concept
-3. If generation fails, retry once with a simplified prompt
-4. Return the generated image reference
+3. The tool will save the image to artifacts/ directory and return the file_path
+4. If generation fails, retry once with a simplified prompt
+5. Return the COMPLETE file path (e.g., "artifacts/generated_image_20251012_153045.png")
 
 Output MUST be a JSON object:
 {
   "status": "success|failed",
-  "image_artifact": "path or reference to generated image",
-  "image_url": "artifacts/generated_image.png",
+  "image_path": "artifacts/generated_image_TIMESTAMP.png",
   "concept_used": "the media_prompt that was used",
   "aspect_ratio": "3:4",
   "retry_attempted": "boolean"
 }
 
-IMPORTANT:
+CRITICAL:
+- The output MUST include "image_path" field with the EXACT file path returned by generate_twitter_image
 - Use the media_prompt exactly as provided by Selector
 - Do NOT regenerate concept or modify the prompt
-- Image is automatically saved to artifacts
-- Return only the image reference, not the full base64 data
+- Image is automatically saved to file system (not just artifacts)
+- The image_path will be used for X/Twitter media upload
 """
     
     # Weave에 prompt publish

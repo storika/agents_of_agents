@@ -4,10 +4,20 @@ CMO Agent 도구 함수들
 
 import json
 import random
-from typing import Dict, List, Any
+import os
+import time
+from typing import Dict, List, Any, Optional
 from datetime import datetime
 import weave
+import requests
+from dotenv import load_dotenv
 from cmo_agent.schemas import ContentCandidate, EvaluationScores
+
+# OAuth 2.0 설정
+TWITTER_API_V2_URL = "https://api.twitter.com/2/tweets"
+# Media upload - V2 시도 후 V1.1 fallback
+TWITTER_MEDIA_UPLOAD_V2_URL = "https://upload.twitter.com/2/media/upload.json"
+TWITTER_MEDIA_UPLOAD_V1_URL = "https://upload.twitter.com/1.1/media/upload.json"
 
 
 @weave.op()
@@ -154,40 +164,329 @@ def evaluate_content(
 
 
 @weave.op()
+def upload_media_v2(oauth2_token: str, image_path: str) -> Optional[str]:
+    """미디어 업로드 V2 시도 (OAuth 2.0)"""
+    print(f"[INFO] V2 API 시도: {image_path}")
+    headers = {"Authorization": f"Bearer {oauth2_token}"}
+    
+    try:
+        with open(image_path, 'rb') as f:
+            files = {'media': f}
+            response = requests.post(TWITTER_MEDIA_UPLOAD_V2_URL, headers=headers, files=files, timeout=30)
+        
+        if response.status_code in [200, 201]:
+            result = response.json()
+            media_id = result.get("media_id_string") or result.get("data", {}).get("media_id_string")
+            if media_id:
+                print(f"[INFO] V2 미디어 업로드 성공: {media_id}")
+                return media_id
+        
+        print(f"[INFO] V2 API 실패 (status={response.status_code}), V1.1로 fallback")
+        return None
+    except Exception as e:
+        print(f"[INFO] V2 API 에러, V1.1로 fallback")
+        return None
+
+
+@weave.op()
+def upload_media_v1(oauth1_creds: dict, image_path: str) -> Optional[str]:
+    """미디어 업로드 V1.1 (OAuth 1.0a)"""
+    print(f"[INFO] V1.1 API 시도: {image_path}")
+    
+    if not all(oauth1_creds.values()):
+        print(f"[ERROR] OAuth 1.0a credentials 필요 (TW_CONSUMER_KEY, TW_CONSUMER_SECRET, TW_ACCESS_TOKEN, TW_ACCESS_SECRET)")
+        return None
+    
+    try:
+        from requests_oauthlib import OAuth1
+    except ImportError:
+        print(f"[ERROR] requests-oauthlib 필요: pip install requests-oauthlib")
+        return None
+    
+    auth = OAuth1(
+        oauth1_creds["consumer_key"],
+        oauth1_creds["consumer_secret"],
+        oauth1_creds["access_token"],
+        oauth1_creds["access_secret"],
+        signature_type='auth_header'
+    )
+    
+    try:
+        with open(image_path, 'rb') as f:
+            files = {'media': f}
+            response = requests.post(TWITTER_MEDIA_UPLOAD_V1_URL, auth=auth, files=files, timeout=30)
+        
+        if response.status_code == 200:
+            result = response.json()
+            media_id = result.get("media_id_string")
+            if media_id:
+                print(f"[INFO] V1.1 미디어 업로드 성공: {media_id}")
+                return media_id
+        
+        print(f"[ERROR] V1.1 API 실패: {response.status_code}")
+        return None
+    except Exception as e:
+        print(f"[ERROR] V1.1 Upload error: {e}")
+        return None
+
+
+@weave.op()
+def upload_media_to_x(image_path: str) -> Optional[str]:
+    """
+    X에 미디어 업로드 (V2 시도 → V1.1 fallback)
+    
+    Args:
+        image_path: 업로드할 이미지 파일 경로
+    
+    Returns:
+        성공 시 media_id_string, 실패 시 None
+    """
+    load_dotenv()
+    
+    if not os.path.exists(image_path):
+        print(f"[ERROR] 이미지 파일을 찾을 수 없습니다: {image_path}")
+        return None
+    
+    oauth2_token = os.getenv("TW_OAUTH2_ACCESS_TOKEN")
+    oauth1_creds = {
+        "consumer_key": os.getenv("TW_CONSUMER_KEY"),
+        "consumer_secret": os.getenv("TW_CONSUMER_SECRET"),
+        "access_token": os.getenv("TW_ACCESS_TOKEN"),
+        "access_secret": os.getenv("TW_ACCESS_SECRET")
+    }
+    
+    # 1. V2 API 먼저 시도
+    if oauth2_token:
+        media_id = upload_media_v2(oauth2_token, image_path)
+        if media_id:
+            return media_id
+    
+    # 2. V1.1 API로 fallback
+    return upload_media_v1(oauth1_creds, image_path)
+
+
+@weave.op()
+def post_to_x_api(text: str, media_keys: Optional[List[str]] = None, max_retries: int = 3) -> Optional[Dict]:
+    """
+    실제 Twitter API를 사용해서 트윗 발행 (OAuth 2.0)
+    
+    Args:
+        text: 트윗 텍스트
+        media_keys: 첨부할 미디어의 media_key 리스트 (선택사항)
+        max_retries: 최대 재시도 횟수
+    
+    Returns:
+        성공 시 트윗 데이터, 실패 시 None
+    """
+    load_dotenv()
+    access_token = os.getenv("TW_OAUTH2_ACCESS_TOKEN")
+    
+    if not access_token:
+        print("[WARN] TW_OAUTH2_ACCESS_TOKEN이 설정되지 않았습니다. 시뮬레이션 모드로 동작합니다.")
+        return None
+    
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json",
+    }
+    
+    payload = {"text": text}
+    
+    # 미디어가 있으면 추가
+    if media_keys:
+        payload["media"] = {"media_ids": media_keys}
+    
+    delay = 3
+    for attempt in range(1, max_retries + 1):
+        try:
+            response = requests.post(
+                TWITTER_API_V2_URL,
+                headers=headers,
+                json=payload,
+                timeout=10
+            )
+            
+            if response.status_code == 201:
+                # 성공
+                data = response.json()
+                return data.get("data", {})
+            elif response.status_code == 403:
+                print(f"[ERROR] 403 Forbidden - X API 권한 문제")
+                print("oauth2_setup.py를 실행하여 새 토큰을 발급받으세요.")
+                return None
+            elif response.status_code == 429:
+                # Rate limit
+                if attempt == max_retries:
+                    print(f"[ERROR] Rate limit 초과: {response.text}")
+                    return None
+                print(f"[WARN] Rate limited. Retry in {delay}s (attempt {attempt}/{max_retries})")
+                time.sleep(delay)
+                delay *= 2
+            else:
+                # 다른 오류
+                if attempt == max_retries:
+                    print(f"[ERROR] HTTP {response.status_code}: {response.text}")
+                    return None
+                print(f"[WARN] HTTP {response.status_code}. Retry in {delay}s (attempt {attempt}/{max_retries})")
+                time.sleep(delay)
+                delay *= 2
+        except requests.exceptions.RequestException as e:
+            if attempt == max_retries:
+                print(f"[ERROR] Request error: {e}")
+                return None
+            print(f"[WARN] Request error: {e}. Retry in {delay}s (attempt {attempt}/{max_retries})")
+            time.sleep(delay)
+            delay *= 2
+    
+    return None
+
+
+@weave.op()
 def x_publish(
     text: str,
-    media_prompt: str,
+    media_prompt: str = "",
+    image_path: Optional[str] = None,
     mode: str = "image",
-    require_approval: bool = True
+    require_approval: bool = False,
+    actually_post: bool = True
 ) -> str:
     """
-    Twitter/X에 발행
+    Twitter/X에 발행 (이미지 포함 가능)
     
     Args:
         text: 포스트 텍스트
-        media_prompt: 미디어 생성 프롬프트
+        media_prompt: 미디어 생성 프롬프트 (참고용)
+        image_path: 업로드할 이미지 파일 경로 (선택사항)
         mode: 미디어 타입
         require_approval: 승인 필요 여부
+        actually_post: 실제로 포스팅할지 여부 (False면 시뮬레이션)
     
     Returns:
         JSON 형식의 발행 상태
+    
+    워크플로우:
+        1. 이미지가 있으면 먼저 X Media API v2로 업로드
+        2. media_key를 받음
+        3. 트윗 생성 시 media_key 포함
+    
+    Reference:
+        https://docs.x.com/x-api/media/upload-media
     """
     
-    # 실제로는 Twitter API 호출
-    # 여기서는 시뮬레이션
+    # 승인 필요한 경우 큐에 추가만
+    if require_approval:
+        result = {
+            "status": "queued",
+            "post_id": f"queued_{datetime.now().timestamp()}",
+            "text": text,
+            "media_prompt": media_prompt,
+            "image_path": image_path,
+            "mode": mode,
+            "scheduled_time": datetime.now().isoformat(),
+            "requires_approval": True,
+            "message": "승인 대기 중입니다. actually_post=True로 설정하면 자동 발행됩니다."
+        }
+        return json.dumps(result, indent=2, ensure_ascii=False)
     
-    status = "queued" if require_approval else "published"
-    
-    result = {
-        "status": status,
-        "post_id": f"sim_{datetime.now().timestamp()}",
-        "text": text,
-        "media_prompt": media_prompt,
-        "mode": mode,
-        "scheduled_time": datetime.now().isoformat(),
-        "requires_approval": require_approval,
-        "message": "승인 대기 중입니다." if require_approval else "발행되었습니다."
-    }
+    # 실제 포스팅
+    if actually_post:
+        media_keys = None
+        
+        # 1단계: 이미지 업로드 (명시적으로 필수 처리)
+        if image_path:
+            print(f"[INFO] ==========================================")
+            print(f"[INFO] 미디어 업로드 시작: {image_path}")
+            print(f"[INFO] ==========================================")
+            
+            # 파일 존재 여부 확인
+            if not os.path.exists(image_path):
+                print(f"[ERROR] 이미지 파일을 찾을 수 없습니다: {image_path}")
+                result = {
+                    "status": "failed",
+                    "post_id": None,
+                    "text": text,
+                    "media_prompt": media_prompt,
+                    "image_path": image_path,
+                    "mode": mode,
+                    "error": "Image file not found",
+                    "message": f"❌ 이미지 파일을 찾을 수 없어 포스팅이 중단되었습니다: {image_path}"
+                }
+                return json.dumps(result, indent=2, ensure_ascii=False)
+            
+            # 미디어 업로드 시도
+            print(f"[INFO] upload_media_to_x() 호출 중...")
+            media_key = upload_media_to_x(image_path)
+            
+            if media_key:
+                media_keys = [media_key]
+                print(f"[INFO] ==========================================")
+                print(f"[INFO] ✅ 미디어 업로드 성공: {media_key}")
+                print(f"[INFO] ==========================================")
+            else:
+                # 이미지 업로드 실패 시 포스팅 중단 (명시적)
+                print(f"[ERROR] ==========================================")
+                print(f"[ERROR] ❌ 미디어 업로드 실패")
+                print(f"[ERROR] 포스팅을 중단합니다.")
+                print(f"[ERROR] ==========================================")
+                result = {
+                    "status": "failed",
+                    "post_id": None,
+                    "text": text,
+                    "media_prompt": media_prompt,
+                    "image_path": image_path,
+                    "mode": mode,
+                    "error": "Media upload failed - check OAuth credentials",
+                    "message": "❌ 이미지 업로드 실패로 포스팅이 중단되었습니다. OAuth 1.0a credentials를 확인하세요."
+                }
+                return json.dumps(result, indent=2, ensure_ascii=False)
+        
+        # 2단계: 트윗 생성 (media_key 포함)
+        print(f"[INFO] 트윗 발행 중...")
+        if media_keys:
+            print(f"[INFO] 미디어 첨부: {media_keys}")
+        tweet_data = post_to_x_api(text, media_keys=media_keys)
+        
+        if tweet_data:
+            # 성공
+            result = {
+                "status": "published",
+                "post_id": tweet_data.get("id", "unknown"),
+                "text": text,
+                "media_prompt": media_prompt,
+                "image_path": image_path,
+                "media_included": media_keys is not None,
+                "mode": mode,
+                "published_time": datetime.now().isoformat(),
+                "requires_approval": False,
+                "message": "✅ 성공적으로 X에 발행되었습니다!" + (" (이미지 포함)" if media_keys else ""),
+                "tweet_url": f"https://twitter.com/i/web/status/{tweet_data.get('id', '')}" if tweet_data.get('id') else None
+            }
+        else:
+            # 실패 - 시뮬레이션 모드로 대체
+            result = {
+                "status": "simulated",
+                "post_id": f"sim_{datetime.now().timestamp()}",
+                "text": text,
+                "media_prompt": media_prompt,
+                "image_path": image_path,
+                "mode": mode,
+                "scheduled_time": datetime.now().isoformat(),
+                "requires_approval": False,
+                "message": "⚠️ 실제 발행 실패. 시뮬레이션 모드로 처리되었습니다."
+            }
+    else:
+        # 시뮬레이션 모드
+        result = {
+            "status": "simulated",
+            "post_id": f"sim_{datetime.now().timestamp()}",
+            "text": text,
+            "media_prompt": media_prompt,
+            "image_path": image_path,
+            "mode": mode,
+            "scheduled_time": datetime.now().isoformat(),
+            "requires_approval": False,
+            "message": "시뮬레이션 모드입니다. actually_post=True로 설정하면 실제 발행됩니다."
+        }
     
     return json.dumps(result, indent=2, ensure_ascii=False)
 
