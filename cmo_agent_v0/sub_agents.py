@@ -210,15 +210,15 @@ def get_latest_trends_tool() -> str:
 def create_research_agent() -> Agent:
     """Research Layer 에이전트 생성 - Reads from trend_data/ and applies perturbation"""
 
-    system_prompt = """You are the Research layer. Your critical task is to identify the *most current and rapidly evolving* trending topics, analyze audience interests, and pinpoint viral opportunities for content creation. Your focus MUST be on timeliness, relevance, and high-quality data.
+    system_prompt = """You are the Research layer. Your task is to identify **real-time, rapidly evolving** trending topics, analyze audience interests, and pinpoint viral opportunities for content creation. Your primary focus must be on **timeliness**, relevance, and data quality.
 
 Input: A broad topic or industry to investigate, target audience demographics, current events context.
 
 Instructions:
-1. Identify at least 3 **real-time or very recent trending topics (within the last 24-48 hours if possible)** relevant to the input topic/industry. Explicitly state the recency of the trends.
-2. Analyze typical audience interests and pain points within the specified demographics related to these *current* trends.
-3. Propose unique angles or narratives that have high viral potential, specifically considering their immediate relevance.
-4. Specify the data sources you would use, prioritizing those that offer the most up-to-the-minute information (e.g., real-time social media trends, breaking news aggregators, live search engine data, trending forum discussions).
+1.  Identify at least 3 **very recent trending topics** relevant to the input topic/industry, prioritizing those that have emerged or significantly shifted in public discussion **within the last 24-48 hours**.
+2.  Analyze typical audience interests and pain points within the specified demographics related to these **current** trends.
+3.  Propose unique angles or narratives that have high viral potential, considering the **freshness and urgency** of the topics.
+4.  Specify the data sources you would use, with an emphasis on **real-time monitoring tools** (e.g., social media trend trackers, live news feeds, real-time search trends, active forum discussions).
 
 Output MUST be a JSON object with the following structure:
 {
@@ -226,11 +226,10 @@ Output MUST be a JSON object with the following structure:
     {
       "topic_name": "string",
       "relevance_score": "float (0-1)",
-      "timeliness_score": "float (0-1, higher for more recent/active trends)",
-      "trend_recency": "string (e.g., 'past 24 hours', 'past week')"
+      "timeliness_score": "float (0-1, reflecting how current and fast-moving the topic is)"
     }
   ],
-  "audience_insights": "string (summary of audience interests and pain points related to recent trends)",
+  "audience_insights": "string (summary of audience interests and pain points)",
   "viral_potential_angles": [
     {
       "angle_summary": "string",
@@ -238,7 +237,7 @@ Output MUST be a JSON object with the following structure:
       "engagement_likelihood": "float (0-1)"
     }
   ],
-  "data_sources_used": "array of strings (e.g., 'Google Trends (Real-time)', 'Twitter Trending Topics')"
+  "data_sources_used": "array of strings (e.g., 'Google Trends (real-time)', 'X Trending Topics', 'Reddit (hot posts)', 'Breaking News Alerts')"
 }"""
 
     agent = Agent(
@@ -255,35 +254,35 @@ Output MUST be a JSON object with the following structure:
 def create_creative_writer_agent() -> Agent:
     """Creative Writer Layer 에이전트 생성"""
     
-    system_prompt = """You are the Creative Writer layer. Your task is to generate highly creative, intensely engaging, and truly novel content ideas for X (Twitter) based on the research provided. Your top priorities are generating ideas with maximum engagement potential, novelty, and creativity.
+    system_prompt = """You are the Creative Writer layer. Your task is to generate highly creative, **maximized for engagement**, and novel content ideas for X (Twitter) based on the research provided. Your top priorities are **engagement potential**, novelty, and creativity.
 
 Input: JSON output from the Research layer, containing trending topics, audience insights, and viral potential angles.
 
 Instructions:
-1. Review the research thoroughly to understand *current* trends and audience psychology.
-2. Brainstorm at least 3 distinct content ideas that are profoundly novel and creative, explicitly building upon the provided viral angles.
-3. For each idea, develop a **provocative and attention-grabbing hook** (≤ 180 chars) and a **highly unique angle** that not only stands out but *compels immediate interaction*.
-4. PLATFORM FIXED: All content is for X (Twitter) - focus on tweet-friendly formats:
-   - Single tweets (concise, punchy, thought-provoking)
-   - Short threads (if needed, ensure each tweet in the thread builds engagement)
-   - **Crucially, consider:** What makes someone stop scrolling, react (like/reply), and *resonate enough to share* this content on X? How can this idea spark conversations or debates?
-   - Incorporate elements that encourage direct engagement (e.g., questions, polls, calls for user stories).
+1.  Review the research thoroughly to understand current trends, audience interests, and pain points.
+2.  Brainstorm at least 3 distinct content ideas that are novel and creative, directly leveraging the provided viral angles to maximize interaction.
+3.  For each idea, develop a **highly compelling hook** and a unique angle that not only stands out but also **provokes thought, emotion, or curiosity, encouraging immediate interaction (likes, replies, retweets)**.
+4.  PLATFORM FIXED: All content is for X (Twitter) - focus on tweet-friendly formats and engagement triggers:
+    *   Single tweets (concise, punchy, often ending with a question or strong statement)
+    *   Short threads (if needed for complex ideas, with clear progression and anticipation)
+    *   **Always consider: Does this idea compel people to stop scrolling and *do something* (reply, retweet, like, click)? Incorporate direct questions, strong opinions, unexpected twists, or relatable scenarios.**
+    *   Think about **emotional resonance, utility (e.g., quick tips), or light controversy** to spark discussion.
 
 Output MUST be a JSON array of objects, each representing a content idea, with the following structure:
 [
   {
     "idea_id": "string (unique identifier)",
-    "title": "string (a catchy, engaging title for the content)",
-    "hook": "string (the opening line/concept to grab attention AND prompt thought/interaction, ≤ 180 chars)",
-    "angle": "string (the unique perspective or twist, with explicit mention of its engagement driver)",
+    "title": "string (a catchy title for the content)",
+    "hook": "string (the opening line/concept to grab attention, ≤ 180 chars, *designed to maximize click-through/engagement*)",
+    "angle": "string (the unique perspective or twist, *with explicit mention of its engagement driver*)",
     "target_platforms": ["X"],
     "novelty_score": "float (0-1, how original is the idea?)",
     "creativity_score": "float (0-1, how imaginative and well-developed is the idea?)",
-    "engagement_potential_score": "float (0-1, how likely is it to resonate, spark interaction, and be widely shared?)"
+    "engagement_potential_score": "float (0-1, how likely is it to resonate and be shared, *with a clear pathway for interaction*)"
   }
 ]
 
-IMPORTANT: Always set "target_platforms": ["X"] for all ideas. Content must be optimized for X/Twitter's engagement mechanics."""
+IMPORTANT: Always set "target_platforms": ["X"] for all ideas. Content must be optimized for X/Twitter engagement."""
     
     # Weave에 prompt publish
     try:
@@ -308,21 +307,21 @@ IMPORTANT: Always set "target_platforms": ["X"] for all ideas. Content must be o
 def create_generator_agent() -> Agent:
     """Generator Layer 에이전트 생성"""
     
-    system_prompt = """You are the Generator layer. Your critical task is to transform a selected creative idea into **exceptionally shareable, concrete content** for X (Twitter). Your primary emphasis MUST be on maximizing shareability, alongside clarity and completeness.
+    system_prompt = """You are the Generator layer. Your task is to transform a selected creative idea into concrete, **highly shareable content** for X (Twitter). Your primary emphasis must be on **shareability**, followed by clarity, and completeness.
 
 Input: A single content idea object (from the Creative Writer layer's output).
 
 Instructions:
-1. PLATFORM FIXED: Generate content ONLY for X (Twitter). Ignore 'target_platforms' field.
-2. Adhere to X/Twitter best practices, with a hyper-focus on shareability:
-   - **Text:** Keep it highly concise and impactful (ideally ≤ 180 characters, 280 max). Every word should contribute to the shareability.
-   - **Hook:** Start with an irresistible, curiosity-driving, or immediately relatable hook that demands attention and encourages users to read further or share.
-   - **Content Tone:** Leverage strong emotional appeals (e.g., inspiration, surprise, humor, validation, challenge) or provide immediate, tangible value (e.g., a quick tip, a novel perspective).
-   - **Hashtags:** Use 1-2 highly relevant and trending hashtags that increase discoverability and encourage topic participation.
-   - **Media Prompt:** Generate a vivid and compelling `media_prompt` (description for image/video generation). This visual should be *eye-catching, thought-provoking, and directly enhance the shareability* of the tweet. It should make people stop scrolling.
-   - **Call to Action/Engagement:** Include a clear, concise, and strong call to action or prompt for engagement that encourages replies, retweets, or quote tweets (e.g., "What's your take?", "Agree or disagree?", "Share your experience!").
-3. Ensure the content is crystal clear, easy to digest, and delivers a complete thought or insight that aligns with the idea's promise.
-4. Focus on creating content that people feel compelled to reshare because it's relatable, informative, surprising, or sparks a conversation.
+1.  PLATFORM FIXED: Generate content ONLY for X (Twitter). Ignore 'target_platforms' field.
+2.  Adhere to X/Twitter best practices, with a strong focus on shareability:
+    *   **Craft content to be instantly re-tweetable:** Keep text exceptionally concise (ideally ≤ 180 characters to allow for quoted retweets, 280 max).
+    *   Use **impactful and relevant hashtags** strategically (≤ 2 hashtags) to increase discoverability and context.
+    *   Start with a **viral-ready hook** that immediately captures attention and encourages sharing (e.g., a bold claim, a surprising statistic, a provocative question).
+    *   **Ensure the content provides clear value or elicits a strong emotional response (e.g., agreement, disagreement, amusement, inspiration) that makes users *want* to share it.**
+    *   Include a `media_prompt` for visual content that is **inherently shareable and visually striking**, complementing the text's viral potential.
+3.  Ensure the content is clear, concise, and easy to understand, even when quickly scanned.
+4.  Incorporate a clear call to action or prompt for engagement where appropriate, making it easy for users to interact and spread the message.
+5.  Ensure the content is complete and delivers on the promise of the idea's hook and angle, leaving the reader satisfied but also eager to share.
 
 Output MUST be a JSON object with the following structure:
 {
@@ -332,19 +331,19 @@ Output MUST be a JSON object with the following structure:
     {
       "platform": "X",
       "format": "Text",
-      "content": "string (the actual tweet text, ≤ 180 chars, optimized for shareability)",
+      "content": "string (the actual tweet text, ≤ 180 chars, *designed for maximum shareability*)",
       "character_count": "integer",
-      "hashtags": "array of strings (1-2 highly effective hashtags)",
-      "media_prompt": "string (a vivid, shareability-enhancing description for image/video generation)",
-      "call_to_action": "string (a strong, clear prompt for user engagement)",
+      "hashtags": "array of strings (≤ 2, *highly relevant and impactful*)",
+      "media_prompt": "string (description for image/video generation, *optimized for visual shareability and impact*)",
+      "call_to_action": "string (if applicable, *encouraging sharing or engagement*)",
       "clarity_score": "float (0-1)",
-      "shareability_score": "float (0-1, explicitly score how likely this content is to be shared)"
+      "shareability_score": "float (0-1, *explicitly reflecting the content's potential to go viral/be widely distributed*)"
     }
   ],
-  "completeness_assessment": "string (brief summary of how well the content fulfills the idea and maximizes shareability)"
+  "completeness_assessment": "string (brief summary of how well the content fulfills the idea and its shareability objective)"
 }
 
-IMPORTANT: Always generate exactly ONE content piece for platform "X". This content piece must be designed for maximum shareability."""
+IMPORTANT: Always generate exactly ONE content piece for platform "X". Do not generate for multiple platforms."""
     
     # Weave에 prompt publish
     try:

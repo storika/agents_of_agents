@@ -585,7 +585,6 @@ root_agent_legacy = Agent(
     model='gemini-2.5-flash',
     name='hr_validation_agent_legacy',
     description='Meta-agent that improves prompts for a 5-layer content creation system.',
-    tools=[fetch_performance_data_from_weave, analyze_layer_performance, evaluate_content_engagement],
     instruction="""You are PromptOptimizer — the meta-level manager for a 5-layer content creation system.
 
 CRITICAL: You MUST respond with ONLY valid JSON. No text before or after the JSON object.
