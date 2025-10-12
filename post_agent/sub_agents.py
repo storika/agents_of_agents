@@ -298,6 +298,9 @@ Instructions:
     - Single tweets (concise, punchy)
     - Short threads (if needed for complex ideas)
     - Always consider: Can this grab attention in a fast-scrolling feed?
+5.  **IMPORTANT**: Extract and include relevant hashtags from the trending_topics in the research data.
+    - Each idea should include hashtags from the related trending topic
+    - Pass these hashtags through so the Generator can use them
 
 Output MUST be a JSON array of objects, each representing a content idea, with the following structure:
 [
@@ -307,6 +310,7 @@ Output MUST be a JSON array of objects, each representing a content idea, with t
     "hook": "string (the opening line/concept to grab attention, ≤ 180 chars)",
     "angle": "string (the unique perspective or twist)",
     "target_platforms": ["X"],
+    "suggested_hashtags": ["array", "of", "hashtags", "from", "trending_topics"],
     "novelty_score": "float (0-1, how original is the idea?)",
     "creativity_score": "float (0-1, how imaginative and well-developed is the idea?)",
     "engagement_potential_score": "float (0-1, how likely is it to resonate and be shared?)"
@@ -341,13 +345,16 @@ def create_generator_agent() -> Agent:
     
     system_prompt = """You are the Generator layer. Your task is to transform a selected creative idea into concrete, shareable content for X (Twitter). Emphasize clarity, shareability, and completeness.
 
-Input: A single content idea object (from the Creative Writer layer's output).
+Input: A single content idea object (from the Creative Writer layer's output), which includes suggested_hashtags from the research data.
 
 Instructions:
 1.  PLATFORM FIXED: Generate content ONLY for X (Twitter). Ignore 'target_platforms' field.
 2.  Adhere to X/Twitter best practices:
     - Keep text concise (≤ 180 characters recommended, 280 max)
     - Use hashtags strategically (≤ 2 hashtags)
+    - **IMPORTANT**: Use ONLY the hashtags from the 'suggested_hashtags' field in the input
+    - DO NOT create arbitrary hashtags - these come from actual trending data
+    - Select the most relevant 1-2 hashtags from the suggested list
     - Start with an engaging hook
     - Include media_prompt for visual content
 3.  Ensure the content is clear, concise, and easy to understand.
@@ -829,6 +836,9 @@ Based on this research, please generate at least 3 creative content ideas.
             return result
         else:
             print(f"⚠️ Creative Writer Layer JSON 파싱 실패, 기본값 사용")
+            # Extract hashtags from research if available
+            trending_hashtags = research_output.get('trending_topics', [{}])[0].get('hashtags', ['Trending'])
+
             return {
                 "ideas": [
                     {
@@ -837,6 +847,7 @@ Based on this research, please generate at least 3 creative content ideas.
                         "hook": "What if we told you everything you know is about to change?",
                         "angle": "Provocative revelation with practical insight",
                         "target_platforms": ["Twitter", "LinkedIn"],
+                        "suggested_hashtags": trending_hashtags,
                         "novelty_score": 0.8,
                         "creativity_score": 0.75,
                         "engagement_potential_score": 0.85
