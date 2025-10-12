@@ -67,7 +67,8 @@ from cmo_agent.tools import (
     call_quote_agent,
     call_reply_agent,
     call_repost_agent,
-    get_trending_context
+    get_trending_context,
+    measure_tweet_engagement
 )
 
 
@@ -82,7 +83,8 @@ root_agent = LlmAgent(
         call_quote_agent,
         call_reply_agent,
         call_repost_agent,
-        get_trending_context
+        get_trending_context,
+        measure_tweet_engagement
     ],
     instruction="""You are CMO — the Chief Marketing Orchestrator.
 
@@ -110,6 +112,14 @@ SPECIALIST AGENTS (via A2A Protocol):
    - Best for: Amplifying great content
    - Strength: Quick curation, community support
    - When to use: Share exceptionally valuable content without commentary
+
+ANALYTICS TOOLS:
+1. **measure_tweet_engagement**: Analyze past tweets and engagement metrics
+   - Use to: Understand what content performs best
+   - Data: Likes, retweets, replies, views, top performing tweets
+   - When to use: Before planning strategy, when user asks about performance
+   - Default: Analyzes @Mason_Storika if no handle specified
+   - Caching: Results cached for 1 hour to avoid unnecessary API calls
 
 DECISION FACTORS:
 When deciding which strategy to use, consider:

@@ -72,6 +72,9 @@ from cmo_agent.tools_version import (
     get_version_metadata
 )
 
+# Import tools
+from hr_validation_agent.tools import measure_tweet_engagement
+
 
 # ===== FIXED 5-LAYER ARCHITECTURE =====
 
@@ -512,7 +515,7 @@ def fetch_performance_data_from_weave(limit: int = 50) -> str:
         }
     """
     from hr_validation_agent.tools import get_calls_for_hr_validation
-    
+
     # Get calls from Weave
     calls_data = get_calls_for_hr_validation(limit=limit, op_name_filter="execute_tool call_post_agent")
     
@@ -624,6 +627,7 @@ root_agent_legacy = Agent(
     model='gemini-2.5-flash',
     name='hr_validation_agent_legacy',
     description='Meta-agent that improves prompts for a 5-layer content creation system.',
+    tools=[fetch_performance_data_from_weave, analyze_layer_performance, evaluate_content_engagement, measure_tweet_engagement],
     instruction="""You are PromptOptimizer — the meta-level manager for a 5-layer content creation system.
 
 CRITICAL: You MUST respond with ONLY valid JSON. No text before or after the JSON object.
@@ -698,6 +702,15 @@ You will receive a JSON with:
 - Use this when you have real-world engagement data (likes, retweets, shares, views)
 - Identifies which layers contribute most to viral content
 - Analyzes internal score dimensions that correlate with high engagement
+
+**measure_tweet_engagement(twitter_handle, max_wait_minutes)** — Measure real engagement metrics from Twitter
+- Input: Twitter handle to analyze (defaults to "Mason_Storika" if not provided), optional max wait time
+- Output: Comprehensive engagement data including likes, retweets, replies, views, and top performing tweets
+- Use this to gather REAL engagement data from published content
+- Helps validate if prompt improvements actually lead to better engagement
+- Provides baseline metrics and identifies what types of content perform best
+- Can take up to max_wait_minutes to complete (polls Apify every 10 seconds)
+- Smart caching: Results cached for 1 hour to avoid unnecessary API calls
 
 ---
 
@@ -863,15 +876,7 @@ Step 4: Call apply_prompt_improvements(hr_decisions_json=<your_json_from_step3_a
        → This updates cmo_agent/sub_agents.py automatically
 
 IMPORTANT: Step 3 outputs JSON, Step 4 applies it to actual files. Do NOT skip Step 4!
-""",
-    tools=[
-        analyze_layer_performance, 
-        evaluate_content_engagement,
-        apply_prompt_improvements,
-        restore_cmo_version,
-        list_cmo_versions,
-        get_version_metadata
-    ]
+"""
 )
 
 # Default to sequential agent

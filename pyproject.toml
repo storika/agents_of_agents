@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "apify-client>=2.1.0",
     "browserbase>=1.4.0",
     "google-adk[ui]>=1.16.0",
     "google-generativeai>=0.8.5",
