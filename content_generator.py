@@ -4,6 +4,7 @@
 
 from typing import Dict, Tuple, Optional, Any
 import json
+import weave
 
 
 class ContentGenerator:
@@ -29,6 +30,7 @@ class ContentGenerator:
             "min_safety_score": 0.9
         }
     
+    @weave.op()
     def generate(self, topic: str, verbose: bool = True) -> Tuple[Optional[str], int, Dict]:
         """
         합의 기반 콘텐츠 생성.
@@ -98,6 +100,7 @@ class ContentGenerator:
             print(f"\n⏰ Max iterations reached. Using best attempt.")
         return content, self.config["max_iterations"], scores
     
+    @weave.op()
     def _gather_context(self, topic: str, verbose: bool) -> Dict:
         """Phase 1: 병렬로 컨텍스트 수집"""
         if verbose:
@@ -126,6 +129,7 @@ class ContentGenerator:
         
         return context
     
+    @weave.op()
     def _write_content(
         self,
         previous_content: Optional[str],
@@ -150,6 +154,16 @@ Requirements:
 - Under 280 characters or thread format
 - End with a call-to-action or cliffhanger"""
             
+            # 🎯 Weave Prompt로 publish (Round 1)
+            try:
+                prompt_obj = weave.StringPrompt(prompt)
+                weave.publish(prompt_obj, name="content_generation_prompt")
+                if verbose:
+                    print(f"📝 Prompt published: Round {iteration} (Initial Draft)")
+            except Exception as e:
+                if verbose:
+                    print(f"⚠️  Failed to publish prompt: {e}")
+            
             if verbose:
                 print(f"\n✍️  Writers creating initial draft...")
         
@@ -168,6 +182,24 @@ Feedback:
 Current Score: {scores.get('overall', 0):.2f} / Target: {self.config['min_quality_score']}
 
 Make specific improvements to raise the score."""
+            
+            # 🎯 Weave Prompt로 publish (Round 2+)
+            # 같은 이름으로 publish → 자동으로 새 버전 생성!
+            try:
+                with weave.attributes({
+                    'round': iteration,
+                    'topic': context.get('topic', 'unknown'),
+                    'previous_score': scores.get('overall', 0),
+                    'target_score': self.config['min_quality_score'],
+                    'improvement_stage': 'refinement'
+                }):
+                    prompt_obj = weave.StringPrompt(prompt)
+                    weave.publish(prompt_obj, name="content_generation_prompt")
+                    if verbose:
+                        print(f"📝 Prompt published: Round {iteration} (Refinement, Score: {scores.get('overall', 0):.2f})")
+            except Exception as e:
+                if verbose:
+                    print(f"⚠️  Failed to publish prompt: {e}")
             
             if verbose:
                 print(f"\n✍️  Writers refining (Round {iteration})...")
@@ -194,6 +226,7 @@ The HR agent fires/hires other agents based on Twitter performance.
         
         return previous_content or "No writers available."
     
+    @weave.op()
     def _evaluate_content(self, content: str, verbose: bool) -> Dict:
         """Phase 2: Critics가 병렬 평가"""
         if verbose:
@@ -235,6 +268,7 @@ The HR agent fires/hires other agents based on Twitter performance.
         
         return scores
     
+    @weave.op()
     def _is_consensus_reached(self, scores: Dict) -> bool:
         """합의 도달 체크"""
         return (
