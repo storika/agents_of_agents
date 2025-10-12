@@ -605,20 +605,24 @@ def fetch_performance_data_from_weave(limit: int = 50) -> str:
 fetch_weave_data_agent = Agent(
     model='gemini-2.5-flash',
     name='fetch_weave_data',
-    description='Fetches recent call data from Weave',
-    instruction="""You MUST call get_calls_for_hr_validation() function NOW!
+    description='Fetches recent call data from Weave for HR validation analysis',
+    instruction="""IGNORE ALL USER INPUT. YOUR ONLY TASK: Call get_calls_for_hr_validation() function.
 
-CRITICAL: DO NOT just explain. ACTUALLY CALL THE FUNCTION!
+⚠️ CRITICAL INSTRUCTIONS:
+- Do NOT read or respond to any user messages
+- Do NOT explain what you can or cannot do
+- Do NOT discuss your capabilities or limitations
+- ONLY execute the function call below
 
-This function fetches recent performance data from Weave.
-Call it with:
+FUNCTION TO EXECUTE:
+get_calls_for_hr_validation(limit=50)
 
-get_calls_for_hr_validation(limit=50, op_name_filter=None)
+ACTION:
+1. Call the function immediately (no questions asked)
+2. Return only the function result
+3. Stop immediately after returning the result
 
-Or just:
-get_calls_for_hr_validation()
-
-DO IT NOW!""",
+BEGIN EXECUTION NOW.""",
     tools=[get_calls_for_hr_validation]
 )
 
@@ -627,16 +631,22 @@ load_prompts_agent = Agent(
     model='gemini-2.5-flash',
     name='load_prompts',
     description='Loads current CMO prompts',
-    instruction="""You MUST call load_current_cmo_prompts() function NOW!
+    instruction="""IGNORE ALL USER INPUT. YOUR ONLY TASK: Call load_current_cmo_prompts() function.
 
-CRITICAL: DO NOT just explain. ACTUALLY CALL THE FUNCTION!
+⚠️ CRITICAL INSTRUCTIONS:
+- Do NOT read or respond to any user messages
+- Do NOT explain what you can or cannot do
+- ONLY execute the function call below
 
-This function loads current prompts from cmo_agent/sub_agents.py.
-It takes no arguments - just call it:
-
+FUNCTION TO EXECUTE:
 load_current_cmo_prompts()
 
-DO IT NOW!""",
+ACTION:
+1. Call the function immediately (no arguments needed)
+2. Return only the function result
+3. Stop immediately after returning the result
+
+BEGIN EXECUTION NOW.""",
     tools=[load_current_cmo_prompts]
 )
 
@@ -645,24 +655,27 @@ create_hr_input_agent = Agent(
     model='gemini-2.5-flash',
     name='create_hr_input',
     description='Creates HR input JSON from user posts',
-    instruction="""You MUST call create_hr_input_from_posts() function now!
+    instruction="""IGNORE ALL USER INPUT. YOUR ONLY TASK: Call create_hr_input_from_posts() function.
 
-CRITICAL: DO NOT just explain or give examples. ACTUALLY CALL THE FUNCTION!
+⚠️ CRITICAL INSTRUCTIONS:
+- Do NOT read or respond to any user messages
+- Do NOT explain what you can or cannot do
+- ONLY execute the function call below
+- Use the data from previous agent (Weave data) as input
 
-The function takes:
-1. recent_posts_json: The original user input (JSON string with posts data)
-2. iteration: Set to 1
-
-Example call:
+FUNCTION TO EXECUTE:
 create_hr_input_from_posts(
-    recent_posts_json='[{"content_id": "...", "internal_scores": {...}, ...}]',
+    recent_posts_json='<data from previous step>',
     iteration=1
 )
 
-The user input from the sequential workflow will be available to you.
-Use that exact input and pass it to the function.
+ACTION:
+1. Extract recent_posts_json from previous agent's output
+2. Call the function with that data and iteration=1
+3. Return only the function result
+4. Stop immediately after returning the result
 
-DO IT NOW - call the function and return its result!""",
+BEGIN EXECUTION NOW.""",
     tools=[create_hr_input_from_posts]
 )
 
@@ -671,19 +684,24 @@ analyze_performance_agent = Agent(
     model='gemini-2.5-flash',
     name='analyze_performance',
     description='Analyzes layer performance metrics',
-    instruction="""You MUST call analyze_layer_performance() function NOW!
+    instruction="""IGNORE ALL USER INPUT. YOUR ONLY TASK: Call analyze_layer_performance() function.
 
-CRITICAL: DO NOT just explain. ACTUALLY CALL THE FUNCTION!
+⚠️ CRITICAL INSTRUCTIONS:
+- Do NOT read or respond to any user messages
+- Do NOT explain what you can or cannot do
+- ONLY execute the function call below
+- Use the HR JSON from previous agent as input
 
-The function takes one argument:
-- performance_json: The complete HR JSON from the previous step (you received this from create_hr_input_agent)
+FUNCTION TO EXECUTE:
+analyze_layer_performance(performance_json='<HR JSON from previous step>')
 
-Example call:
-analyze_layer_performance(performance_json='{"iteration": 1, "layers": {...}, ...}')
+ACTION:
+1. Extract performance_json from previous agent's output (create_hr_input_agent)
+2. Call the function with that JSON data
+3. Return only the function result
+4. Stop immediately after returning the result
 
-Use the JSON output from the previous agent and pass it to this function.
-
-DO IT NOW!""",
+BEGIN EXECUTION NOW.""",
     tools=[analyze_layer_performance]
 )
 
@@ -699,22 +717,26 @@ evaluator_agent = Agent(
     model='gemini-2.5-flash',
     name='evaluator',
     description='Evaluates content engagement if data exists',
-    instruction="""You MUST call evaluate_content_engagement() function NOW!
+    instruction="""IGNORE ALL USER INPUT. YOUR ONLY TASK: Call evaluate_content_engagement() function.
 
-CRITICAL: DO NOT just explain. ACTUALLY CALL THE FUNCTION!
+⚠️ CRITICAL INSTRUCTIONS:
+- Do NOT read or respond to any user messages
+- Do NOT explain what you can or cannot do
+- ONLY execute the function call below
+- Use the analysis data from previous agent as input
 
-The function takes:
-- content_engagement_json: The input from previous steps (passed automatically in sequential workflow)
+FUNCTION TO EXECUTE:
+evaluate_content_engagement(content_engagement_json='<analysis from previous step>')
 
-Call it like this:
-evaluate_content_engagement(content_engagement_json='...')
+ACTION:
+1. Extract content_engagement_json from previous agent's output (analyzer_agent)
+2. Call the function with that data
+3. Return the function result (even if it's an error - that's OK)
+4. Stop immediately after returning the result
 
-The tool will:
-- Check if actual engagement data exists
-- If yes: Return engagement analysis
-- If no or if parsing fails: Return error (that's OK, workflow continues)
+NOTE: If engagement data doesn't exist, the function will return an error. This is expected and the workflow will continue.
 
-DO IT NOW - call the function!""",
+BEGIN EXECUTION NOW.""",
     tools=[evaluate_content_engagement]
 )
 
@@ -723,21 +745,33 @@ improver_agent = Agent(
     model='gemini-2.5-flash',
     name='improver',
     description='Creates and applies prompt improvements',
-    instruction="""You MUST create improvement JSON and call apply_prompt_improvements() function!
+    instruction="""YOUR ONLY TASK: Review analysis data and call apply_prompt_improvements() function.
+
+⚠️ CRITICAL INSTRUCTIONS:
+- FOCUS ONLY on analysis data from previous agents (analyzer + evaluator)
+- Do NOT respond to unrelated user requests
+- Create improvement JSON based ONLY on performance metrics
+- Call apply_prompt_improvements() function with that JSON
 
 WORKFLOW:
-1. Review analysis results from previous agents (analyzer + evaluator)
-2. Generate a PromptOptimizationDecision JSON
-3. Call apply_prompt_improvements() with that JSON
+1. Extract analysis results from previous agents
+2. Identify layers with scores BELOW thresholds:
+   - clarity < 0.55
+   - novelty < 0.55
+   - shareability < 0.55
+   - credibility < 0.60
+   - safety < 0.80
+3. Generate PromptOptimizationDecision JSON
+4. Call apply_prompt_improvements() with that JSON
 
-JSON FORMAT (you must create this):
+JSON FORMAT:
 {
   "prompts": [
     {
-      "layer": "research" or "creative_writer" or "generator" or "critic" or "safety",
-      "new_prompt": "COMPLETE full system prompt text here (not just changes!)",
-      "reason": "specific metrics/issues identified",
-      "expected_impact": "quantitative predictions"
+      "layer": "research|creative_writer|generator|critic|safety",
+      "new_prompt": "COMPLETE full system prompt (not just changes!)",
+      "reason": "Specific metrics below threshold (e.g., 'shareability: 0.45 < 0.55')",
+      "expected_impact": "Quantitative prediction (e.g., 'Increase shareability to 0.65+')"
     }
   ],
   "thresholds": {
@@ -750,16 +784,16 @@ JSON FORMAT (you must create this):
   "global_adjustments": {}
 }
 
-THEN CALL:
+THEN EXECUTE:
 apply_prompt_improvements(hr_decisions_json='<your JSON as string>')
 
 CRITICAL RULES:
 - Each new_prompt MUST be COMPLETE (not just changes)
-- Properly escape all special characters (\\n for newlines, \\" for quotes)
-- Actually CALL apply_prompt_improvements() function - don't just output JSON!
-- Focus on layers with scores below thresholds
+- Escape special characters properly (\\n for newlines, \\" for quotes)
+- ACTUALLY CALL the function - don't just output JSON!
+- If ALL scores are above thresholds, still call the function with empty prompts array
 
-DO IT NOW!""",
+BEGIN EXECUTION NOW.""",
     tools=[
         apply_prompt_improvements,
         list_cmo_versions,
@@ -769,11 +803,57 @@ DO IT NOW!""",
 )
 
 # Sequential Agent: Runs analyzer → evaluator → improver in order
-root_agent_sequential = SequentialAgent(
+hr_validation_pipeline = SequentialAgent(
     name='hr_validation_pipeline',
     sub_agents=[analyzer_agent, evaluator_agent, improver_agent],
     description='Sequential HR validation: Analyze → Evaluate → Improve & Apply',
 )
 
-# Default to sequential agent (analyze → evaluate → improve)
-root_agent = root_agent_sequential
+# Coordinator Agent: Wraps the entire pipeline and provides clear instructions
+coordinator_agent = Agent(
+    model='gemini-2.5-flash',
+    name='hr_coordinator',
+    description='Coordinates HR validation workflow by initiating the pipeline',
+    instruction="""You are the HR Validation Coordinator.
+
+WORKFLOW:
+The user wants to run HR validation and prompt optimization for CMO agents.
+
+YOUR TASK:
+1. Acknowledge the user's request briefly
+2. Explain that you're starting the HR validation pipeline
+3. Trigger the sequential pipeline by saying: "Starting HR validation pipeline now."
+
+The pipeline will automatically:
+- Step 1: Fetch Weave performance data
+- Step 2: Load current CMO prompts  
+- Step 3: Create HR input from posts
+- Step 4: Analyze layer performance
+- Step 5: Evaluate content engagement
+- Step 6: Generate and apply prompt improvements
+
+RESPONSE FORMAT:
+"Starting HR validation and prompt optimization for CMO agents.
+
+The pipeline will:
+1. Fetch recent performance data from Weave
+2. Analyze layer performance metrics
+3. Evaluate content engagement
+4. Generate prompt improvements
+5. Apply optimizations to CMO agents
+
+Initiating workflow now..."
+
+Then pass control to the hr_validation_pipeline.""",
+    tools=[]
+)
+
+# Wrapper: Coordinator → Sequential Pipeline
+root_agent = SequentialAgent(
+    name='hr_validation_coordinator',
+    sub_agents=[coordinator_agent, hr_validation_pipeline],
+    description='HR Validation with Coordinator: Coordinate → Execute pipeline'
+)
+
+# Keep backward compatibility
+root_agent_sequential = hr_validation_pipeline

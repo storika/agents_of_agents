@@ -315,9 +315,9 @@ Input: A single content idea object (from the Creative Writer layer's output).
 Instructions:
 1.  PLATFORM FIXED: Generate content ONLY for X (Twitter). Ignore 'target_platforms' field.
 2.  Adhere to X/Twitter best practices, with an **ABSOLUTE, RELENTLESS hyper-focus on FORCING shareability and direct interaction**. Every element must scream 'share me!' or 'respond to me!':
-    -   **Text:** Craft it to be **PUNCHY, CONCISE, AND PROVOCATIVE (MAX 180 characters, ABSOLUTE MAX 240)**. Each sentence, each word MUST directly contribute to generating immediate discussion, a strong emotional reaction, or a reshare. Ruthlessly eliminate any fluff or ambiguity, strictly adhering to X's character limits.
+    -   **Text:** Craft it to be **PUNCHY, CONCISE, AND PROVOCATIVE (MAX 280 characters, ABSOLUTE MAX 280)**. Each sentence, each word MUST directly contribute to generating immediate discussion, a strong emotional reaction, or a reshare. Ruthlessly eliminate any fluff or ambiguity, strictly adhering to X's character limits. While 280 is the max, strive for extreme conciseness (e.g., aiming for <180 characters) to maximize impact.
     -   **Hook:** Start with a **SHOCKING, CONTROVERSIAL, OR DEEPLY RELATABLE statement/question** that instantly stops the scroll and *demands* a reaction. This is not passive curiosity; it's an active *challenge* to the reader's perspective or an undeniable truth they *must* acknowledge.
-    -   **Content Tone:** Leverage **POWERFUL, OPINIONATED, AND DECISIVE emotional appeals** (e.g., outrage, strong agreement, disbelief, inspiration, a call to action against a common fallacy). Provide a **CRYSTAL-CLEAR, UNDENIABLE value proposition or a BOLD, UNIQUE insight** that makes resharing an instinctual response. Crucially, design the content so that sharing it allows users to **express their own identity, affirm their strong beliefs, or powerfully articulate an argument** they resonate with.
+    -   **Content Tone:** Leverage **POWERFUL, OPINIONATED, AND DECISIVE emotional appeals** (e.g., outrage, strong agreement, disbelief, inspiration, a call to action against a common fallacy). Provide a **CRYSTAL-CLEAR, UNDENIABLE value proposition or a BOLD, UNIQUE insight** that makes resharing an instinctual response. Crucially, design the content so that sharing it allows users to **express their own identity, affirm their strong beliefs, powerfully articulate an argument they resonate with, or contribute to a significant ongoing public conversation.**
     -   **Hashtags:** Use 2-3 **HIGHLY TRENDING, CONVERSATION-DRIVING, AND STRATEGICALLY PROVOCATIVE hashtags** that amplify discoverability and ignite widespread topic participation/debate. Ensure they are relevant but also designed to attract attention.
     -   **Media Prompt:** Generate an **EXTREMELY VIVID, EMOTIONALLY CHARGED, AND VISUALLY DISRUPTIVE `media_prompt`** (description for image/video generation). This visual must be a *scroll-stopper*, an *attention-grabber*, and *intrinsically linked to the content's provocative, shareable nature*, designed to be shared *with* the tweet. It should instantly communicate the content's bold angle and compel engagement.
     -   **Call to Action/Engagement:** Include an **UNAMBIGUOUS, URGENT, AND DIRECT call to action** that *explicitly forces* replies, quote tweets (with opinions), or retweets. Examples include: **"This is the truth. What's YOUR take? Respond NOW!"**, **"Dare to disagree? Quote tweet with your sharpest rebuttal!"**, or **"If this resonates, hit RT! If it infuriates you, tell me exactly why!"**. Make it absolutely impossible to ignore or scroll past without an action.
@@ -332,7 +332,7 @@ Output MUST be a JSON object with the following structure:
     {
       "platform": "X",
       "format": "Text",
-      "content": "string (the actual tweet text, ≤ 240 chars, aggressively optimized for immediate shareability and reaction)",
+      "content": "string (the actual tweet text, ≤ 280 chars, aggressively optimized for immediate shareability and reaction)",
       "character_count": "integer",
       "hashtags": "array of strings (2-3 highly effective, debate-driving hashtags)",
       "media_prompt": "string (an extremely vivid, scroll-stopping, and engagement-forcing description for image/video generation)",
@@ -369,16 +369,16 @@ IMPORTANT: Always generate exactly ONE content piece for platform "X". This cont
 def create_critic_agent() -> Agent:
     """Critic Layer 에이전트 생성"""
     
-    system_prompt = """You are the Critic layer. Your task is to evaluate the quality of the generated content across multiple dimensions before publishing. Your evaluation should be thorough, objective, and accurate.
+    system_prompt = """You are the Critic layer. Your task is to evaluate the quality of the generated content across multiple dimensions before publishing. Your evaluation should be thorough, objective, accurate, and focus on credibility.
 
 Input: JSON output from the Generator layer, containing generated content pieces.
 
 Instructions:
-1.  For each content piece, evaluate its accuracy, objectivity, and thoroughness.
-2.  Check for factual errors, misleading statements, or unsupported claims.
+1.  For each content piece, evaluate its accuracy, objectivity, thoroughness, and **credibility**.
+2.  Check for factual errors, misleading statements, unsupported claims, or any elements that might undermine its trustworthiness.
 3.  Assess if the content presents a balanced view or exhibits bias.
 4.  Determine if the content adequately covers the topic as promised by the idea.
-5.  Provide constructive feedback for improvement, even if the scores are high.
+5.  Provide constructive feedback for improvement, even if the scores are high, with a focus on enhancing overall credibility and impact.
 
 Output MUST be a JSON object with the following structure:
 {
@@ -391,6 +391,7 @@ Output MUST be a JSON object with the following structure:
       "accuracy_score": "float (0-1, based on factual correctness)",
       "objectivity_score": "float (0-1, based on neutrality and bias avoidance)",
       "thoroughness_score": "float (0-1, based on completeness and depth)",
+      "credibility_score": "float (0-1, based on reliability, trustworthiness, and absence of misleading claims)",
       "overall_quality_score": "float (0-1, average or weighted average of the above)",
       "feedback_points": "array of strings (specific suggestions for improvement)"
     }
