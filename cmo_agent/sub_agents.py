@@ -7,7 +7,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional
-from google.adk.agents.llm_agent import Agent
+from google.adk import Agent
 import weave
 
 
@@ -187,25 +187,48 @@ def load_latest_trend_data() -> Optional[Dict[str, Any]]:
         return None
 
 
+def get_latest_trends_tool() -> str:
+    """
+    Tool function: Fetch the most recent trending data from trend_data/ directory.
+
+    This tool can be called by agents to access real-time trend data collected
+    from Twitter and Google Trends.
+
+    Returns:
+        JSON string containing the latest trend data, or error message if unavailable.
+    """
+    trend_data = load_latest_trend_data()
+
+    if trend_data:
+        return json.dumps(trend_data, indent=2, ensure_ascii=False)
+    else:
+        return json.dumps({
+            "error": "No trend data available",
+            "message": "Please run the trend collection pipeline first: python trend_research_pipeline/pipeline.py"
+        })
+
+
 @weave.op()
 def create_research_agent() -> Agent:
     """Research Layer 에이전트 생성 - Reads from trend_data/ and applies perturbation"""
 
     system_prompt = """You are the Research layer. Your task is to read collected trend data from trend_data/, apply perturbation and analysis, and format it for content generation.
 
-Input: You will receive raw trending data collected from Google Trends and Twitter, including:
-- Google Trends: Top trending searches with search volumes
-- Twitter Trends: Trending topics from various tabs (For You, Trending, News, etc.)
-- Post Analysis: Actual posts related to trending keywords
-- Pipeline metadata: Collection timestamp, data sources
+IMPORTANT: You have access to a tool called `get_latest_trends_tool` that fetches the most recent trending data.
+ALWAYS call this tool FIRST to get real-time trend data before performing your analysis.
+
+The tool returns JSON data containing:
+- timestamp: When the data was collected
+- data: Object with query, answer, images, and results from Twitter/Google Trends
 
 Your Tasks:
-1. ANALYZE the raw trend data to identify the most relevant topics for AI/ML developer audience
-2. EXTRACT top 3-5 trending topics with relevance and timeliness scores
-3. SYNTHESIZE audience insights from the trending posts and topics
-4. PROPOSE 3-5 viral potential angles that combine trends with unique perspectives
-5. ADD PERTURBATION: Introduce creative variations, unexpected connections, contrarian takes
-6. ENRICH with hashtag recommendations, timing insights, and engagement predictions
+1. CALL get_latest_trends_tool() to fetch the latest trend data
+2. ANALYZE the raw trend data to identify the most relevant topics for AI/ML developer audience
+3. EXTRACT top 3-5 trending topics with relevance and timeliness scores
+4. SYNTHESIZE audience insights from the trending posts and topics
+5. PROPOSE 3-5 viral potential angles that combine trends with creative perspectives
+6. ADD PERTURBATION: Introduce creative variations, unexpected connections, contrarian takes
+7. ENRICH with hashtag recommendations, timing insights, and engagement predictions
 
 Output MUST be a JSON object with the following structure:
 {
@@ -247,7 +270,8 @@ IMPORTANT:
         model='gemini-2.5-flash',
         name='research_layer',
         description='Research layer that reads trend_data/ and enriches it with analysis',
-        instruction=system_prompt
+        instruction=system_prompt,
+        tools=[get_latest_trends_tool]  # Bind the tool to fetch trend data
     )
 
     return agent
@@ -615,7 +639,7 @@ IMPORTANT:
 @weave.op()
 def call_research_layer(topic: str = None, audience_demographics: str = "AI/ML developers, indie hackers, founders") -> Dict[str, Any]:
     """
-    Research Layer 호출 - Loads from trend_data/ and applies analysis
+    Research Layer 호출 - Agent will use get_latest_trends_tool to fetch trend data
 
     Args:
         topic: 조사할 주제 (optional, will use trend data if None)
@@ -624,45 +648,72 @@ def call_research_layer(topic: str = None, audience_demographics: str = "AI/ML d
     Returns:
         Research layer 출력 with enriched trend analysis
     """
+    # Use direct Gemini API call with function calling enabled
+    import google.generativeai as genai
+    import os
+
+    genai.configure(api_key=os.getenv("GOOGLE_AI_STUDIO_API_KEY"))
+
+    # Get system prompt from agent
     agent = create_research_agent()
+    system_instruction = agent.instruction
 
-    # Load latest trend data from trend_data/
-    trend_data = load_latest_trend_data()
+    # Create model with function calling
+    model = genai.GenerativeModel(
+        'gemini-2.0-flash-exp',
+        tools=[get_latest_trends_tool]  # Enable tool calling
+    )
 
-    if trend_data:
-        # Use real trend data
-        prompt = f"""
-Raw Trend Data (from trend_data/):
-{json.dumps(trend_data, indent=2, ensure_ascii=False)}
-
+    # Simple prompt - let the agent call the tool to fetch data
+    prompt = f"""
 Target Audience: {audience_demographics}
 Topic Focus: {topic if topic else "Discover from trend data"}
 
-Your Task:
-1. Analyze the raw trend data above
-2. Extract the most relevant trending topics for the target audience
-3. Synthesize audience insights from the collected posts and topics
-4. Propose viral angles that combine trends with creative perturbation
-5. Add hashtag recommendations and timing insights
+Please use the get_latest_trends_tool to fetch the latest trending data, then analyze it to:
+1. Extract the most relevant trending topics for the target audience
+2. Synthesize audience insights from the collected posts and topics
+3. Propose viral angles that combine trends with creative perturbation
+4. Add hashtag recommendations and timing insights
 
-Please provide your analysis in the specified JSON format.
-"""
-    else:
-        # Fallback if no trend data available
-        print("⚠️ No trend data available, using fallback research mode")
-        prompt = f"""
-Topic: {topic if topic else "AI Agents and Multi-Agent Systems"}
-Target Audience: {audience_demographics}
-Current Context: Latest developments in AI and technology
-
-No pre-collected trend data available. Please identify trending topics based on your knowledge
-and provide audience insights and viral angles.
+Provide your analysis in the specified JSON format.
 """
 
     try:
         print(f"🔍 Research Layer 실행 중...")
-        response = agent.execute(prompt)
-        result = parse_agent_response(response, "research_layer")
+
+        # Start chat to enable multi-turn tool calling
+        chat = model.start_chat()
+
+        # Send initial message with system instruction
+        response = chat.send_message(f"{system_instruction}\n\n{prompt}")
+
+        # Handle function calling loop
+        while response.candidates[0].content.parts[0].function_call:
+            function_call = response.candidates[0].content.parts[0].function_call
+            print(f"🔧 Agent calling tool: {function_call.name}")
+
+            # Execute the function call
+            if function_call.name == "get_latest_trends_tool":
+                function_result = get_latest_trends_tool()
+            else:
+                function_result = json.dumps({"error": "Unknown function"})
+
+            # Send function result back to model
+            response = chat.send_message(
+                genai.protos.Content(
+                    parts=[genai.protos.Part(
+                        function_response=genai.protos.FunctionResponse(
+                            name=function_call.name,
+                            response={"result": function_result}
+                        )
+                    )]
+                )
+            )
+
+        # Get final text response
+        response_text = response.text
+
+        result = parse_agent_response(response_text, "research_layer")
 
         if result and "trending_topics" in result:
             print(f"✓ {len(result.get('trending_topics', []))}개의 트렌딩 토픽 발견")
@@ -746,8 +797,9 @@ Based on this research, please generate at least 3 creative content ideas.
     
     try:
         print(f"✍️ Creative Writer Layer 실행 중...")
-        response = agent.execute(prompt)
-        result = parse_agent_response(response, "creative_writer_layer")
+        response = agent.send_message(prompt)
+        response_text = response.text if hasattr(response, 'text') else str(response)
+        result = parse_agent_response(response_text, "creative_writer_layer")
         
         if result and isinstance(result, list):
             print(f"✓ {len(result)}개의 콘텐츠 아이디어 생성")
@@ -812,8 +864,9 @@ Please generate actual shareable content for the specified platforms.
     
     try:
         print(f"⚙️ Generator Layer 실행 중...")
-        response = agent.execute(prompt)
-        result = parse_agent_response(response, "generator_layer")
+        response = agent.send_message(prompt)
+        response_text = response.text if hasattr(response, 'text') else str(response)
+        result = parse_agent_response(response_text, "generator_layer")
         
         if result and "content_pieces" in result:
             print(f"✓ {len(result['content_pieces'])}개의 콘텐츠 조각 생성")
@@ -881,8 +934,9 @@ Please evaluate the quality of this content across accuracy, objectivity, and th
     
     try:
         print(f"🔎 Critic Layer 실행 중...")
-        response = agent.execute(prompt)
-        result = parse_agent_response(response, "critic_layer")
+        response = agent.send_message(prompt)
+        response_text = response.text if hasattr(response, 'text') else str(response)
+        result = parse_agent_response(response_text, "critic_layer")
         
         if result and "evaluations" in result:
             print(f"✓ {len(result['evaluations'])}개의 평가 완료")
@@ -952,8 +1006,9 @@ Please assess the safety of this content for brand safety, ethical, and legal co
     
     try:
         print(f"🛡️ Safety Layer 실행 중...")
-        response = agent.execute(prompt)
-        result = parse_agent_response(response, "safety_layer")
+        response = agent.send_message(prompt)
+        response_text = response.text if hasattr(response, 'text') else str(response)
+        result = parse_agent_response(response_text, "safety_layer")
         
         if result and "overall_safety_score" in result:
             print(f"✓ 안전성 평가 완료: {result.get('risk_level', 'unknown')} 위험도")
