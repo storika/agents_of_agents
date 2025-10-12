@@ -1,0 +1,307 @@
+{
+  "content_history": [
+    {
+      "id": "post_001",
+      "date": "2025-10-05",
+      "platform": "Twitter",
+      "content": {
+        "text": "We built an AI that hires other AIs. The future of autonomous teams is here. 🤖",
+        "media_prompt": "3D isometric illustration of AI agents recruiting each other",
+        "hashtags": ["AI", "Agents", "Automation"]
+      },
+      "scores": {
+        "novelty": 0.85,
+        "creativity": 0.80,
+        "engagement": 0.88,
+        "clarity": 0.75,
+        "shareability": 0.82,
+        "quality": 0.78,
+        "overall": 0.81
+      },
+      "actual_performance": {
+        "views": 15420,
+        "likes": 892,
+        "retweets": 234,
+        "replies": 67,
+        "engagement_rate": 0.078,
+        "click_through_rate": 0.042
+      },
+      "feedback": "High engagement from developer community. Technical audience responded well to autonomous team concept."
+    },
+    {
+      "id": "post_002",
+      "date": "2025-10-07",
+      "platform": "Twitter",
+      "content": {
+        "text": "HR Agent just approved 5 new AI specialists. Zero interviews. Pure performance data. Welcome to 2025. ⚡",
+        "media_prompt": "Futuristic HR dashboard with AI profiles",
+        "hashtags": ["FutureOfWork", "AI", "HR"]
+      },
+      "scores": {
+        "novelty": 0.78,
+        "creativity": 0.72,
+        "engagement": 0.85,
+        "clarity": 0.82,
+        "shareability": 0.76,
+        "quality": 0.80,
+        "overall": 0.79
+      },
+      "actual_performance": {
+        "views": 12340,
+        "likes": 678,
+        "retweets": 189,
+        "replies": 45,
+        "engagement_rate": 0.074,
+        "click_through_rate": 0.038
+      },
+      "feedback": "Provocative tone resonated well. Future of work angle generated discussion."
+    },
+    {
+      "id": "post_003",
+      "date": "2025-10-09",
+      "platform": "LinkedIn",
+      "content": {
+        "text": "Traditional hiring: weeks of interviews.\nAI hiring: milliseconds of data analysis.\n\nWe're building the future at WeaveHacks2. Follow our journey.",
+        "media_prompt": "Split screen comparison: traditional vs AI hiring",
+        "hashtags": ["Innovation", "AITransformation", "WeaveHacks"]
+      },
+      "scores": {
+        "novelty": 0.70,
+        "creativity": 0.75,
+        "engagement": 0.72,
+        "clarity": 0.88,
+        "shareability": 0.70,
+        "quality": 0.82,
+        "overall": 0.76
+      },
+      "actual_performance": {
+        "views": 8950,
+        "likes": 412,
+        "shares": 98,
+        "comments": 34,
+        "engagement_rate": 0.061,
+        "click_through_rate": 0.029
+      },
+      "feedback": "LinkedIn audience appreciated professional tone. Comparison format worked well."
+    },
+    {
+      "id": "post_004",
+      "date": "2025-10-10",
+      "platform": "Twitter",
+      "content": {
+        "text": "Plot twist: The AI we built to evaluate content quality just rejected our CEO's tweet. \n\nSystems working as intended. 😅",
+        "media_prompt": "Humorous illustration of AI rejecting human content",
+        "hashtags": ["AI", "Transparency", "BuildInPublic"]
+      },
+      "scores": {
+        "novelty": 0.82,
+        "creativity": 0.88,
+        "engagement": 0.90,
+        "clarity": 0.85,
+        "shareability": 0.88,
+        "quality": 0.75,
+        "overall": 0.85
+      },
+      "actual_performance": {
+        "views": 23450,
+        "likes": 1567,
+        "retweets": 423,
+        "replies": 156,
+        "engagement_rate": 0.092,
+        "click_through_rate": 0.055
+      },
+      "feedback": "Highest performing post! Humor + transparency = viral potential. Behind-the-scenes content resonates."
+    },
+    {
+      "id": "post_005",
+      "date": "2025-10-11",
+      "platform": "Twitter",
+      "content": {
+        "text": "5 iterations. 10 AI agents. 1 perfect tweet.\n\nThis is how we do content at WeaveHacks2. No guesswork. Just data.",
+        "media_prompt": "Data visualization showing iteration improvements",
+        "hashtags": ["DataDriven", "AIContent", "WeaveHacks"]
+      },
+      "scores": {
+        "novelty": 0.75,
+        "creativity": 0.70,
+        "engagement": 0.78,
+        "clarity": 0.80,
+        "shareability": 0.72,
+        "quality": 0.77,
+        "overall": 0.75
+      },
+      "actual_performance": {
+        "views": 11230,
+        "likes": 623,
+        "retweets": 167,
+        "replies": 52,
+        "engagement_rate": 0.075,
+        "click_through_rate": 0.041
+      },
+      "feedback": "Process-focused content performed decently. Developer audience interested in methodology."
+    }
+  ],
+  "performance_trends": {
+    "overall_metrics": {
+      "total_posts": 5,
+      "avg_views": 14278,
+      "avg_engagement_rate": 0.076,
+      "avg_ctr": 0.041,
+      "total_reach": 71390
+    },
+    "top_performing_characteristics": {
+      "content_types": [
+        {
+          "type": "behind_the_scenes",
+          "avg_engagement": 0.092,
+          "example_post_id": "post_004"
+        },
+        {
+          "type": "provocative_future",
+          "avg_engagement": 0.078,
+          "example_post_id": "post_001"
+        },
+        {
+          "type": "comparison",
+          "avg_engagement": 0.061,
+          "example_post_id": "post_003"
+        }
+      ],
+      "tone": {
+        "humorous": {
+          "avg_engagement": 0.092,
+          "posts": ["post_004"]
+        },
+        "provocative": {
+          "avg_engagement": 0.076,
+          "posts": ["post_001", "post_002"]
+        },
+        "professional": {
+          "avg_engagement": 0.061,
+          "posts": ["post_003"]
+        },
+        "data_driven": {
+          "avg_engagement": 0.075,
+          "posts": ["post_005"]
+        }
+      },
+      "best_hashtags": [
+        {"tag": "AI", "posts": 4, "avg_engagement": 0.078},
+        {"tag": "BuildInPublic", "posts": 1, "avg_engagement": 0.092},
+        {"tag": "FutureOfWork", "posts": 1, "avg_engagement": 0.074}
+      ],
+      "optimal_length": {
+        "twitter": "80-120 characters",
+        "linkedin": "150-200 characters"
+      }
+    },
+    "audience_insights": {
+      "most_engaged_segments": [
+        {
+          "segment": "AI/ML Engineers",
+          "engagement_rate": 0.089,
+          "interests": ["autonomous systems", "agent architecture", "behind-the-scenes"]
+        },
+        {
+          "segment": "Tech Founders",
+          "engagement_rate": 0.082,
+          "interests": ["future of work", "automation", "transparency"]
+        },
+        {
+          "segment": "Developer Community",
+          "engagement_rate": 0.075,
+          "interests": ["methodology", "technical details", "data-driven approaches"]
+        }
+      ],
+      "peak_engagement_times": {
+        "twitter": ["9-11 AM PST", "3-5 PM PST"],
+        "linkedin": ["7-9 AM PST", "12-1 PM PST"]
+      }
+    },
+    "recommendations": [
+      "Increase behind-the-scenes content - highest engagement (9.2%)",
+      "Use humor when authentic - resonates well with tech audience",
+      "Transparency and vulnerability work well (CEO rejection story)",
+      "Short, punchy tweets (80-120 chars) perform better than longer ones",
+      "Technical audiences prefer data-driven insights over generic motivational content",
+      "Comparison formats work well on LinkedIn",
+      "Avoid over-promotion of project name - focus on value/insights"
+    ]
+  },
+  "current_trends": {
+    "date": "2025-10-11",
+    "platform_trends": {
+      "twitter": [
+        {
+          "topic": "AI Agents",
+          "trend_score": 0.92,
+          "velocity": "rising_fast",
+          "keywords": ["autonomous agents", "multi-agent systems", "agent orchestration"],
+          "related_hashtags": ["AIAgents", "AutonomousSystems", "AgentFrameworks"]
+        },
+        {
+          "topic": "Weave / W&B",
+          "trend_score": 0.78,
+          "velocity": "steady",
+          "keywords": ["LLM observability", "AI evaluation", "weave integration"],
+          "related_hashtags": ["Weave", "WandB", "LLMOps"]
+        },
+        {
+          "topic": "Build in Public",
+          "trend_score": 0.85,
+          "velocity": "steady",
+          "keywords": ["transparent development", "open process", "startup journey"],
+          "related_hashtags": ["BuildInPublic", "IndieHackers", "Transparency"]
+        }
+      ],
+      "linkedin": [
+        {
+          "topic": "AI Transformation",
+          "trend_score": 0.88,
+          "velocity": "rising",
+          "keywords": ["enterprise AI", "AI adoption", "workflow automation"],
+          "related_hashtags": ["AITransformation", "DigitalTransformation", "FutureOfWork"]
+        },
+        {
+          "topic": "Team Automation",
+          "trend_score": 0.82,
+          "velocity": "steady",
+          "keywords": ["process automation", "team efficiency", "AI workflows"],
+          "related_hashtags": ["Automation", "TeamEfficiency", "Productivity"]
+        }
+      ]
+    },
+    "emerging_topics": [
+      {
+        "topic": "AI Safety in Production",
+        "relevance": 0.87,
+        "why_relevant": "Your safety agent validates content - timely topic"
+      },
+      {
+        "topic": "LLM Evaluation Frameworks",
+        "relevance": 0.85,
+        "why_relevant": "Critic agent evaluates quality - addresses current pain point"
+      },
+      {
+        "topic": "Agent-to-Agent Communication",
+        "relevance": 0.90,
+        "why_relevant": "Multi-agent system with HR-CMO interaction - cutting edge"
+      }
+    ],
+    "competitor_analysis": {
+      "similar_projects": [
+        {
+          "name": "AutoGPT",
+          "approach": "Single autonomous agent",
+          "our_differentiator": "Multi-agent team with HR oversight"
+        },
+        {
+          "name": "LangChain",
+          "approach": "Framework for chains",
+          "our_differentiator": "Specialized agent roles with evaluation loop"
+        }
+      ]
+    }
+  }
+}
+

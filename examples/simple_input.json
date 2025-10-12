@@ -1,0 +1,114 @@
+{
+  "content_history": [
+    {
+      "id": "post_001",
+      "date": "2025-10-05",
+      "content": {
+        "text": "We built an AI that hires other AIs. The future of autonomous teams is here. 🤖",
+        "media_prompt": "3D isometric illustration of AI agents recruiting each other",
+        "hashtags": ["AI", "Agents"]
+      },
+      "scores": {
+        "novelty": 0.85,
+        "creativity": 0.80,
+        "engagement": 0.88,
+        "clarity": 0.75,
+        "overall": 0.81
+      },
+      "actual_performance": {
+        "views": 15420,
+        "likes": 892,
+        "retweets": 234,
+        "engagement_rate": 0.078
+      },
+      "feedback": "High engagement from developer community. Technical audience responded well to autonomous team concept."
+    },
+    {
+      "id": "post_004",
+      "date": "2025-10-10",
+      "content": {
+        "text": "Plot twist: The AI we built to evaluate content quality just rejected our CEO's tweet. Systems working as intended. 😅",
+        "media_prompt": "Humorous illustration of AI rejecting human content",
+        "hashtags": ["AI", "BuildInPublic"]
+      },
+      "scores": {
+        "novelty": 0.82,
+        "creativity": 0.88,
+        "engagement": 0.90,
+        "clarity": 0.85,
+        "overall": 0.85
+      },
+      "actual_performance": {
+        "views": 23450,
+        "likes": 1567,
+        "retweets": 423,
+        "engagement_rate": 0.092
+      },
+      "feedback": "Highest performing post! Humor + transparency = viral potential. Behind-the-scenes content resonates."
+    },
+    {
+      "id": "post_005",
+      "date": "2025-10-11",
+      "content": {
+        "text": "5 iterations. 10 AI agents. 1 perfect tweet. This is how we do content at WeaveHacks2. No guesswork. Just data.",
+        "media_prompt": "Data visualization showing iteration improvements",
+        "hashtags": ["DataDriven", "AIContent"]
+      },
+      "scores": {
+        "novelty": 0.75,
+        "creativity": 0.70,
+        "engagement": 0.78,
+        "clarity": 0.80,
+        "overall": 0.75
+      },
+      "actual_performance": {
+        "views": 11230,
+        "likes": 623,
+        "retweets": 167,
+        "engagement_rate": 0.075
+      },
+      "feedback": "Process-focused content performed decently. Developer audience interested in methodology."
+    }
+  ],
+  "current_trends": {
+    "date": "2025-10-11",
+    "platform_trends": {
+      "twitter": [
+        {
+          "topic": "AI Agents",
+          "trend_score": 0.92,
+          "velocity": "rising_fast",
+          "keywords": ["autonomous agents", "multi-agent systems", "agent orchestration"],
+          "related_hashtags": ["AIAgents", "AutonomousSystems"]
+        },
+        {
+          "topic": "Build in Public",
+          "trend_score": 0.85,
+          "velocity": "steady",
+          "keywords": ["transparent development", "open process", "startup journey"],
+          "related_hashtags": ["BuildInPublic", "IndieHackers"]
+        },
+        {
+          "topic": "LLM Observability",
+          "trend_score": 0.78,
+          "velocity": "rising",
+          "keywords": ["weave", "LLM monitoring", "AI evaluation"],
+          "related_hashtags": ["LLMOps", "Weave"]
+        }
+      ]
+    },
+    "emerging_topics": [
+      {
+        "topic": "AI Safety in Production",
+        "relevance": 0.87,
+        "why_relevant": "Your safety agent validates content - timely topic"
+      },
+      {
+        "topic": "Agent-to-Agent Communication",
+        "relevance": 0.90,
+        "why_relevant": "Multi-agent system with HR-CMO interaction - cutting edge"
+      }
+    ]
+  }
+}
+

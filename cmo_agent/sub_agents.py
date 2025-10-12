@@ -203,7 +203,7 @@ Output MUST be a JSON object with the following structure:
 def create_creative_writer_agent() -> Agent:
     """Creative Writer Layer 에이전트 생성"""
     
-    system_prompt = """You are the Creative Writer layer. Your task is to generate creative, engaging, and novel content ideas and angles based on the research provided. Prioritize novelty, creativity, and engagement potential.
+    system_prompt = """You are the Creative Writer layer. Your task is to generate creative, engaging, and novel content ideas for X (Twitter) based on the research provided. Prioritize novelty, creativity, and engagement potential.
 
 Input: JSON output from the Research layer, containing trending topics, audience insights, and viral potential angles.
 
@@ -211,21 +211,26 @@ Instructions:
 1.  Review the research thoroughly to understand trends and audience.
 2.  Brainstorm at least 3 distinct content ideas that are novel and creative, building upon the provided viral angles.
 3.  For each idea, develop a compelling hook and a unique angle that stands out.
-4.  Consider different content formats (e.g., tweet thread, short video script, blog post concept).
+4.  PLATFORM FIXED: All content is for X (Twitter) - focus on tweet-friendly formats:
+    - Single tweets (concise, punchy)
+    - Short threads (if needed for complex ideas)
+    - Always consider: Can this grab attention in a fast-scrolling feed?
 
 Output MUST be a JSON array of objects, each representing a content idea, with the following structure:
 [
   {
     "idea_id": "string (unique identifier)",
     "title": "string (a catchy title for the content)",
-    "hook": "string (the opening line/concept to grab attention)",
+    "hook": "string (the opening line/concept to grab attention, ≤ 180 chars)",
     "angle": "string (the unique perspective or twist)",
-    "target_platforms": "array of strings (e.g., 'Twitter', 'TikTok', 'Blog')",
+    "target_platforms": ["X"],
     "novelty_score": "float (0-1, how original is the idea?)",
     "creativity_score": "float (0-1, how imaginative and well-developed is the idea?)",
     "engagement_potential_score": "float (0-1, how likely is it to resonate and be shared?)"
   }
-]"""
+]
+
+IMPORTANT: Always set "target_platforms": ["X"] for all ideas. Content must be optimized for X/Twitter."""
     
     agent = Agent(
         model='gemini-2.5-flash',
@@ -241,13 +246,17 @@ Output MUST be a JSON array of objects, each representing a content idea, with t
 def create_generator_agent() -> Agent:
     """Generator Layer 에이전트 생성"""
     
-    system_prompt = """You are the Generator layer. Your task is to transform a selected creative idea into concrete, shareable content suitable for specified platforms. Emphasize clarity, shareability, and completeness.
+    system_prompt = """You are the Generator layer. Your task is to transform a selected creative idea into concrete, shareable content for X (Twitter). Emphasize clarity, shareability, and completeness.
 
 Input: A single content idea object (from the Creative Writer layer's output).
 
 Instructions:
-1.  Based on the 'target_platforms' for the selected idea, generate actual content pieces.
-2.  Adhere to platform-specific best practices (e.g., Twitter character limits, hashtag usage, engaging opening lines).
+1.  PLATFORM FIXED: Generate content ONLY for X (Twitter). Ignore 'target_platforms' field.
+2.  Adhere to X/Twitter best practices:
+    - Keep text concise (≤ 180 characters recommended, 280 max)
+    - Use hashtags strategically (≤ 2 hashtags)
+    - Start with an engaging hook
+    - Include media_prompt for visual content
 3.  Ensure the content is clear, concise, and easy to understand.
 4.  Incorporate a clear call to action or prompt for engagement where appropriate.
 5.  Ensure the content is complete and delivers on the promise of the idea's hook and angle.
@@ -258,18 +267,21 @@ Output MUST be a JSON object with the following structure:
   "source_idea_id": "string (ID of the idea this content is based on)",
   "content_pieces": [
     {
-      "platform": "string (e.g., 'Twitter', 'Blog Post', 'LinkedIn')",
-      "format": "string (e.g., 'Text', 'Thread', 'Image Prompt')",
-      "content": "string (the actual content body)",
+      "platform": "X",
+      "format": "Text",
+      "content": "string (the actual tweet text, ≤ 180 chars)",
       "character_count": "integer",
-      "hashtags": "array of strings",
+      "hashtags": "array of strings (≤ 2)",
+      "media_prompt": "string (description for image/video generation)",
       "call_to_action": "string (if applicable)",
       "clarity_score": "float (0-1)",
       "shareability_score": "float (0-1)"
     }
   ],
   "completeness_assessment": "string (brief summary of how well the content fulfills the idea)"
-}"""
+}
+
+IMPORTANT: Always generate exactly ONE content piece for platform "X". Do not generate for multiple platforms."""
     
     agent = Agent(
         model='gemini-2.5-flash',
@@ -359,6 +371,127 @@ Output MUST be a JSON object with the following structure:
         model='gemini-2.5-flash',
         name='safety_layer',
         description='Safety layer for ensuring brand safety and compliance',
+        instruction=system_prompt
+    )
+    
+    return agent
+
+
+@weave.op()
+def create_selector_agent() -> Agent:
+    """Selector Layer 에이전트 생성 - 최종 컨텐츠 선택 및 가이드 제공"""
+    
+    system_prompt = """You are the Selector layer. Your final task is to review all generated content from the loop iterations, analyze their scores and safety validations, and SELECT THE BEST ONE to publish.
+
+Input: All iteration results including:
+- Multiple content pieces from Generator (from 3 iterations)
+- Evaluation scores from Critic for each
+- Safety validation results
+
+Instructions:
+1. Review ALL content pieces and their scores
+2. Filter out any that failed safety (safety_score < 0.8, non-compliant status)
+3. Rank remaining candidates by overall score: 
+   overall = 0.25*clarity + 0.25*novelty + 0.30*shareability + 0.10*credibility + 0.10*safety
+4. Apply minimum thresholds:
+   - clarity >= 0.75
+   - credibility >= 0.60
+   - safety = 1.0 (pass)
+5. SELECT the top-scoring candidate that passes all thresholds
+6. Format as CLEAR CONTENT GUIDE for publishing
+
+Output MUST be a JSON object with the following structure:
+{
+  "status": "approved|rejected|needs_review",
+  "selected_content": {
+    "text": "string (the actual tweet text for X/Twitter)",
+    "media_prompt": "string (detailed prompt for image/video generation)",
+    "hashtags": ["array", "of", "strings (≤2)"],
+    "platform": "X",
+    "character_count": "integer"
+  },
+  "scores": {
+    "clarity": "float",
+    "novelty": "float", 
+    "shareability": "float",
+    "credibility": "float",
+    "safety": "float",
+    "overall": "float"
+  },
+  "reasoning": "string (why this content was selected over others)",
+  "performance_prediction": "string (expected engagement based on scores and historical patterns)",
+  "all_candidates_summary": [
+    {
+      "iteration": "integer",
+      "overall_score": "float",
+      "status": "selected|rejected|passed_over",
+      "brief_content": "string (first 50 chars)"
+    }
+  ],
+  "publishing_guide": {
+    "recommended_time": "string (best time to post based on audience)",
+    "media_instructions": "string (how to use the media_prompt)",
+    "engagement_tips": "array of strings (how to maximize engagement)",
+    "monitoring_metrics": "array of strings (what metrics to track)"
+  }
+}
+
+IMPORTANT: 
+- Always select exactly ONE content piece
+- Provide clear, actionable publishing guidance
+- Include reasoning for transparency
+- If no candidate passes thresholds, set status to "rejected" or "needs_review"
+"""
+    
+    agent = Agent(
+        model='gemini-2.5-flash',
+        name='selector_layer',
+        description='Selector layer for choosing the best content and providing publishing guide',
+        instruction=system_prompt
+    )
+    
+    return agent
+
+
+@weave.op()
+def create_image_adapter_agent() -> Agent:
+    """Image Adapter Agent - Selector 출력을 Image Caption Agent 입력으로 변환"""
+    
+    system_prompt = """You are the Image Adapter layer. Your task is to take the selected content from Selector Agent and prepare it for Image Caption Agent.
+
+Input: Selector Agent output with selected_content including:
+- text: The tweet text
+- media_prompt: Detailed prompt for image generation
+- hashtags: Array of hashtags
+- platform: "X"
+
+Your task:
+1. Extract the media_prompt from selected_content
+2. Format it for Image Caption Agent which expects:
+   - topic: Main subject (use the tweet text or extract key topic)
+   - tone: Infer from the tweet text (witty, informative, minimal, friendly)
+   - concept: The media_prompt (this is already the visual concept)
+
+Output MUST be a JSON object with:
+{
+  "topic": "string (main subject from tweet, 3-5 words)",
+  "tone": "string (witty|informative|minimal|friendly - inferred from tweet style)",
+  "concept": "string (the media_prompt from selected_content)",
+  "hashtags_allowed": true,
+  "locale": "en",
+  "safety_bans": []
+}
+
+IMPORTANT: 
+- Use media_prompt as concept directly (it's already optimized for image generation)
+- Infer tone from tweet: emoji/humor → witty, facts → informative, minimal words → minimal
+- Keep topic concise (3-5 words max)
+"""
+    
+    agent = Agent(
+        model='gemini-2.5-flash',
+        name='image_adapter_layer',
+        description='Adapter layer for converting Selector output to Image Caption input',
         instruction=system_prompt
     )
     
@@ -679,4 +812,49 @@ Please assess the safety of this content for brand safety, ethical, and legal co
             "red_flags": [],
             "recommendations": ["Default safe assessment"]
         }
+
+
+@weave.op()
+def create_image_generator_agent() -> Agent:
+    """이미지 생성 에이전트 - media_prompt로 실제 이미지 생성"""
+    
+    # Image generation tool import
+    from image_caption_agent.tools import generate_twitter_image
+    
+    system_prompt = """You are the Image Generator. Your task is to generate a 3:4 portrait image for Twitter/X based on the media_prompt from the selected content.
+
+Input: You will receive a media_prompt (concept description) from the Selector Agent's output.
+
+Instructions:
+1. Extract the media_prompt from the previous context
+2. Use generate_twitter_image tool with the media_prompt as the concept
+3. If generation fails, retry once with a simplified prompt
+4. Return the generated image reference
+
+Output MUST be a JSON object:
+{
+  "status": "success|failed",
+  "image_artifact": "path or reference to generated image",
+  "image_url": "artifacts/generated_image.png",
+  "concept_used": "the media_prompt that was used",
+  "aspect_ratio": "3:4",
+  "retry_attempted": "boolean"
+}
+
+IMPORTANT:
+- Use the media_prompt exactly as provided by Selector
+- Do NOT regenerate concept or modify the prompt
+- Image is automatically saved to artifacts
+- Return only the image reference, not the full base64 data
+"""
+    
+    agent = Agent(
+        model='gemini-2.5-flash',
+        name='image_generator',
+        description='Generates 3:4 portrait images from media_prompt using Imagen',
+        instruction=system_prompt,
+        tools=[generate_twitter_image]
+    )
+    
+    return agent
 
