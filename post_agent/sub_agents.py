@@ -1085,9 +1085,9 @@ Please assess the safety of this content for brand safety, ethical, and legal co
 @weave.op()
 def create_image_generator_agent() -> Agent:
     """이미지 생성 에이전트 - media_prompt로 실제 이미지 생성"""
-    
+
     # Image generation tool import
-    from image_caption_agent.tools import generate_twitter_image
+    from post_agent.tools import generate_twitter_image
     
     system_prompt = """You are the Image Generator. Your task is to generate a 3:4 portrait image for Twitter/X based on the media_prompt from the selected content.
 
