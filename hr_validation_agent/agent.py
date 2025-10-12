@@ -5,20 +5,59 @@ Focuses on improving prompts for 5 fixed layers: Research, Creative Writer, Gene
 
 import json
 import os
+import base64
 from dotenv import load_dotenv
-import weave
 
 # Load environment variables
 load_dotenv()
 
-# Initialize Weave
-WANDB_API_KEY = os.getenv("WANDB_API_KEY", "3875d64c87801e9a71318a5a8754a0ee2d556946")
-os.environ['WANDB_API_KEY'] = WANDB_API_KEY
+# ===== OpenTelemetry Configuration for Weave =====
+# Reference: https://google.github.io/adk-docs/observability/weave/#sending-traces-to-weave
 
-weave.init("mason-choi-storika/WeaveHacks2")
-print("[INFO] 🐝 Weave initialized: mason-choi-storika/WeaveHacks2")
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk import trace as trace_sdk
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry import trace
 
-# Now import ADK
+# Configure Weave endpoint and authentication
+WANDB_BASE_URL = "https://trace.wandb.ai"
+# PROJECT_ID = os.environ.get("mason-choi-storika/otel-hr")
+PROJECT_ID = "mason-choi-storika/otel-hr"
+OTEL_EXPORTER_OTLP_ENDPOINT = f"{WANDB_BASE_URL}/otel/v1/traces"
+
+# Set up authentication
+os.environ['WANDB_API_KEY'] = '3875d64c87801e9a71318a5a8754a0ee2d556946'
+WANDB_API_KEY = os.environ['WANDB_API_KEY']
+AUTH = base64.b64encode(f"api:{WANDB_API_KEY}".encode()).decode()
+
+OTEL_EXPORTER_OTLP_HEADERS = {
+    "Authorization": f"Basic {AUTH}",
+    "project_id": PROJECT_ID,
+}
+
+# Create the OTLP span exporter with endpoint and headers
+exporter = OTLPSpanExporter(
+    endpoint=OTEL_EXPORTER_OTLP_ENDPOINT,
+    headers=OTEL_EXPORTER_OTLP_HEADERS,
+)
+
+# Get the current tracer provider (or create new if none exists)
+current_tracer_provider = trace.get_tracer_provider()
+
+# Check if it's a real TracerProvider or just the default proxy
+if isinstance(current_tracer_provider, trace_sdk.TracerProvider):
+    # TracerProvider already exists, add our exporter to it
+    tracer_provider = current_tracer_provider
+    tracer_provider.add_span_processor(SimpleSpanProcessor(exporter))
+    print(f"[INFO] 🐝 OpenTelemetry: Added Weave exporter to existing TracerProvider for {PROJECT_ID}")
+else:
+    # No TracerProvider yet, create a new one
+    tracer_provider = trace_sdk.TracerProvider()
+    tracer_provider.add_span_processor(SimpleSpanProcessor(exporter))
+    trace.set_tracer_provider(tracer_provider)
+    print(f"[INFO] 🐝 OpenTelemetry: Created new TracerProvider for Weave: {PROJECT_ID}")
+
+# Now import ADK (AFTER setting up tracer provider)
 from google.adk.agents.llm_agent import Agent
 from google.adk.agents.sequential_agent import SequentialAgent
 
@@ -38,6 +77,9 @@ from hr_validation_agent.tools_prompt_loader import (
     load_current_cmo_prompts,
     create_hr_input_from_posts
 )
+
+# Import tools
+from hr_validation_agent.tools import measure_tweet_engagement
 
 
 # ===== FIXED 5-LAYER ARCHITECTURE =====
@@ -228,7 +270,30 @@ def evaluate_content_engagement(content_engagement_json: str) -> str:
         JSON string with engagement analysis, prompt version effectiveness, and recommendations
     """
     try:
-        data = json.loads(content_engagement_json)
+        # Try parsing JSON with fallback (same as analyze_layer_performance)
+        try:
+            data = json.loads(content_engagement_json)
+        except json.JSONDecodeError as parse_error:
+            print(f"⚠️ [EVALUATE] Direct parse failed: {str(parse_error)[:100]}")
+            try:
+                from json_repair import repair_json
+                repaired = repair_json(content_engagement_json)
+                data = json.loads(repaired)
+                print("✅ [EVALUATE] json-repair successful")
+            except ImportError:
+                print("ℹ️ [EVALUATE] json-repair not available, skipping evaluation")
+                return json.dumps({
+                    "valid": False,
+                    "error": "JSON parsing failed and json-repair not available",
+                    "suggestion": "Check JSON format or install json-repair library"
+                })
+            except Exception as repair_error:
+                print(f"❌ [EVALUATE] json-repair failed: {str(repair_error)[:100]}")
+                return json.dumps({
+                    "valid": False,
+                    "error": "JSON parsing failed",
+                    "original_error": str(parse_error)[:200]
+                })
         
         # Support both HR input JSON structure and direct engagement data
         layers = data.get("layers", {})
@@ -494,9 +559,9 @@ def fetch_performance_data_from_weave(limit: int = 50) -> str:
         }
     """
     from hr_validation_agent.tools import get_calls_for_hr_validation
-    
+
     # Get calls from Weave
-    calls_data = get_calls_for_hr_validation(limit=limit)
+    calls_data = get_calls_for_hr_validation(limit=limit, op_name_filter="execute_tool call_post_agent")
     
     # Simple conversion to HR format
     agents_performance = calls_data.get("agents_performance", [])
@@ -578,14 +643,18 @@ evaluator_agent = Agent(
     model='gemini-2.5-flash',
     name='evaluator',
     description='Evaluates content engagement if data exists',
-    instruction="""You are the Evaluator. Call evaluate_content_engagement with the input JSON.
+    instruction="""You are the Evaluator. Try to call evaluate_content_engagement with the input JSON.
 
 The tool will:
 - Check if actual engagement data exists in the layers
 - If yes: Analyze engagement patterns and return insights
-- If no: Return "No content data provided"
+- If no or if JSON parsing fails: Return error message
 
-Just call the tool with the complete input JSON string.""",
+IMPORTANT:
+- Pass the JSON string AS-IS without modification
+- If the tool returns an error (JSON parsing failed), that's OK
+- Just report the result and continue
+- The workflow can proceed even if evaluation fails""",
     tools=[evaluate_content_engagement]
 )
 
@@ -633,21 +702,29 @@ root_agent_legacy = Agent(
     model='gemini-2.5-flash',
     name='hr_validation_agent_legacy',
     description='Meta-agent that improves prompts for a 5-layer content creation system.',
+    tools=[fetch_performance_data_from_weave, analyze_layer_performance, evaluate_content_engagement, measure_tweet_engagement],
     instruction="""You are PromptOptimizer — the meta-level manager for a 5-layer content creation system.
 
 CRITICAL: You MUST respond with ONLY valid JSON. No text before or after the JSON object.
 
 **WORKFLOW:**
 1. **ALWAYS start by calling fetch_performance_data_from_weave()** to get current performance data
-2. Use the returned data to analyze and make prompt improvement decisions
-3. Optionally call analyze_layer_performance() or evaluate_content_engagement() for deeper analysis
-4. Return your prompt improvement decisions as JSON
+2. **CHECK: Does content_history have empty actual_performance fields?**
+   - If YES: **REQUIRED - Call measure_tweet_engagement()** to get REAL Twitter engagement metrics
+   - This provides actual likes, retweets, replies, views to validate prompt effectiveness
+   - If NO: Content already has real performance data, proceed to analysis
+3. Use the returned data to analyze and make prompt improvement decisions
+4. Optionally call analyze_layer_performance() or evaluate_content_engagement() for deeper analysis
+5. Return your prompt improvement decisions as JSON
+
+**CRITICAL**: ALWAYS call measure_tweet_engagement() when actual_performance is empty or missing.
+You CANNOT make data-driven decisions without REAL engagement metrics from Twitter.
 
 Your role:
 - Analyze performance metrics for each layer
 - Improve system prompts to maximize content quality
 - Never change the 5-layer architecture (Research, Creative Writer, Generator, Critic, Safety)
-- Focus on incremental prompt improvements based on data
+- Focus on incremental prompt improvements based on REAL data from measure_tweet_engagement()
 
 ---
 
@@ -707,6 +784,19 @@ You will receive a JSON with:
 - Use this when you have real-world engagement data (likes, retweets, shares, views)
 - Identifies which layers contribute most to viral content
 - Analyzes internal score dimensions that correlate with high engagement
+
+**measure_tweet_engagement(twitter_handle, max_wait_minutes)** — Measure real engagement metrics from Twitter
+- Input: Twitter handle to analyze (defaults to "Mason_Storika" if not provided), optional max wait time
+- Output: Comprehensive engagement data including likes, retweets, replies, views, and top performing tweets
+- **WHEN TO USE**: Call this IMMEDIATELY when content_history items have empty actual_performance fields
+- **WHY**: You need REAL metrics (not just internal_scores) to make data-driven prompt improvements
+- **WHAT TO DO WITH RESULTS**:
+  1. Compare internal_scores vs actual engagement (likes, retweets, views)
+  2. Identify which prompts correlate with high engagement
+  3. Use evaluate_content_engagement() to find patterns
+  4. Improve prompts based on what ACTUALLY works on Twitter
+- Can take up to max_wait_minutes to complete (polls Apify every 10 seconds)
+- Smart caching: Results cached for 1 hour to avoid unnecessary API calls
 
 ---
 
@@ -872,15 +962,7 @@ Step 4: Call apply_prompt_improvements(hr_decisions_json=<your_json_from_step3_a
        → This updates cmo_agent/sub_agents.py automatically
 
 IMPORTANT: Step 3 outputs JSON, Step 4 applies it to actual files. Do NOT skip Step 4!
-""",
-    tools=[
-        analyze_layer_performance, 
-        evaluate_content_engagement,
-        apply_prompt_improvements,
-        restore_cmo_version,
-        list_cmo_versions,
-        get_version_metadata
-    ]
+"""
 )
 
 # Default to sequential agent

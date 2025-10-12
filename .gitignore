@@ -72,3 +72,4 @@ trend_data/*.json
 !trend_data/README.md
 *.png
 debug_*.png
+tweet_engagement_cache/
