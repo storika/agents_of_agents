@@ -108,11 +108,11 @@ class GlobalAdjustments(BaseModel):
 
 class PerformanceThresholds(BaseModel):
     """Metric thresholds for evaluation."""
-    clarity_min: float = Field(default=0.55, ge=0, le=1)
-    novelty_min: float = Field(default=0.55, ge=0, le=1)
-    shareability_min: float = Field(default=0.55, ge=0, le=1)
-    credibility_min: float = Field(default=0.60, ge=0, le=1)
-    safety_min: float = Field(default=0.80, ge=0, le=1)
+    clarity: float = Field(default=0.55, ge=0, le=1)
+    novelty: float = Field(default=0.55, ge=0, le=1)
+    shareability: float = Field(default=0.55, ge=0, le=1)
+    credibility: float = Field(default=0.60, ge=0, le=1)
+    safety: float = Field(default=0.80, ge=0, le=1)
 
 
 class PromptOptimizationDecision(BaseModel):
@@ -121,13 +121,13 @@ class PromptOptimizationDecision(BaseModel):
         default_factory=list,
         description="List of complete new prompts (5 for bootstrap, 1-3 for improvements)"
     )
-    global_adjustments: GlobalAdjustments = Field(
-        default_factory=GlobalAdjustments,
-        description="System-wide configuration updates"
-    )
     thresholds: PerformanceThresholds = Field(
         default_factory=PerformanceThresholds,
         description="Updated performance thresholds"
+    )
+    global_adjustments: GlobalAdjustments = Field(
+        default_factory=GlobalAdjustments,
+        description="System-wide configuration updates (optional)"
     )
 
     def to_strict_json(self) -> str:

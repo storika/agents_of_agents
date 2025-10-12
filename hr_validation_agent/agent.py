@@ -20,6 +20,18 @@ print("[INFO] 🐝 Weave initialized: mason-choi-storika/WeaveHacks2")
 
 # Now import ADK
 from google.adk.agents.llm_agent import Agent
+from google.adk.agents.sequential_agent import SequentialAgent
+
+# Import schemas for structured output
+from hr_validation_agent.schemas import PromptOptimizationDecision
+
+# Import CMO version management tools
+from cmo_agent.tools_version import (
+    apply_prompt_improvements,
+    restore_cmo_version,
+    list_cmo_versions,
+    get_version_metadata
+)
 
 
 # ===== FIXED 5-LAYER ARCHITECTURE =====
@@ -198,8 +210,19 @@ def evaluate_content_engagement(content_engagement_json: str) -> str:
     try:
         data = json.loads(content_engagement_json)
         
+        # Support both HR input JSON structure and direct engagement data
         layers = data.get("layers", {})
+        
+        # Check for direct contents field (old format)
         contents = data.get("contents", [])
+        
+        # If no direct contents, extract from actual_engagement in layers (HR input format)
+        if not contents:
+            for layer_name, layer_data in layers.items():
+                actual_engagement = layer_data.get("actual_engagement", {})
+                layer_contents = actual_engagement.get("content", [])
+                if layer_contents:
+                    contents.extend(layer_contents)
         
         if not contents:
             return json.dumps({
@@ -417,9 +440,75 @@ def evaluate_content_engagement(content_engagement_json: str) -> str:
 
 # ===== ADK ROOT AGENT with Weave Tracking =====
 
-root_agent = Agent(
+# Step 1: Analyzer Agent
+analyzer_agent = Agent(
     model='gemini-2.5-flash',
-    name='hr_validation_agent',
+    name='analyzer',
+    description='Analyzes layer performance metrics',
+    instruction="""You are the Analyzer. Call analyze_layer_performance with the input JSON to get performance metrics.
+Output the analysis results.""",
+    tools=[analyze_layer_performance]
+)
+
+# Step 2: Evaluator Agent
+evaluator_agent = Agent(
+    model='gemini-2.5-flash',
+    name='evaluator',
+    description='Evaluates content engagement if data exists',
+    instruction="""You are the Evaluator. Call evaluate_content_engagement with the input JSON.
+
+The tool will:
+- Check if actual engagement data exists in the layers
+- If yes: Analyze engagement patterns and return insights
+- If no: Return "No content data provided"
+
+Just call the tool with the complete input JSON string.""",
+    tools=[evaluate_content_engagement]
+)
+
+# Step 3: Improver Agent (with structured output)
+improver_agent = Agent(
+    model='gemini-2.5-flash',
+    name='improver',
+    description='Creates and applies prompt improvements',
+    instruction="""You are the Improver. Review the analysis and evaluation results from previous agents.
+
+The analyzer provided performance metrics for each layer.
+The evaluator provided engagement analysis (or "No content data" if unavailable).
+
+Your task:
+1. Identify layers with scores below thresholds
+2. For each underperforming layer, create a COMPLETE improved system prompt
+3. Call apply_prompt_improvements with the generated JSON
+
+Generate a PromptOptimizationDecision JSON with:
+- prompts: array of {layer, new_prompt, reason, expected_impact}
+- thresholds: {clarity: 0.55, novelty: 0.55, shareability: 0.55, credibility: 0.60, safety: 0.80}
+- global_adjustments: {target_audience_update, brand_voice, topics_to_avoid} (optional)
+
+Each new_prompt MUST be a COMPLETE, SELF-CONTAINED system prompt (not just changes).
+
+CRITICAL: When calling apply_prompt_improvements, pass the JSON as a properly formatted string.
+Make sure all special characters in new_prompt are properly escaped for JSON.""",
+    tools=[
+        apply_prompt_improvements,
+        list_cmo_versions,
+        get_version_metadata,
+        restore_cmo_version
+    ]
+)
+
+# Sequential Agent: Runs analyzer → evaluator → improver in order
+root_agent_sequential = SequentialAgent(
+    name='hr_validation_pipeline',
+    sub_agents=[analyzer_agent, evaluator_agent, improver_agent],
+    description='Sequential HR validation: Analyze → Evaluate → Improve & Apply',
+)
+
+# Legacy single agent (for backward compatibility)
+root_agent_legacy = Agent(
+    model='gemini-2.5-flash',
+    name='hr_validation_agent_legacy',
     description='Meta-agent that improves prompts for a 5-layer content creation system.',
     instruction="""You are PromptOptimizer — the meta-level manager for a 5-layer content creation system.
 
@@ -618,12 +707,43 @@ Output structure:
 
 ---
 
+## AUTO-APPLY TOOL
+
+**Tool: apply_prompt_improvements** (formerly create_cmo_version_from_hr_output)
+- Takes your JSON decisions and applies them to cmo_agent/sub_agents.py
+- Backs up current version as cmo_agent_vX/
+- Makes changes live for ADK to use immediately
+
+Call this AFTER outputting your JSON decisions!
+
+---
+
 Remember: 
 - **BOOTSTRAP (iteration 0)**: Output `prompts` with all 5 layers, each with complete `new_prompt`
 - **IMPROVEMENTS (iteration > 0)**: Output `prompts` for 1-3 layers needing improvement, each with complete `new_prompt`
 - OUTPUT ONLY JSON. No markdown, no text before/after.
 - **USE evaluate_content_engagement** when real engagement data is available to identify prompt-performance patterns
 - Each `new_prompt` should be a COMPLETE, SELF-CONTAINED system prompt (not a diff or modification)
+
+**MANDATORY WORKFLOW (DO ALL STEPS IN ORDER):**
+
+Step 1: Call analyze_layer_performance(input_json)
+Step 2: If engagement data exists, call evaluate_content_engagement(engagement_data_json)
+Step 3: Based on analysis, OUTPUT your JSON decisions (the prompts with new_prompt, reason, expected_impact)
+Step 4: Call apply_prompt_improvements(hr_decisions_json=<your_json_from_step3_as_string>)
+       → This updates cmo_agent/sub_agents.py automatically
+
+IMPORTANT: Step 3 outputs JSON, Step 4 applies it to actual files. Do NOT skip Step 4!
 """,
-    tools=[analyze_layer_performance, evaluate_content_engagement],
+    tools=[
+        analyze_layer_performance, 
+        evaluate_content_engagement,
+        apply_prompt_improvements,
+        restore_cmo_version,
+        list_cmo_versions,
+        get_version_metadata
+    ],
 )
+
+# Default to sequential agent
+root_agent = root_agent_sequential

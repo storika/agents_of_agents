@@ -313,17 +313,32 @@ def get_trending_context() -> str:
         if "google_trends" in data_sources:
             google_trends = data_sources["google_trends"]
             if google_trends.get("collected") and google_trends.get("data"):
-                gt_data = google_trends.get("data", {})
-
-                # Extract trending searches (Google Trends usually has 10-20)
-                for trend_item in gt_data.get("trending_searches", [])[:10]:
-                    trending_topics.append({
-                        "topic": trend_item.get("title", ""),
-                        "trend_score": 0.85,
-                        "relevance": "high",
-                        "source": "Google Trends",
-                        "url": trend_item.get("url", "")
-                    })
+                gt_data = google_trends.get("data", [])
+                
+                # Handle both list and dict formats
+                if isinstance(gt_data, list):
+                    # Data is directly a list of trends
+                    for trend_item in gt_data[:10]:
+                        topic = trend_item.get("Trends") or trend_item.get("title", "")
+                        if topic:
+                            trending_topics.append({
+                                "topic": topic,
+                                "trend_score": 0.85,
+                                "relevance": "high",
+                                "source": "Google Trends",
+                                "search_volume": trend_item.get("Search volume", ""),
+                                "url": trend_item.get("Explore link") or trend_item.get("url", "")
+                            })
+                elif isinstance(gt_data, dict):
+                    # Data has nested structure with trending_searches
+                    for trend_item in gt_data.get("trending_searches", [])[:10]:
+                        trending_topics.append({
+                            "topic": trend_item.get("title", ""),
+                            "trend_score": 0.85,
+                            "relevance": "high",
+                            "source": "Google Trends",
+                            "url": trend_item.get("url", "")
+                        })
 
         # Extract from trending posts analysis (keywords)
         if "trending_posts" in data_sources:
