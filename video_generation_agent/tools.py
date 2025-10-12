@@ -17,32 +17,51 @@ import time
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+from dotenv import load_dotenv
 from google import genai
 from google.genai import Client, types
 from google.adk.tools.tool_context import ToolContext
 
-# Initialize Gemini client
-client = Client()
+# Load environment variables
+load_dotenv()
+
+# Get API key
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+
+# Initialize Gemini client with API key
+client = Client(api_key=GOOGLE_API_KEY)
 
 
 async def generate_video_concept(
     image_concept: str,
     topic: str,
     tone: str,
-    tool_context: ToolContext
+    tool_context: ToolContext,
+    include_audio: bool = True
 ) -> dict:
     """
-    이미지 콘셉트를 바탕으로 비디오 모션/스토리 프롬프트를 생성합니다.
+    이미지 콘셉트를 바탕으로 비디오 모션/스토리 프롬프트를 생성합니다 (오디오 포함).
 
     Args:
         image_concept: 원본 이미지 콘셉트 설명
         topic: 콘텐츠 주제
         tone: 톤 (engaging, dramatic, calm, energetic)
         tool_context: 도구 컨텍스트
+        include_audio: 오디오 프롬프트 포함 여부 (Veo 3는 기본적으로 오디오 생성)
 
     Returns:
-        모션 프롬프트, 카메라 움직임, 시각 효과를 포함한 딕셔너리
+        모션 프롬프트, 카메라 움직임, 시각 효과, 오디오 큐를 포함한 딕셔너리
     """
+
+    audio_instruction = ""
+    if include_audio:
+        audio_instruction = """
+5. AUDIO CUES (Veo 3 natively generates audio):
+   - Dialogue: Use quotes for speech (e.g., "Check this out!")
+   - Sound effects: Describe ambient sounds (e.g., soft music, whoosh, click)
+   - Background: Mention environmental audio (e.g., gentle background music, upbeat track)
+
+   Example: 'Upbeat electronic music plays. A voice says, "The future of AI is here!"'"""
 
     video_concept_prompt = f"""Create detailed 8-second video motion/story plan based on this image concept:
 
@@ -52,9 +71,9 @@ Tone: {tone}
 
 Generate a video prompt with:
 1. Camera movement (slow zoom, pan, tilt, static)
-2. Visual effects (fade in/out, text overlay positions, lighting changes)
+2. Visual effects (fade in/out, lighting changes, color shifts)
 3. Mood and energy (calm, energetic, mysterious, uplifting)
-4. 8-second structure (0-3s: intro, 3-6s: main, 6-8s: outro)
+4. 8-second structure (0-3s: intro, 3-6s: main, 6-8s: outro){audio_instruction}
 
 Requirements:
 - Vertical 9:16 aspect ratio (Instagram Reels/TikTok/YouTube Shorts)
@@ -62,8 +81,10 @@ Requirements:
 - Keep subject centered and visible
 - No abrupt cuts or jarring movements
 - Suitable for social media (engaging, attention-grabbing)
+- Audio should enhance the visual story (dialogue, sound effects, music)
+- NO TEXT OVERLAYS - the video should be purely visual and audio
 
-Output a single detailed prompt (2-3 sentences) describing the motion and cinematography."""
+Output a single detailed prompt (3-4 sentences) describing the motion, cinematography, and audio. Do NOT include any text overlays or on-screen text."""
 
     try:
         response = client.models.generate_content(
@@ -122,31 +143,34 @@ async def generate_video_from_image(
 
         print(f"[INFO] Loading reference image: {image_path}")
 
-        # Upload image to Gemini for reference
+        # Read image file as bytes
         with open(image_path, 'rb') as f:
             image_bytes = f.read()
 
-        # Create image part
-        image_part = types.Part.from_bytes(data=image_bytes, mime_type='image/png')
+        print(f"[INFO] Image loaded ({len(image_bytes)} bytes)")
 
-        # Enhance prompt for vertical video
-        enhanced_prompt = f"{motion_prompt}. Vertical 9:16 format optimized for social media stories and reels. Professional cinematography with smooth camera movements."
+        # Enhance prompt for vertical video with audio
+        enhanced_prompt = f"{motion_prompt}. Vertical 9:16 format optimized for social media stories and reels. Professional cinematography with smooth camera movements and audio."
 
         print(f"[INFO] Starting video generation with Veo 3...")
         print(f"[INFO] Prompt: {enhanced_prompt[:100]}...")
         print(f"[INFO] Aspect ratio: {aspect_ratio}, Duration: {duration}s")
 
-        # Generate video using Veo 3
+        # Generate video using Veo 3 with image bytes
         operation = client.models.generate_videos(
             model="veo-3.0-generate-001",
             prompt=enhanced_prompt,
-            image=image_part,
+            image={
+                "imageBytes": image_bytes,
+                "mimeType": "image/png"
+            },
             config=types.GenerateVideosConfig(
                 aspect_ratio=aspect_ratio,
             )
         )
 
-        print(f"[INFO] Operation started: {operation.name}")
+        operation_name = operation.name
+        print(f"[INFO] Operation started: {operation_name}")
         print(f"[INFO] Polling for completion (this may take 11 seconds to 6 minutes)...")
 
         # Poll until operation is done
@@ -167,7 +191,7 @@ async def generate_video_from_image(
                 }
 
             time.sleep(10)  # Poll every 10 seconds
-            operation = client.operations.get(operation.name)
+            operation = client.operations.get(operation)
 
         generation_time = time.time() - start_time
         print(f"[INFO] Video generation completed in {generation_time:.1f}s")
@@ -192,7 +216,11 @@ async def generate_video_from_image(
 
         # Download video
         print(f"[INFO] Downloading video to: {file_path}")
-        client.files.download(file=generated_video.video, path=file_path)
+        video_bytes = client.files.download(file=generated_video.video)
+
+        # Write video bytes to file
+        with open(file_path, 'wb') as f:
+            f.write(video_bytes)
 
         # Save to ADK artifacts (for UI/logging)
         with open(file_path, 'rb') as f:
@@ -217,9 +245,12 @@ async def generate_video_from_image(
         }
 
     except Exception as e:
+        import traceback
         generation_time = time.time() - start_time
         error_msg = f'Video generation error after {generation_time:.1f}s: {str(e)}'
         print(f"[ERROR] {error_msg}")
+        print(f"[ERROR] Traceback:")
+        traceback.print_exc()
 
         return {
             'status': 'failed',
@@ -265,7 +296,8 @@ async def generate_video_from_text(
             )
         )
 
-        print(f"[INFO] Operation started: {operation.name}")
+        operation_name = operation.name
+        print(f"[INFO] Operation started: {operation_name}")
         print(f"[INFO] Polling for completion (this may take 11 seconds to 6 minutes)...")
 
         # Poll until operation is done
@@ -286,7 +318,7 @@ async def generate_video_from_text(
                 }
 
             time.sleep(10)
-            operation = client.operations.get(operation.name)
+            operation = client.operations.get(operation)
 
         generation_time = time.time() - start_time
         print(f"[INFO] Video generation completed in {generation_time:.1f}s")
@@ -309,7 +341,11 @@ async def generate_video_from_text(
         file_path = os.path.join(artifacts_dir, filename)
 
         print(f"[INFO] Downloading video to: {file_path}")
-        client.files.download(file=generated_video.video, path=file_path)
+        video_bytes = client.files.download(file=generated_video.video)
+
+        # Write video bytes to file
+        with open(file_path, 'wb') as f:
+            f.write(video_bytes)
 
         # Save to ADK artifacts
         with open(file_path, 'rb') as f:
