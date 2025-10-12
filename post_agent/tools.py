@@ -373,12 +373,19 @@ def post_to_x_api(text: str, media_keys: Optional[List[str]] = None, max_retries
                         wait_seconds = int(reset_timestamp) - int(time_module.time())
                         wait_hours = wait_seconds / 3600
 
+                        print(f"\n{'='*60}")
                         print(f"[ERROR] ⚠️  24-HOUR RATE LIMIT EXCEEDED!")
+                        print(f"{'='*60}")
                         print(f"[ERROR] Your app has a limit of {rate_limit_headers['app_24h_limit']} tweets per 24 hours")
                         print(f"[ERROR] App remaining: {rate_limit_headers['app_24h_remaining']}/{rate_limit_headers['app_24h_limit']}")
                         print(f"[ERROR] User remaining: {rate_limit_headers['user_24h_remaining']}/{rate_limit_headers['user_24h_limit']}")
                         print(f"[ERROR] Resets at: {reset_str} (in {wait_hours:.1f} hours)")
                         print(f"[INFO] This is separate from the general API rate limit (1.08M requests)")
+                        print(f"\n[INFO] 📋 MANUAL POSTING INFO:")
+                        print(f"[INFO] Tweet text: {payload.get('text', 'N/A')}")
+                        if payload.get('media', {}).get('media_ids'):
+                            print(f"[INFO] Media IDs: {payload['media']['media_ids']}")
+                        print(f"{'='*60}\n")
                     else:
                         print(f"[ERROR] 24-hour rate limit exceeded (no reset time available)")
                 else:
@@ -504,12 +511,25 @@ def x_publish(
                 "tweet_url": f"https://twitter.com/i/web/status/{tweet_data.get('id', '')}"
             }
         else:
+            # Failed to post (likely rate limited)
+            print(f"\n{'='*60}")
+            print(f"[INFO] 📋 MANUAL POSTING INFORMATION")
+            print(f"{'='*60}")
+            print(f"[INFO] Tweet text: {text}")
+            if image_path:
+                print(f"[INFO] Image path: {image_path}")
+            if media_keys:
+                print(f"[INFO] Media ID (already uploaded): {media_keys[0]}")
+            print(f"[INFO] You can manually post this content on Twitter/X")
+            print(f"{'='*60}\n")
+
             result = {
-                "status": "simulated",
-                "post_id": f"sim_{datetime.now().timestamp()}",
+                "status": "failed",
+                "post_id": f"failed_{datetime.now().timestamp()}",
                 "text": text,
                 "image_path": image_path,
-                "message": "⚠️ 실제 발행 실패. 시뮬레이션 모드로 처리되었습니다."
+                "media_id": media_keys[0] if media_keys else None,
+                "message": "⚠️ 포스팅 실패 (Rate Limit). 위의 정보로 수동 포스팅 가능합니다."
             }
     else:
         # Simulation mode
