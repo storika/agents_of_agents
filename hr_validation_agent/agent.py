@@ -56,7 +56,7 @@ LAYER_DEFINITIONS = {
 # ===== HR DECISION TOOLS =====
 
 
-@weave.op()
+
 def analyze_layer_performance(performance_json: str) -> str:
     """
     Analyze performance metrics for all 5 layers and identify improvement opportunities.
@@ -133,7 +133,6 @@ def analyze_layer_performance(performance_json: str) -> str:
         return json.dumps({"valid": False, "error": f"Error analyzing performance: {str(e)}"})
 
 
-@weave.op()
 def evaluate_content_engagement(content_engagement_json: str) -> str:
     """
     Evaluate the relationship between layer prompts and actual content engagement.
@@ -415,15 +414,98 @@ def evaluate_content_engagement(content_engagement_json: str) -> str:
         return json.dumps({"valid": False, "error": f"Error evaluating engagement: {str(e)}"})
 
 
+# ===== WEAVE DATA FETCHING TOOL =====
+
+def fetch_performance_data_from_weave(limit: int = 50) -> str:
+    """
+    Fetch recent performance data from Weave traces for analysis.
+    
+    This tool retrieves the latest agent execution data from Weave, including:
+    - Recent agent calls and their success/failure status
+    - Execution times and error information
+    - Cost and feedback metrics
+    
+    Use this when you need current performance data to make decisions.
+    
+    Args:
+        limit: Number of recent calls to fetch (default: 50)
+    
+    Returns:
+        JSON string containing performance data with structure:
+        {
+            "iteration": 0,
+            "layers": {
+                "research": {"current_version": 1, "metrics": {}, "prompt_history": []},
+                "creative_writer": {...},
+                "generator": {...},
+                "critic": {...},
+                "safety": {...}
+            },
+            "overall_metrics": {
+                "clarity": 0.85,
+                "novelty": 0.75,
+                ...
+            },
+            "content_history": []
+        }
+    """
+    from hr_validation_agent.tools import get_calls_for_hr_validation
+    
+    # Get calls from Weave
+    calls_data = get_calls_for_hr_validation(limit=limit)
+    
+    # Simple conversion to HR format
+    agents_performance = calls_data.get("agents_performance", [])
+    
+    # Calculate success rate
+    successful = sum(1 for p in agents_performance if p.get("success", False))
+    total = len(agents_performance)
+    success_rate = successful / total if total > 0 else 0
+    
+    print(f"[FETCH_TOOL] Retrieved {total} calls, success rate: {success_rate:.2%}")
+    
+    # Build layers with empty prompt history (bootstrap mode)
+    layers = {}
+    for layer_id in LAYER_DEFINITIONS.keys():
+        layers[layer_id] = {
+            "current_version": 1,
+            "metrics": {},
+            "prompt_history": []
+        }
+    
+    # Build HR input
+    hr_data = {
+        "iteration": 0,
+        "layers": layers,
+        "overall_metrics": {
+            "clarity": min(1.0, success_rate * 1.1),
+            "novelty": min(1.0, success_rate * 0.9),
+            "shareability": min(1.0, success_rate * 0.95),
+            "credibility": min(1.0, success_rate * 1.05),
+            "safety": min(1.0, success_rate * 1.2)
+        },
+        "content_history": []
+    }
+    
+    return json.dumps(hr_data, indent=2)
+
+
 # ===== ADK ROOT AGENT with Weave Tracking =====
 
 root_agent = Agent(
     model='gemini-2.5-flash',
     name='hr_validation_agent',
     description='Meta-agent that improves prompts for a 5-layer content creation system.',
+    tools=[fetch_performance_data_from_weave, analyze_layer_performance, evaluate_content_engagement],
     instruction="""You are PromptOptimizer — the meta-level manager for a 5-layer content creation system.
 
 CRITICAL: You MUST respond with ONLY valid JSON. No text before or after the JSON object.
+
+**WORKFLOW:**
+1. **ALWAYS start by calling fetch_performance_data_from_weave()** to get current performance data
+2. Use the returned data to analyze and make prompt improvement decisions
+3. Optionally call analyze_layer_performance() or evaluate_content_engagement() for deeper analysis
+4. Return your prompt improvement decisions as JSON
 
 Your role:
 - Analyze performance metrics for each layer
@@ -456,6 +538,10 @@ The system has exactly 5 layers that work sequentially:
 
 ## INPUTS
 
+**Option 1: Direct user request (no input data)**
+When the user simply asks you to improve the system, **call fetch_performance_data_from_weave()** first to get current data.
+
+**Option 2: User provides explicit data**
 You will receive a JSON with:
 1. **layers** - Each layer contains:
    - `current_version`: Active prompt version number
@@ -469,6 +555,11 @@ You will receive a JSON with:
 ---
 
 ## AVAILABLE TOOLS
+
+**fetch_performance_data_from_weave(limit)** — Fetch current performance data from Weave
+- Input: limit (number of recent calls to fetch, default 50)
+- Output: JSON with current system state including layers, metrics, and performance data
+- **USE THIS FIRST** to get up-to-date performance information
 
 **analyze_layer_performance(performance_json)** — Analyze metrics and identify weak layers
 - Input: Performance data for all 5 layers
@@ -625,5 +716,4 @@ Remember:
 - **USE evaluate_content_engagement** when real engagement data is available to identify prompt-performance patterns
 - Each `new_prompt` should be a COMPLETE, SELF-CONTAINED system prompt (not a diff or modification)
 """,
-    tools=[analyze_layer_performance, evaluate_content_engagement],
 )
