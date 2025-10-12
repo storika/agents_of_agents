@@ -330,6 +330,9 @@ def post_to_x_api(text: str, media_keys: Optional[List[str]] = None, max_retries
 
                 print(f"[RATE_LIMIT] Remaining: {rate_limit_headers['remaining']}/{rate_limit_headers['limit']} (resets at {reset_str})")
 
+            # Debug: Show actual HTTP status
+            print(f"[DEBUG] HTTP Status: {response.status_code}")
+
             if response.status_code == 201:
                 data = response.json()
                 return data.get("data", {})
@@ -339,6 +342,9 @@ def post_to_x_api(text: str, media_keys: Optional[List[str]] = None, max_retries
                 return None
             elif response.status_code == 429:
                 # Extract rate limit info from headers
+                print(f"[DEBUG] 429 Response body: {response.text}")
+                print(f"[DEBUG] 429 Response headers: {dict(response.headers)}")
+
                 reset_timestamp = rate_limit_headers.get('reset')
                 if reset_timestamp:
                     from datetime import datetime
