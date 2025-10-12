@@ -213,7 +213,6 @@ def get_latest_trends_tool() -> str:
         })
 
 
-@weave.op()
 def create_research_agent() -> Agent:
     """Research Layer 에이전트 생성 - Reads from trend_data/ and applies perturbation"""
 
@@ -282,7 +281,6 @@ IMPORTANT:
     return agent
 
 
-@weave.op()
 def create_creative_writer_agent() -> Agent:
     """Creative Writer Layer 에이전트 생성"""
     
@@ -339,7 +337,6 @@ IMPORTANT: Always set "target_platforms": ["X"] for all ideas. Content must be o
     return agent
 
 
-@weave.op()
 def create_generator_agent() -> Agent:
     """Generator Layer 에이전트 생성"""
     
@@ -403,7 +400,6 @@ IMPORTANT: Always generate exactly ONE content piece for platform "X". Do not ge
     return agent
 
 
-@weave.op()
 def create_critic_agent() -> Agent:
     """Critic Layer 에이전트 생성"""
     
@@ -455,7 +451,6 @@ Output MUST be a JSON object with the following structure:
     return agent
 
 
-@weave.op()
 def create_safety_agent() -> Agent:
     """Safety Layer 에이전트 생성"""
     
@@ -507,7 +502,6 @@ Output MUST be a JSON object with the following structure:
     return agent
 
 
-@weave.op()
 def create_selector_agent() -> Agent:
     """Selector Layer 에이전트 생성 - 최종 컨텐츠 선택 및 가이드 제공"""
     
@@ -593,7 +587,6 @@ IMPORTANT:
     return agent
 
 
-@weave.op()
 def create_image_adapter_agent() -> Agent:
     """Image Adapter Agent - Selector 출력을 Image Caption Agent 입력으로 변환"""
     
@@ -648,7 +641,6 @@ IMPORTANT:
     return agent
 
 
-@weave.op()
 def call_research_layer(topic: str = None, audience_demographics: str = None) -> Dict[str, Any]:
     """
     Research Layer 호출 - Agent will use get_latest_trends_tool to fetch trend data
@@ -791,7 +783,6 @@ Provide your analysis in the specified JSON format.
         }
 
 
-@weave.op()
 def call_creative_writer_layer(research_output: Dict[str, Any]) -> Dict[str, Any]:
     """
     Creative Writer Layer 호출
@@ -873,7 +864,6 @@ Based on this research, please generate at least 3 creative content ideas.
         }
 
 
-@weave.op()
 def call_generator_layer(content_idea: Dict[str, Any]) -> Dict[str, Any]:
     """
     Generator Layer 호출
@@ -954,7 +944,6 @@ Please generate actual shareable content for the specified platforms.
         }
 
 
-@weave.op()
 def call_critic_layer(generator_output: Dict[str, Any]) -> Dict[str, Any]:
     """
     Critic Layer 호출
@@ -1033,7 +1022,6 @@ Please evaluate the quality of this content across accuracy, objectivity, and th
         }
 
 
-@weave.op()
 def call_safety_layer(generator_output: Dict[str, Any], critic_output: Dict[str, Any]) -> Dict[str, Any]:
     """
     Safety Layer 호출
@@ -1102,7 +1090,6 @@ Please assess the safety of this content for brand safety, ethical, and legal co
         }
 
 
-@weave.op()
 def create_image_generator_agent() -> Agent:
     """이미지 생성 에이전트 - media_prompt로 실제 이미지 생성"""
 
@@ -1158,7 +1145,6 @@ CRITICAL:
     return agent
 
 
-@weave.op()
 def create_media_selector_agent() -> Agent:
     """Media Selector Agent - Decides whether to use image or video based on content"""
 
@@ -1231,7 +1217,6 @@ IMPORTANT:
     return agent
 
 
-@weave.op()
 def create_video_generator_agent() -> Agent:
     """Video Generator Agent - Generates 8-second vertical video from image"""
 
@@ -1304,7 +1289,6 @@ IMPORTANT:
 
 # ===== IMAGE AND VIDEO CONCEPT GENERATION SUB-AGENTS =====
 
-@weave.op()
 def generate_image_concept(topic: str, tone: str) -> dict:
     """
     Generate image concept based on topic and tone using LLM reasoning.
@@ -1345,7 +1329,6 @@ Keep it Twitter-friendly, no brands/text/sensitive content."""
         }
 
 
-@weave.op()
 def generate_video_concept(
     image_concept: str,
     topic: str,

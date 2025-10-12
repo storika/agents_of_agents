@@ -106,9 +106,19 @@ def call_post_agent(
     Returns:
         JSON string with response
     """
-    # Parse context from JSON string
+    # Parse context from JSON string - safe version
     import json as json_lib
-    context = json_lib.loads(context_json) if context_json and context_json != "{}" else None
+    context = None
+    if context_json and context_json != "{}":
+        try:
+            # Limit size
+            if len(context_json) > 50000:
+                print(f"[WARNING] context_json too large ({len(context_json)} chars) in call_post_agent")
+                context_json = context_json[:50000]
+            context = json_lib.loads(context_json)
+        except json_lib.JSONDecodeError as e:
+            print(f"[WARNING] Failed to parse context_json in call_post_agent: {e}")
+            context = None
 
     response = call_agent_via_a2a(
         agent_name="post_agent",
@@ -143,9 +153,19 @@ def call_quote_agent(
     Returns:
         JSON string with response
     """
-    # Parse context from JSON string
+    # Parse context from JSON string - safe version
     import json as json_lib
-    context = json_lib.loads(context_json) if context_json and context_json != "{}" else None
+    context = None
+    if context_json and context_json != "{}":
+        try:
+            # Limit size
+            if len(context_json) > 50000:
+                print(f"[WARNING] context_json too large ({len(context_json)} chars) in call_quote_agent")
+                context_json = context_json[:50000]
+            context = json_lib.loads(context_json)
+        except json_lib.JSONDecodeError as e:
+            print(f"[WARNING] Failed to parse context_json in call_quote_agent: {e}")
+            context = None
 
     response = call_agent_via_a2a(
         agent_name="quote_agent",
@@ -184,9 +204,19 @@ def call_reply_agent(
             "error": "tweet_url is required for reply_agent"
         })
 
-    # Parse context from JSON string
+    # Parse context from JSON string - safe version
     import json as json_lib
-    context = json_lib.loads(context_json) if context_json and context_json != "{}" else None
+    context = None
+    if context_json and context_json != "{}":
+        try:
+            # Limit size
+            if len(context_json) > 50000:
+                print(f"[WARNING] context_json too large ({len(context_json)} chars) in call_reply_agent")
+                context_json = context_json[:50000]
+            context = json_lib.loads(context_json)
+        except json_lib.JSONDecodeError as e:
+            print(f"[WARNING] Failed to parse context_json in call_reply_agent: {e}")
+            context = None
 
     response = call_agent_via_a2a(
         agent_name="reply_agent",
@@ -222,9 +252,19 @@ def call_repost_agent(
             "error": "tweet_url is required for repost_agent"
         })
 
-    # Parse context from JSON string
+    # Parse context from JSON string - safe version
     import json as json_lib
-    context = json_lib.loads(context_json) if context_json and context_json != "{}" else None
+    context = None
+    if context_json and context_json != "{}":
+        try:
+            # Limit size
+            if len(context_json) > 50000:
+                print(f"[WARNING] context_json too large ({len(context_json)} chars) in call_repost_agent")
+                context_json = context_json[:50000]
+            context = json_lib.loads(context_json)
+        except json_lib.JSONDecodeError as e:
+            print(f"[WARNING] Failed to parse context_json in call_repost_agent: {e}")
+            context = None
 
     response = call_agent_via_a2a(
         agent_name="repost_agent",

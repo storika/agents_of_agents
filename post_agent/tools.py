@@ -24,7 +24,6 @@ gemini_text_client = Client()
 gemini_image_client = genai.Client()
 
 
-@weave.op()
 def upload_video_chunked(oauth1_creds: dict, video_path: str) -> Optional[str]:
     """
     Upload video using Twitter's chunked upload API (required for videos)
@@ -158,7 +157,6 @@ def upload_video_chunked(oauth1_creds: dict, video_path: str) -> Optional[str]:
         return None
 
 
-@weave.op()
 def upload_media_v2(oauth2_token: str, image_path: str) -> Optional[str]:
     """Upload media using Twitter API V2 (OAuth 2.0)"""
     print(f"[INFO] V2 API 시도: {image_path}")
@@ -183,7 +181,6 @@ def upload_media_v2(oauth2_token: str, image_path: str) -> Optional[str]:
         return None
 
 
-@weave.op()
 def upload_media_v1(oauth1_creds: dict, image_path: str) -> Optional[str]:
     """Upload media using Twitter API V1.1 (OAuth 1.0a)"""
     print(f"[INFO] V1.1 API 시도: {image_path}")
@@ -225,7 +222,6 @@ def upload_media_v1(oauth1_creds: dict, image_path: str) -> Optional[str]:
         return None
 
 
-@weave.op()
 def upload_media_to_x(image_path: str) -> Optional[str]:
     """
     Upload media to X (V2 attempt → V1.1 fallback)
@@ -275,7 +271,6 @@ def upload_media_to_x(image_path: str) -> Optional[str]:
     return upload_media_v1(oauth1_creds, image_path)
 
 
-@weave.op()
 def post_to_x_api(text: str, media_keys: Optional[List[str]] = None, max_retries: int = 3) -> Optional[Dict]:
     """
     Post tweet using Twitter API V2 (OAuth 2.0)
@@ -423,7 +418,6 @@ def post_to_x_api(text: str, media_keys: Optional[List[str]] = None, max_retries
     return None
 
 
-@weave.op()
 def x_publish(
     text: str,
     image_path: Optional[str] = None,
@@ -591,7 +585,6 @@ def post_to_x(text: str, image_path: str = "", hashtags: str = "", actually_post
 
 # ===== IMAGE GENERATION TOOLS =====
 
-@weave.op()
 def generate_twitter_image(concept: str, retry: bool = False) -> dict:
     """
     Generate a 3:4 portrait image for Twitter based on a concept.
@@ -663,7 +656,6 @@ def generate_twitter_image(concept: str, retry: bool = False) -> dict:
 
 # ===== VIDEO GENERATION TOOLS =====
 
-@weave.op()
 def generate_video_from_image(
     image_path: str,
     motion_prompt: str,

@@ -7,7 +7,6 @@ import weave
 from typing import Optional
 
 
-@weave.op()
 def fetch_tweet_content(tweet_url: str) -> str:
     """
     Fetch tweet content from URL
@@ -40,7 +39,6 @@ def fetch_tweet_content(tweet_url: str) -> str:
     return json.dumps(mock_tweet, indent=2)
 
 
-@weave.op()
 def generate_reply(
     tweet_text: str,
     author: str = "@unknown",
@@ -95,7 +93,6 @@ def generate_reply(
     return json.dumps(mock_replies, indent=2)
 
 
-@weave.op()
 def post_reply(
     tweet_url: str,
     reply_text: str,

@@ -32,7 +32,6 @@ class MasonViralOrchestrator(weave.Model):
             }
         )
     
-    @weave.op()
     def run(self, initial_team_state: Dict[str, Any]):
         """
         전체 시스템 실행 (무한 루프).
@@ -95,7 +94,6 @@ class MasonViralOrchestrator(weave.Model):
                 remaining_wait = self.config["iteration_interval_hours"] - self.config["min_wait_for_metrics"]
                 time.sleep(remaining_wait * 3600)
     
-    @weave.op()
     def _run_hr_agent(self, team_state: Dict, iteration: int) -> Dict:
         """Step 1: HR Agent 실행"""
         from hr_validation_agent.agent import analyze_team_and_decide
@@ -113,7 +111,6 @@ class MasonViralOrchestrator(weave.Model):
         
         return decisions
     
-    @weave.op()
     def _apply_hr_decisions(self, current_agents: Dict, hr_decisions: Dict) -> Dict:
         """Step 2: HR 결정 적용"""
         from agent_factory import apply_hr_decisions
@@ -128,7 +125,6 @@ class MasonViralOrchestrator(weave.Model):
         
         return updated_agents
     
-    @weave.op()
     def _generate_contents(
         self, 
         agents: Dict, 
@@ -183,7 +179,6 @@ class MasonViralOrchestrator(weave.Model):
             "How our HR agent improved content quality by 3x"
         ]
     
-    @weave.op()
     def _post_to_twitter(self, contents: List[Dict], iteration: int) -> List[str]:
         """Step 4: Twitter 발행"""
         tweet_ids = []
@@ -213,7 +208,6 @@ class MasonViralOrchestrator(weave.Model):
         time.sleep(1)  # 1초만 대기 (테스트용)
         print(f"  ✅ 대기 완료")
     
-    @weave.op()
     def _collect_twitter_metrics(self, tweet_ids: List[str]) -> List[Dict]:
         """Step 6: Twitter 메트릭 수집"""
         metrics = []
@@ -244,7 +238,6 @@ class MasonViralOrchestrator(weave.Model):
         
         return metrics
     
-    @weave.op()
     def _update_team_state(
         self,
         team_state: Dict,

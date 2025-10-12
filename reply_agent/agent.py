@@ -180,7 +180,6 @@ root_agent = LlmAgent(
 
 # ===== A2A PROTOCOL INTERFACE =====
 
-@weave.op()
 def execute(request: Dict[str, Any]) -> Dict[str, Any]:
     """
     A2A Protocol Entry Point for Reply Agent
@@ -305,7 +304,6 @@ def execute(request: Dict[str, Any]) -> Dict[str, Any]:
 
 # ===== CONVENIENCE FUNCTIONS =====
 
-@weave.op()
 def create_reply(
     tweet_url: str,
     strategy: str = "insightful",

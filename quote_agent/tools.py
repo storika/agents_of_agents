@@ -140,7 +140,6 @@ def load_trending_posts_from_data(max_results: int = 10) -> List[Dict[str, Any]]
         return []
 
 
-@weave.op()
 def search_recent_posts(
     query: str, max_results: int = 10, tweet_fields: Optional[List[str]] = None
 ) -> Dict[str, Any]:
@@ -283,7 +282,6 @@ def search_recent_posts(
         }
 
 
-@weave.op()
 def generate_quote_tweet_comment(
     post_text: str, context: Optional[str] = None, max_length: int = 200
 ) -> str:
@@ -355,7 +353,6 @@ OUTPUT: Return ONLY the comment text, nothing else. No quotes, no explanations."
         return "Interesting perspective! Would love to hear more about your experience with this."
 
 
-@weave.op()
 def quote_tweet_post(
     post_id: str, comment: str, dry_run: bool = True
 ) -> Dict[str, Any]:
@@ -423,7 +420,6 @@ def quote_tweet_post(
         return {"status": "error", "error": str(e), "post_id": post_id}
 
 
-@weave.op()
 def quote_to_x(
     tweet_url: str,
     comment: str,
@@ -568,7 +564,6 @@ def quote_to_x(
     return json.dumps(result, indent=2, ensure_ascii=False)
 
 
-@weave.op()
 def auto_repost_workflow(
     query: str,
     max_search_results: int = 10,
@@ -717,7 +712,6 @@ def print_workflow_result(result: Dict[str, Any]) -> None:
 
 # ===== AUTO TRENDING REPOST =====
 
-@weave.op()
 def auto_trending_repost(max_results: int = 10) -> Dict[str, Any]:
     """
     Automatically select a random trending post and generate a repost with comment
@@ -790,7 +784,6 @@ def auto_trending_repost(max_results: int = 10) -> Dict[str, Any]:
 # These are for compatibility with repost_agent/agent.py that uses old function names
 
 
-@weave.op()
 def find_trending_tweets_tool(topic: str, max_results: int = 10) -> str:
     """Legacy wrapper for search_recent_posts - returns JSON string"""
     result = search_recent_posts(query=topic, max_results=max_results)
@@ -814,7 +807,6 @@ def find_trending_tweets_tool(topic: str, max_results: int = 10) -> str:
     )
 
 
-@weave.op()
 def generate_repost_comment_tool(
     tweet_text: str, author: str = "@unknown", strategy: str = "auto"
 ) -> str:
@@ -892,7 +884,6 @@ def generate_repost_comment_tool(
     )
 
 
-@weave.op()
 def post_quote_tweet_tool(
     original_tweet_url: str, comment: str, dry_run: bool = True
 ) -> str:
@@ -910,7 +901,6 @@ def post_quote_tweet_tool(
     return json.dumps(result, indent=2)
 
 
-@weave.op()
 def analyze_tweet_for_repost(tweet_text: str, author: str = "@unknown") -> str:
     """
     Analyze a tweet and recommend the best repost strategy

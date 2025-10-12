@@ -26,7 +26,6 @@ class WeaveAgent(weave.Model):
     instruction: str
     model: str = "gemini-2.5-flash"
     
-    @weave.op()
     def run(self, prompt: str) -> Dict[str, Any]:
         """
         에이전트 실행 (Weave가 자동으로 입력/출력 추적).
@@ -58,7 +57,6 @@ class ContentGenerationPipeline(weave.Model):
     agents: Dict[str, WeaveAgent]
     config: Dict[str, Any]
     
-    @weave.op()
     def generate_content(self, topic: str) -> Dict[str, Any]:
         """
         합의 기반 콘텐츠 생성 (Weave가 전체 프로세스 추적).
@@ -110,7 +108,6 @@ class ContentGenerationPipeline(weave.Model):
             "status": "max_iterations_reached"
         }
     
-    @weave.op()
     def _gather_context(self, topic: str) -> Dict[str, Any]:
         """Phase 1: 컨텍스트 수집 (Weave 추적)"""
         context = {"topic": topic}
@@ -123,7 +120,6 @@ class ContentGenerationPipeline(weave.Model):
         
         return context
     
-    @weave.op()
     def _write_round(self, previous_content: Optional[str], context: Dict, iteration: int) -> str:
         """Phase 2: 작성 라운드 (Weave 추적)"""
         writers = [a for a in self.agents.values() if "writer" in a.role]
@@ -141,7 +137,6 @@ class ContentGenerationPipeline(weave.Model):
         result = writer.run(prompt)
         return result.get("response", "")
     
-    @weave.op()
     def _evaluate_round(self, content: str, iteration: int) -> Dict[str, float]:
         """Phase 2: 평가 라운드 (Weave 추적)"""
         critics = [a for a in self.agents.values() if "critic" in a.role]
@@ -174,7 +169,6 @@ class HRDecisionTracker(weave.Model):
     
     project_name: str = "mason-choi-storika/WeaveHacks2"
     
-    @weave.op()
     def log_hr_decision(
         self,
         iteration: int,
@@ -203,7 +197,6 @@ class HRDecisionTracker(weave.Model):
             "team_performance": team_state.get("score_history", {})
         }
     
-    @weave.op()
     def log_content_performance(
         self,
         content_id: str,
