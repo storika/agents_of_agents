@@ -189,6 +189,16 @@ Output MUST be a JSON object with the following structure:
   "data_sources_used": "array of strings (e.g., 'Google Trends', 'Twitter Analytics')"
 }"""
     
+    # Weave에 prompt publish
+    try:
+        prompt_obj = weave.StringPrompt(system_prompt)
+        weave.publish(prompt_obj, name="cmo_research_prompt")
+        print(f"📝 CMO Research Prompt published")
+    except Exception as e:
+        print(f"⚠️  Failed to publish CMO research prompt: {e}")
+        import traceback
+        traceback.print_exc()
+    
     agent = Agent(
         model='gemini-2.5-flash',
         name='research_layer',
@@ -231,6 +241,16 @@ Output MUST be a JSON array of objects, each representing a content idea, with t
 ]
 
 IMPORTANT: Always set "target_platforms": ["X"] for all ideas. Content must be optimized for X/Twitter."""
+    
+    # Weave에 prompt publish
+    try:
+        prompt_obj = weave.StringPrompt(system_prompt)
+        weave.publish(prompt_obj, name="cmo_creative_writer_prompt")
+        print(f"📝 CMO Creative Writer Prompt published")
+    except Exception as e:
+        print(f"⚠️  Failed to publish CMO creative writer prompt: {e}")
+        import traceback
+        traceback.print_exc()
     
     agent = Agent(
         model='gemini-2.5-flash',
@@ -283,6 +303,16 @@ Output MUST be a JSON object with the following structure:
 
 IMPORTANT: Always generate exactly ONE content piece for platform "X". Do not generate for multiple platforms."""
     
+    # Weave에 prompt publish
+    try:
+        prompt_obj = weave.StringPrompt(system_prompt)
+        weave.publish(prompt_obj, name="cmo_generator_prompt")
+        print(f"📝 CMO Generator Prompt published")
+    except Exception as e:
+        print(f"⚠️  Failed to publish CMO generator prompt: {e}")
+        import traceback
+        traceback.print_exc()
+    
     agent = Agent(
         model='gemini-2.5-flash',
         name='generator_layer',
@@ -325,6 +355,16 @@ Output MUST be a JSON object with the following structure:
   ]
 }"""
     
+    # Weave에 prompt publish
+    try:
+        prompt_obj = weave.StringPrompt(system_prompt)
+        weave.publish(prompt_obj, name="cmo_critic_prompt")
+        print(f"📝 CMO Critic Prompt published")
+    except Exception as e:
+        print(f"⚠️  Failed to publish CMO critic prompt: {e}")
+        import traceback
+        traceback.print_exc()
+    
     agent = Agent(
         model='gemini-2.5-flash',
         name='critic_layer',
@@ -366,6 +406,16 @@ Output MUST be a JSON object with the following structure:
   ],
   "recommendations": "array of strings (suggestions to fix issues or 'Reject Content')"
 }"""
+    
+    # Weave에 prompt publish
+    try:
+        prompt_obj = weave.StringPrompt(system_prompt)
+        weave.publish(prompt_obj, name="cmo_safety_prompt")
+        print(f"📝 CMO Safety Prompt published")
+    except Exception as e:
+        print(f"⚠️  Failed to publish CMO safety prompt: {e}")
+        import traceback
+        traceback.print_exc()
     
     agent = Agent(
         model='gemini-2.5-flash',
@@ -443,6 +493,16 @@ IMPORTANT:
 - If no candidate passes thresholds, set status to "rejected" or "needs_review"
 """
     
+    # Weave에 prompt publish
+    try:
+        prompt_obj = weave.StringPrompt(system_prompt)
+        weave.publish(prompt_obj, name="cmo_selector_prompt")
+        print(f"📝 CMO Selector Prompt published")
+    except Exception as e:
+        print(f"⚠️  Failed to publish CMO selector prompt: {e}")
+        import traceback
+        traceback.print_exc()
+    
     agent = Agent(
         model='gemini-2.5-flash',
         name='selector_layer',
@@ -487,6 +547,16 @@ IMPORTANT:
 - Infer tone from tweet: emoji/humor → witty, facts → informative, minimal words → minimal
 - Keep topic concise (3-5 words max)
 """
+    
+    # Weave에 prompt publish
+    try:
+        prompt_obj = weave.StringPrompt(system_prompt)
+        weave.publish(prompt_obj, name="cmo_image_adapter_prompt")
+        print(f"📝 CMO Image Adapter Prompt published")
+    except Exception as e:
+        print(f"⚠️  Failed to publish CMO image adapter prompt: {e}")
+        import traceback
+        traceback.print_exc()
     
     agent = Agent(
         model='gemini-2.5-flash',
@@ -847,6 +917,16 @@ IMPORTANT:
 - Image is automatically saved to artifacts
 - Return only the image reference, not the full base64 data
 """
+    
+    # Weave에 prompt publish
+    try:
+        prompt_obj = weave.StringPrompt(system_prompt)
+        weave.publish(prompt_obj, name="cmo_image_generator_prompt")
+        print(f"📝 CMO Image Generator Prompt published")
+    except Exception as e:
+        print(f"⚠️  Failed to publish CMO image generator prompt: {e}")
+        import traceback
+        traceback.print_exc()
     
     agent = Agent(
         model='gemini-2.5-flash',

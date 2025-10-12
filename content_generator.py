@@ -158,11 +158,11 @@ Requirements:
             try:
                 prompt_obj = weave.StringPrompt(prompt)
                 weave.publish(prompt_obj, name="content_generation_prompt")
-                if verbose:
-                    print(f"📝 Prompt published: Round {iteration} (Initial Draft)")
+                print(f"📝 Prompt published: Round {iteration} (Initial Draft)")
             except Exception as e:
-                if verbose:
-                    print(f"⚠️  Failed to publish prompt: {e}")
+                print(f"⚠️  Failed to publish prompt: {e}")
+                import traceback
+                traceback.print_exc()
             
             if verbose:
                 print(f"\n✍️  Writers creating initial draft...")
@@ -195,11 +195,11 @@ Make specific improvements to raise the score."""
                 }):
                     prompt_obj = weave.StringPrompt(prompt)
                     weave.publish(prompt_obj, name="content_generation_prompt")
-                    if verbose:
-                        print(f"📝 Prompt published: Round {iteration} (Refinement, Score: {scores.get('overall', 0):.2f})")
+                    print(f"📝 Prompt published: Round {iteration} (Refinement, Score: {scores.get('overall', 0):.2f})")
             except Exception as e:
-                if verbose:
-                    print(f"⚠️  Failed to publish prompt: {e}")
+                print(f"⚠️  Failed to publish prompt: {e}")
+                import traceback
+                traceback.print_exc()
             
             if verbose:
                 print(f"\n✍️  Writers refining (Round {iteration})...")
