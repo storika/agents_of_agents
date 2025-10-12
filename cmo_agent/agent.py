@@ -23,7 +23,7 @@ from opentelemetry import trace
 
 # Configure Weave endpoint and authentication
 WANDB_BASE_URL = "https://trace.wandb.ai"
-PROJECT_ID = os.environ.get("WANDB_PROJECT_ID", "mason-choi-storika/mason-test")
+PROJECT_ID = os.environ.get("WANDB_PROJECT_ID", "mason-choi-storika/WeaveHacks2")
 OTEL_EXPORTER_OTLP_ENDPOINT = f"{WANDB_BASE_URL}/otel/v1/traces"
 
 # Set up authentication
