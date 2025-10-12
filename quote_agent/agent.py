@@ -4,6 +4,7 @@ An agent that creates engaging quote tweets (reposts with comments) for Twitter/
 """
 
 import os
+import json
 
 import weave
 from dotenv import load_dotenv
@@ -310,3 +311,129 @@ def post_quote_tweet(tweet_url: str, comment: str, dry_run: bool = True) -> dict
     )
 
     return json.loads(result)
+
+
+# ===== A2A PROTOCOL INTERFACE =====
+
+@weave.op()
+def execute(request: dict) -> dict:
+    """
+    A2A Protocol Entry Point for Quote Agent
+
+    Args:
+        request: {
+            "action": str,              # Action to perform
+            "params": dict,             # Action-specific parameters
+            "context": dict,            # Historical data, trends, etc.
+            "caller": str               # Who's calling (for tracking)
+        }
+
+    Returns:
+        {
+            "status": "success|pending|failed",
+            "result": Any,              # Action result
+            "metadata": {
+                "agent": "quote_agent",
+                "action": str,
+                "timestamp": str,
+                "metrics": dict
+            }
+        }
+    """
+    from datetime import datetime
+
+    action = request.get("action", "create_quote_tweet")
+    params = request.get("params", {})
+    context = request.get("context", {})
+    caller = request.get("caller", "unknown")
+
+    print(f"[QUOTE_AGENT] A2A Request from {caller}: {action}")
+
+    try:
+        if action == "create_quote_tweet":
+            # Extract parameters
+            strategy = params.get("strategy", "trending")
+            topic = params.get("topic")
+            tweet_url = params.get("tweet_url")
+            require_approval = params.get("require_approval", True)
+
+            # Build prompt for root_agent
+            if strategy == "trending":
+                prompt = "Pick one from trending topics and create a quote tweet"
+            elif tweet_url:
+                prompt = f"Create a quote tweet for {tweet_url}"
+            elif topic:
+                prompt = f"Find a trending tweet about {topic} and create a quote tweet"
+            else:
+                prompt = "Pick one from trending topics and create a quote tweet"
+
+            if context:
+                prompt += f"\n\nContext: {json.dumps(context, indent=2)}"
+
+            # Execute via tools directly
+            print(f"[QUOTE_AGENT] Executing quote tweet generation...")
+            from quote_agent.tools import search_recent_posts, generate_quote_tweet_comment, auto_trending_repost
+
+            # Use auto_trending_repost for trending strategy
+            if strategy == "trending":
+                result = auto_trending_repost()
+                response_text = json.dumps(result, indent=2)
+            else:
+                # Manual strategy with topic or URL
+                search_query = topic if topic else "trending content"
+                posts_result = search_recent_posts(search_query, max_results=5)
+
+                # Generate comment for first post
+                posts_data = json.loads(posts_result) if isinstance(posts_result, str) else posts_result
+                if posts_data.get("posts"):
+                    first_post = posts_data["posts"][0]
+                    comment = generate_quote_tweet_comment(first_post["text"])
+                    response_text = json.dumps({
+                        "post": first_post,
+                        "comment": comment
+                    }, indent=2)
+                else:
+                    response_text = json.dumps({"error": "No posts found"}, indent=2)
+
+            return {
+                "status": "success",
+                "result": {
+                    "quote_tweet_generated": True,
+                    "response": response_text,
+                    "requires_approval": require_approval
+                },
+                "metadata": {
+                    "agent": "quote_agent",
+                    "action": action,
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "metrics": {
+                        "generation_time_ms": 0  # TODO: Track actual time
+                    }
+                }
+            }
+
+        else:
+            return {
+                "status": "failed",
+                "error": f"Unknown action: {action}",
+                "metadata": {
+                    "agent": "quote_agent",
+                    "action": action,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+
+    except Exception as e:
+        print(f"[QUOTE_AGENT ERROR] {e}")
+        import traceback
+        traceback.print_exc()
+
+        return {
+            "status": "failed",
+            "error": str(e),
+            "metadata": {
+                "agent": "quote_agent",
+                "action": action,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        }
