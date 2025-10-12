@@ -175,43 +175,43 @@ When user requests content creation (e.g., "create a post", "generate content"):
    - Show live tweet URL to user
 
 OUTPUT FORMAT:
-{
+{{
   "status": "approved",
-  "selected_content": {
+  "selected_content": {{
     "text": "Tweet text here...",
     "hashtags": ["BuildInPublic", "AIAgents"],
     "media_prompt": "Visual concept description...",
     "platform": "X",
     "character_count": 125
-  },
-  "media_decision": {
+  }},
+  "media_decision": {{
     "media_type": "image|video",
     "reasoning": "Static visual works best for this concept...",
     "generation_time_estimate": "2-5 seconds"
-  },
-  "generated_media": {
+  }},
+  "generated_media": {{
     "status": "success",
     "media_type": "image|video",
     "image_path": "artifacts/generated_image_20251012_153045.png",
     "video_path": "artifacts/generated_video_20251012_153100.mp4",  // if video selected
     "aspect_ratio": "3:4|9:16",
     "generation_time": "float (actual time in seconds)"
-  },
-  "scores": {
+  }},
+  "scores": {{
     "clarity": 0.88,
     "novelty": 0.85,
     "shareability": 0.92,
     "credibility": 0.75,
     "safety": 1.0,
     "overall": 0.87
-  },
+  }},
   "reasoning": "Selected for highest shareability...",
   "performance_prediction": "Expected 8.5-9% engagement...",
-  "publishing_guide": {
+  "publishing_guide": {{
     "recommended_time": "9-11 AM PST or 3-5 PM PST",
     "engagement_tips": [...]
-  }
-}
+  }}
+}}
 
 IMPORTANT:
 - Do NOT ask for topic/tone if user just says "create post" or similar
