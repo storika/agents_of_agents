@@ -4,7 +4,6 @@ All inter-agent communication goes through these standardized tools
 """
 
 import json
-import weave
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 from pathlib import Path
@@ -12,7 +11,6 @@ from pathlib import Path
 
 # ===== A2A PROTOCOL LAYER =====
 
-@weave.op()
 def call_agent_via_a2a(
     agent_name: str,
     action: str,
@@ -90,7 +88,6 @@ def call_agent_via_a2a(
 
 # ===== CONVENIENCE WRAPPERS FOR SPECIFIC AGENTS =====
 
-@weave.op()
 def call_post_agent(
     tone: str = "witty",
     topic: str = "",
@@ -125,7 +122,6 @@ def call_post_agent(
     return json.dumps(response, indent=2)
 
 
-@weave.op()
 def call_quote_agent(
     strategy: str = "trending",
     topic: str = "",
@@ -163,7 +159,6 @@ def call_quote_agent(
     return json.dumps(response, indent=2)
 
 
-@weave.op()
 def call_reply_agent(
     tweet_url: str,
     strategy: str = "insightful",
@@ -204,7 +199,6 @@ def call_reply_agent(
     return json.dumps(response, indent=2)
 
 
-@weave.op()
 def call_repost_agent(
     tweet_url: str,
     context_json: str = "{}"
@@ -242,7 +236,6 @@ def call_repost_agent(
     return json.dumps(response, indent=2)
 
 
-@weave.op()
 def get_trending_context() -> str:
     """
     Get current trending topics and context from real trend_data/ directory

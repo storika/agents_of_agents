@@ -1,74 +1,71 @@
 """
-CMO Agent 간단한 실행 예제
+CMO Agent 간단한 실행 예제 (OpenTelemetry Weave 통합)
+
+이 예제는 CMO Agent를 사용하여 콘텐츠를 생성하고,
+모든 ADK 작업이 자동으로 Weave로 추적되는 것을 보여줍니다.
 """
 
-import json
-from cmo_agent.agent import orchestrate_content_creation
+import os
+from dotenv import load_dotenv
+
+# 환경 변수 로드
+load_dotenv()
+
+# CMO Agent import (자동으로 OpenTelemetry 설정)
+from cmo_agent.agent import root_agent, decide_and_execute
 
 
 def main():
     """CMO 에이전트 실행 예제"""
     
-    print("🚀 CMO Agent 실행 예제")
+    print("🚀 CMO Agent 실행 예제 (with Weave OpenTelemetry)")
     print("=" * 70 + "\n")
     
-    # 설정
-    iteration = 0
-    topic = "AI agents that hire other AI agents for WeaveHack2"
-    num_candidates = 4
+    # 환경 변수 확인
+    if not os.getenv('WANDB_API_KEY'):
+        print("⚠️  경고: WANDB_API_KEY가 설정되지 않았습니다.")
+        print("   Weave traces를 보려면 환경 변수를 설정하세요.")
+        print("   export WANDB_API_KEY=your_key\n")
     
-    print(f"설정:")
-    print(f"  - 반복: {iteration}")
-    print(f"  - 주제: {topic}")
-    print(f"  - 후보 수: {num_candidates}\n")
-    
-    # CMO 실행
-    result_json = orchestrate_content_creation(
-        iteration=iteration,
-        topic=topic,
-        num_candidates=num_candidates
-    )
-    
-    # 결과 파싱
-    result = json.loads(result_json)
-    
-    # 결과 출력
-    print("\n" + "=" * 70)
-    print("📊 실행 결과")
-    print("=" * 70 + "\n")
-    
-    if "error" in result:
-        print(f"❌ 오류: {result['error']}")
+    if not os.getenv('GOOGLE_API_KEY'):
+        print("❌ 에러: GOOGLE_API_KEY가 필요합니다.")
+        print("   export GOOGLE_API_KEY=your_key")
         return
     
-    # 후보 요약
-    print(f"생성된 후보: {len(result['candidates'])}개\n")
-    for i, candidate in enumerate(result['candidates'], 1):
-        scores = candidate['scores']
-        print(f"{i}. {candidate['text'][:60]}...")
-        print(f"   점수: {scores['overall']:.2f} "
-              f"(clarity={scores['clarity']:.2f}, "
-              f"novelty={scores['novelty']:.2f}, "
-              f"shareability={scores['shareability']:.2f})")
-        print()
+    # 요청 설정
+    user_request = "AI agents that hire other AI agents for WeaveHack2에 대한 quote tweet을 만들어줘"
     
-    # 선택된 콘텐츠
-    selected = result['selected']
-    print("=" * 70)
-    print("✨ 선택된 최종 콘텐츠")
-    print("=" * 70 + "\n")
-    print(f"📝 텍스트: {selected['text']}")
-    print(f"🎨 미디어: {selected['media_prompt']}")
-    print(f"📊 예상 점수: {selected['expected_overall']:.2f}")
-    print(f"📤 상태: {result['publish_status']}")
-    print(f"\n💡 피드백: {result['feedback_summary']}")
+    print(f"📝 요청: {user_request}\n")
+    print("⏳ CMO Agent 실행 중...")
+    print("   - 트렌드 조사")
+    print("   - 콘텐츠 생성")
+    print("   - 모든 작업이 Weave로 자동 전송됨\n")
     
-    # 결과 저장
-    output_file = f"cmo_iteration_{iteration}.json"
-    with open(output_file, 'w') as f:
-        json.dump(result, f, indent=2, ensure_ascii=False)
-    
-    print(f"\n✅ 결과가 {output_file}에 저장되었습니다.")
+    try:
+        # CMO 실행
+        response = decide_and_execute(user_request)
+        
+        # 결과 출력
+        print("\n" + "=" * 70)
+        print("📊 실행 결과")
+        print("=" * 70 + "\n")
+        print(response)
+        
+        # Weave 대시보드 링크
+        project_id = os.getenv('WANDB_PROJECT_ID', 'mason-choi-storika/WeaveHacks2')
+        print("\n" + "=" * 70)
+        print("🐝 Weave 대시보드에서 traces 확인:")
+        print(f"   https://wandb.ai/{project_id}")
+        print("   - Traces 탭에서 실행 흐름 확인")
+        print("   - Timeline View에서 각 단계별 latency 분석")
+        print("   - LLM 호출과 tool invocation 추적")
+        print("=" * 70)
+        
+    except Exception as e:
+        print(f"\n❌ 에러 발생: {e}")
+        import traceback
+        traceback.print_exc()
+        return
 
 
 if __name__ == "__main__":

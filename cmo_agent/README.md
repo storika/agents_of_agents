@@ -182,13 +182,81 @@ result = run_cmo_iteration(json.dumps(config))
 
 ## 🐝 Weave 대시보드
 
-모든 메트릭은 자동으로 Weave에 로깅됩니다:
+### OpenTelemetry 기반 추적
+
+CMO Agent는 **OpenTelemetry (OTEL)**를 사용하여 Google ADK의 모든 작업을 Weave로 자동 전송합니다:
+
+- ✅ **LLM 호출**: 모든 Gemini 모델 호출 자동 추적
+- ✅ **도구 실행**: A2A 프로토콜을 통한 서브 에이전트 호출 추적
+- ✅ **워크플로우**: 에이전트 간 데이터 흐름 시각화
+- ✅ **타임라인 뷰**: 전체 실행 흐름의 시각화
+- ✅ **성능 분석**: 각 단계별 레이턴시 및 비용 분석
+
+### 필수 사항
+
+1. **패키지 설치**:
+```bash
+pip install google-adk opentelemetry-sdk opentelemetry-exporter-otlp-proto-http
+```
+
+2. **환경 변수 설정** (.env 파일 또는 export):
+```bash
+# 필수: W&B API Key (https://wandb.ai/authorize)
+export WANDB_API_KEY=your_wandb_api_key
+
+# 필수: Google API Key
+export GOOGLE_API_KEY=your_google_api_key
+
+# 선택: 프로젝트 ID (기본값: mason-choi-storika/WeaveHacks2)
+export WANDB_PROJECT_ID=your-entity/your-project
+```
+
+⚠️ **중요**: API 키를 코드에 직접 입력하지 마세요! 항상 환경 변수나 `.env` 파일을 사용하세요.
+
+### OTEL 설정 (자동)
+
+CMO Agent를 import하면 자동으로 다음이 설정됩니다:
+
+1. **OTLPSpanExporter**: Weave로 traces 전송
+2. **TracerProvider**: ADK의 모든 작업 추적
+3. **인증 헤더**: W&B API 키로 자동 인증
+
+```python
+# cmo_agent를 import하면 자동으로 OTEL 설정됨
+from cmo_agent.agent import root_agent
+
+# 즉시 사용 가능 - 모든 작업이 Weave로 전송됨
+response = root_agent.send_message("트렌드 기반 quote tweet 만들어줘")
+```
+
+### Weave 대시보드에서 확인
+
+1. **URL 접속**: https://wandb.ai/mason-choi-storika/WeaveHacks2
+2. **Traces 탭**: 모든 OTEL traces 확인
+3. **Timeline View**: 
+   - 각 LLM 호출의 시간과 비용
+   - Tool invocation 순서와 결과
+   - 에이전트 간 데이터 전달 흐름
+4. **비교 분석**: 여러 실행을 비교하여 성능 개선
+
+### 추적되는 데이터
+
+**자동 추적 (OTEL):**
+- Agent reasoning steps
+- LLM model calls (Gemini)
+- Tool executions (A2A protocol)
+- Error traces and debugging info
+
+**수동 로깅 (@weave.op):**
 - 반복별 후보 점수
 - 선택된 콘텐츠
 - 예상 vs 실제 engagement
 - 시간별 성능 트렌드
 
-Weave 프로젝트: `mason-choi-storika/WeaveHacks2`
+### 참고 문서
+- [Weave ADK 통합 가이드](https://weave-docs.wandb.ai/guides/integrations/google_adk/)
+- [OpenTelemetry Traces to Weave](https://weave-docs.wandb.ai/guides/tracking/tracing)
+- [Google ADK Observability](https://google.github.io/adk-docs/observability/weave/)
 
 ## 🤝 기여
 

@@ -1,9 +1,29 @@
 """
 CMO Agent를 이전 컨텐츠 히스토리와 트렌드 데이터와 함께 실행하는 예제
+(OpenTelemetry Weave 통합)
+
+이 예제는 CMO Agent를 히스토리 데이터와 함께 실행하는 방법을 보여줍니다.
+모든 ADK 작업이 자동으로 Weave로 추적됩니다.
 """
 
 import json
-from use_content_history import load_content_history, format_context_for_research
+import os
+from dotenv import load_dotenv
+
+# 환경 변수 로드
+load_dotenv()
+
+try:
+    from use_content_history import load_content_history, format_context_for_research
+except ImportError:
+    print("⚠️  use_content_history 모듈을 찾을 수 없습니다.")
+    print("   이 예제는 참고용입니다.")
+    
+    def load_content_history(filename):
+        return {}
+    
+    def format_context_for_research(history):
+        return ""
 
 
 def run_cmo_with_history():

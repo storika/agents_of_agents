@@ -4,20 +4,58 @@ Strategy orchestrator that decides WHAT action to take and delegates to speciali
 """
 
 import os
+import base64
 from dotenv import load_dotenv
-import weave
 
 # Load environment variables
 load_dotenv()
 
-# Initialize Weave
-WANDB_API_KEY = os.getenv("WANDB_API_KEY", "3875d64c87801e9a71318a5a8754a0ee2d556946")
-os.environ['WANDB_API_KEY'] = WANDB_API_KEY
+# ===== OpenTelemetry Configuration for Weave =====
+# Reference: https://google.github.io/adk-docs/observability/weave/#sending-traces-to-weave
 
-weave.init("mason-choi-storika/WeaveHacks2")
-print("[INFO] 🐝 Weave initialized for CMO Agent: mason-choi-storika/WeaveHacks2")
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk import trace as trace_sdk
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry import trace
 
-# Now import ADK
+# Configure Weave endpoint and authentication
+WANDB_BASE_URL = "https://trace.wandb.ai"
+PROJECT_ID = os.environ.get("WANDB_PROJECT_ID", "mason-choi-storika/mason-test")
+OTEL_EXPORTER_OTLP_ENDPOINT = f"{WANDB_BASE_URL}/otel/v1/traces"
+
+# Set up authentication
+os.environ['WANDB_API_KEY'] = '3875d64c87801e9a71318a5a8754a0ee2d556946'
+WANDB_API_KEY = os.environ['WANDB_API_KEY']
+AUTH = base64.b64encode(f"api:{WANDB_API_KEY}".encode()).decode()
+
+OTEL_EXPORTER_OTLP_HEADERS = {
+    "Authorization": f"Basic {AUTH}",
+    "project_id": PROJECT_ID,
+}
+
+# Create the OTLP span exporter with endpoint and headers
+exporter = OTLPSpanExporter(
+    endpoint=OTEL_EXPORTER_OTLP_ENDPOINT,
+    headers=OTEL_EXPORTER_OTLP_HEADERS,
+)
+
+# Get the current tracer provider (or create new if none exists)
+current_tracer_provider = trace.get_tracer_provider()
+
+# Check if it's a real TracerProvider or just the default proxy
+if isinstance(current_tracer_provider, trace_sdk.TracerProvider):
+    # TracerProvider already exists, add our exporter to it
+    tracer_provider = current_tracer_provider
+    tracer_provider.add_span_processor(SimpleSpanProcessor(exporter))
+    print(f"[INFO] 🐝 OpenTelemetry: Added Weave exporter to existing TracerProvider for {PROJECT_ID}")
+else:
+    # No TracerProvider yet, create a new one
+    tracer_provider = trace_sdk.TracerProvider()
+    tracer_provider.add_span_processor(SimpleSpanProcessor(exporter))
+    trace.set_tracer_provider(tracer_provider)
+    print(f"[INFO] 🐝 OpenTelemetry: Created new TracerProvider for Weave: {PROJECT_ID}")
+
+# Now import ADK (AFTER setting up tracer provider)
 from google.adk.agents.llm_agent import Agent as LlmAgent
 
 # Import A2A protocol tools
@@ -187,36 +225,39 @@ Remember: You are the STRATEGIST, not the EXECUTOR. Your job is to decide WHAT t
 )
 
 
-# Publish prompt to Weave
-try:
-    prompt_obj = weave.StringPrompt(root_agent.instruction)
-    weave.publish(prompt_obj, name="cmo_agent_system_prompt_v2")
-    print("📝 CMO Agent System Prompt published to Weave")
-except Exception as e:
-    print(f"⚠️ Failed to publish CMO Agent prompt: {e}")
+# Note: All agent operations are automatically traced via OpenTelemetry
+# No need to manually publish prompts - they will appear in Weave traces
 
 
-# ===== CONVENIENCE FUNCTIONS =====
-
-@weave.op()
-def decide_and_execute(user_request: str = "create next content", context: dict = None):
-    """
-    Main entry point: Decide strategy and execute via A2A
-
-    Args:
-        user_request: User's request (e.g., "create content", "find trending tweet")
-        context: Additional context (historical data, preferences)
-
-    Returns:
-        Agent's response with strategy decision and execution result
-    """
-    import json
-
-    prompt = user_request
-    if context:
-        prompt += f"\n\nAdditional context: {json.dumps(context, indent=2)}"
-
-    print(f"[CMO_AGENT] User request: {user_request}")
-    response = root_agent.send_message(prompt)
-
-    return response
+# ===== USAGE EXAMPLE =====
+# 
+# To run the CMO agent, use the async pattern from ADK documentation:
+#
+# from google.adk.runners import InMemoryRunner
+# from google.genai import types
+# import asyncio
+#
+# async def run_cmo_agent():
+#     runner = InMemoryRunner(agent=root_agent, app_name="cmo_agent")
+#     session_service = runner.session_service
+#     
+#     user_id = "user_01"
+#     session_id = "session_01"
+#     await session_service.create_session(
+#         app_name="cmo_agent",
+#         user_id=user_id,
+#         session_id=session_id,
+#     )
+#     
+#     async for event in runner.run_async(
+#         user_id=user_id,
+#         session_id=session_id,
+#         new_message=types.Content(
+#             role="user",
+#             parts=[types.Part(text="Create a quote tweet about trending topics")]
+#         ),
+#     ):
+#         if event.is_final_response() and event.content:
+#             print(f"Final response: {event.content.parts[0].text.strip()}")
+#
+# asyncio.run(run_cmo_agent())
