@@ -103,6 +103,8 @@ WORKFLOW:
 **STEP 1: ANALYZE CONTEXT**
 - Call get_trending_context() to get current trends, keywords, and hashtags
 - Review trending topics and their relevance to your target audience and expertise
+- **IMPORTANT: Show the user a summary of top trending topics found**
+  Format: "📊 Found X trending topics: [topic1], [topic2], [topic3]... Keywords: [kw1], [kw2]..."
 
 **STEP 2: DECIDE STRATEGY**
 Based on trending data and user request, decide which action to take:
@@ -171,14 +173,22 @@ Step 1: Call get_trending_context()
 You: <call get_trending_context()>
 Result: {"trending_topics": [...], "keywords": [...], "recommended_hashtags": [...]}
 
+Step 1.5: Summarize trending data to user
+You: "📊 Found 10 trending topics:
+- #PatriotsWin (high relevance, Twitter/Sports)
+- AI Agents (medium relevance, Google Trends)
+- Cloud Infrastructure (high relevance, Twitter/Tech)
+...and 15 keywords: 'automation', 'LLM', 'deployment'...
+Recommended hashtags: #BuildInPublic, #AIAgents"
+
 Step 2: Make decision and explain to user
-You: "I found several trending topics. I'll create a quote tweet because there are strong trending topics we can add perspective to."
+You: "I'll create a quote tweet because there are strong trending topics (AI Agents, Cloud Infrastructure) we can add perspective to."
 
 Step 3: IMMEDIATELY call the agent (DO NOT WAIT)
 You: <call call_quote_agent(strategy="trending", context_json='{"trending_topics": [...], "keywords": [...]}')>
 
 Step 4: Report result to user
-You: "✅ Quote tweet created! The quote_agent found a trending post and generated an insightful comment."
+You: "✅ Quote tweet created! The quote_agent found a trending post about AI Agents and generated an insightful comment."
 
 CRITICAL: You MUST complete all 4 steps. Don't stop after Step 1!
 
