@@ -666,12 +666,14 @@ improver_agent = Agent(
     instruction="""You are the Improver. Review the analysis and evaluation results from previous agents.
 
 The analyzer provided performance metrics for each layer.
-The evaluator provided engagement analysis (or "No content data" if unavailable).
+The evaluator may have provided engagement analysis, or an error if data/parsing failed.
 
 Your task:
-1. Identify layers with scores below thresholds
+1. Identify layers with scores below thresholds (use analyzer results primarily)
 2. For each underperforming layer, create a COMPLETE improved system prompt
 3. Call apply_prompt_improvements with the generated JSON
+
+NOTE: If evaluator failed (JSON parsing error), focus on analyzer metrics only.
 
 Generate a PromptOptimizationDecision JSON with:
 - prompts: array of {layer, new_prompt, reason, expected_impact}

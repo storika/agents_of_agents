@@ -5,6 +5,7 @@ An agent that creates engaging quote tweets (reposts with comments) for Twitter/
 
 import os
 import json
+from typing import Optional
 
 import weave
 from dotenv import load_dotenv
@@ -204,9 +205,9 @@ root_agent = LlmAgent(
 
 
 def create_quote_tweet(
-    tweet_url: str = None,
-    tweet_text: str = None,
-    topic: str = None,
+    tweet_url: Optional[str] = None,
+    tweet_text: Optional[str] = None,
+    topic: Optional[str] = None,
     strategy: str = "auto",
     author: str = "@unknown",
 ) -> dict:

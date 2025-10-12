@@ -462,7 +462,7 @@ def _get_fallback_trending_context() -> str:
 
 def get_recent_performance_data(
     limit: int = 20,
-    filter_op_name: str = None
+    filter_op_name: Optional[str] = None
 ) -> str:
     """
     Weave에서 최근 실행 기록을 가져와서 성능 분석용 JSON으로 반환

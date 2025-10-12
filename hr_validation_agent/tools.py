@@ -6,7 +6,7 @@ import json
 import os
 import re
 import time
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import weave
 from apify_client import ApifyClient
 from datetime import datetime
@@ -14,7 +14,7 @@ from datetime import datetime
 
 def get_recent_calls_as_json(
     limit: int = 100,
-    filter: dict = None,
+    filter: Optional[dict] = None,
     include_costs: bool = True,
     include_feedback: bool = True
 ) -> str:
@@ -68,7 +68,7 @@ def get_recent_calls_as_json(
 
 def get_calls_for_hr_validation(
     limit: int = 50,
-    op_name_filter: str = None
+    op_name_filter: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     HR Validation Agent용 input 형식으로 calls 데이터 변환

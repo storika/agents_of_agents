@@ -5,7 +5,7 @@ Specialized agent for creating and posting original tweets with images via A2A p
 
 import os
 import json
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from datetime import datetime
 from dotenv import load_dotenv
 import weave
@@ -431,9 +431,9 @@ def execute(request: Dict[str, Any]) -> Dict[str, Any]:
 # ===== CONVENIENCE FUNCTIONS =====
 
 def create_post(
-    topic: str = None,
+    topic: Optional[str] = None,
     tone: str = "witty",
-    context: Dict[str, Any] = None,
+    context: Optional[Dict[str, Any]] = None,
     caller: str = "direct"
 ) -> Dict[str, Any]:
     """

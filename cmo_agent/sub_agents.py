@@ -607,7 +607,7 @@ IMPORTANT:
     return agent
 
 
-def call_research_layer(topic: str = None, audience_demographics: str = "AI/ML developers, indie hackers, founders") -> Dict[str, Any]:
+def call_research_layer(topic: Optional[str] = None, audience_demographics: str = "AI/ML developers, indie hackers, founders") -> Dict[str, Any]:
     """
     Research Layer 호출 - Agent will use get_latest_trends_tool to fetch trend data
 
