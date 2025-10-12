@@ -11,6 +11,8 @@ import weave
 from apify_client import ApifyClient
 from datetime import datetime
 
+from weave.trace_server.trace_server_interface import CallsFilter
+
 
 def get_recent_calls_as_json(
     limit: int = 100,
@@ -34,13 +36,14 @@ def get_recent_calls_as_json(
     import os
     client = weave.init(os.getenv("WANDB_PROJECT_ID", "mason-choi-storika/WeaveHacks2"))
     
-    # Get calls with minimal columns (only output)
+    # Get calls - let Weave determine optimal columns
+    # Note: columns parameter can cause 500 errors if we try to access fields not in the list
     calls_iter = client.get_calls(
         limit=limit,
         filter=filter,
         include_costs=include_costs,
         include_feedback=include_feedback,
-        columns=["output"],  # Only fetch output column for performance
+        # Removed columns parameter to avoid 500 errors when accessing other fields
         sort_by=[{"field": "started_at", "direction": "desc"}]
     )
     
@@ -67,7 +70,7 @@ def get_recent_calls_as_json(
 
 
 def get_calls_for_hr_validation(
-    limit: int = 50,
+    limit: int = 10,
     op_name_filter: Optional[str] = None
 ) -> Dict[str, Any]:
     """
@@ -89,13 +92,14 @@ def get_calls_for_hr_validation(
     if op_name_filter:
         filter_dict = {"op_names": [op_name_filter]}
     
-    # Get calls with minimal columns (only output)
+    # Get calls - let Weave determine optimal columns
+    # Note: columns parameter can cause 500 errors if we try to access fields not in the list
     calls_iter = client.get_calls(
         limit=limit,
-        filter=filter_dict,
+        filter=CallsFilter(op_names=[op_name_filter]) if op_name_filter else None,
         include_costs=True,
         include_feedback=True,
-        columns=["output"],  # Only fetch output column for performance
+        # Removed columns parameter to avoid 500 errors when accessing other fields
         sort_by=[{"field": "started_at", "direction": "desc"}]
     )
     
