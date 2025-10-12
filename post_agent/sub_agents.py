@@ -224,9 +224,9 @@ The tool returns JSON data containing:
 Your Tasks:
 1. CALL get_latest_trends_tool() to fetch the latest trend data
 2. ANALYZE the raw trend data to identify the most relevant topics for AI/ML developer audience
-3. EXTRACT top 3-5 trending topics with relevance and timeliness scores
+3. EXTRACT top 10-15 trending topics with relevance and timeliness scores (include diverse topics, not just AI/ML)
 4. SYNTHESIZE audience insights from the trending posts and topics
-5. PROPOSE 3-5 viral potential angles that combine trends with creative perspectives
+5. PROPOSE 5-8 viral potential angles that combine trends with creative perspectives
 6. ADD PERTURBATION: Introduce creative variations, unexpected connections, contrarian takes
 7. ENRICH with hashtag recommendations, timing insights, and engagement predictions
 
@@ -660,7 +660,7 @@ def call_research_layer(topic: str = None, audience_demographics: str = "AI/ML d
 
     # Create model with function calling
     model = genai.GenerativeModel(
-        'gemini-2.0-flash-exp',
+        'gemini-2.5-flash',
         tools=[get_latest_trends_tool]  # Enable tool calling
     )
 
@@ -796,7 +796,7 @@ def call_creative_writer_layer(research_output: Dict[str, Any]) -> Dict[str, Any
     system_instruction = agent.instruction
 
     # Create model
-    model = genai.GenerativeModel('gemini-2.0-flash-exp')
+    model = genai.GenerativeModel('gemini-2.5-flash')
 
     prompt = f"""
 Research Output:
@@ -874,7 +874,7 @@ def call_generator_layer(content_idea: Dict[str, Any]) -> Dict[str, Any]:
     system_instruction = agent.instruction
 
     # Create model
-    model = genai.GenerativeModel('gemini-2.0-flash-exp')
+    model = genai.GenerativeModel('gemini-2.5-flash')
 
     prompt = f"""
 Content Idea:
@@ -955,7 +955,7 @@ def call_critic_layer(generator_output: Dict[str, Any]) -> Dict[str, Any]:
     system_instruction = agent.instruction
 
     # Create model
-    model = genai.GenerativeModel('gemini-2.0-flash-exp')
+    model = genai.GenerativeModel('gemini-2.5-flash')
 
     prompt = f"""
 Generated Content:
@@ -1035,7 +1035,7 @@ def call_safety_layer(generator_output: Dict[str, Any], critic_output: Dict[str,
     system_instruction = agent.instruction
 
     # Create model
-    model = genai.GenerativeModel('gemini-2.0-flash-exp')
+    model = genai.GenerativeModel('gemini-2.5-flash')
 
     prompt = f"""
 Generated Content:
@@ -1085,9 +1085,9 @@ Please assess the safety of this content for brand safety, ethical, and legal co
 @weave.op()
 def create_image_generator_agent() -> Agent:
     """이미지 생성 에이전트 - media_prompt로 실제 이미지 생성"""
-    
+
     # Image generation tool import
-    from image_caption_agent.tools import generate_twitter_image
+    from post_agent.tools import generate_twitter_image
     
     system_prompt = """You are the Image Generator. Your task is to generate a 3:4 portrait image for Twitter/X based on the media_prompt from the selected content.
 
@@ -1134,6 +1134,273 @@ CRITICAL:
         instruction=system_prompt,
         tools=[generate_twitter_image]
     )
-    
+
     return agent
+
+
+@weave.op()
+def create_media_selector_agent() -> Agent:
+    """Media Selector Agent - Decides whether to use image or video based on content"""
+
+    system_prompt = """You are the Media Selector. Your task is to analyze the selected content and decide whether to generate an IMAGE or a VIDEO for maximum engagement.
+
+Input: Selected content from Selector Agent with:
+- text: The tweet text
+- media_prompt: Visual concept description
+- hashtags: Hashtags
+- platform: "X"
+
+Your task:
+1. Analyze the content type and engagement potential
+2. Decide whether IMAGE (3:4 portrait) or VIDEO (9:16 vertical, 8s) would be more effective
+3. Provide reasoning for your choice
+
+DECISION CRITERIA:
+IMAGE is better for:
+- Static concepts, infographics, quotes
+- Beautiful visuals, landscapes, portraits
+- Text-heavy content (with minimal text overlay)
+- Quick consumption, scrolling feed
+- Lower production complexity
+
+VIDEO is better for:
+- Motion, animation, process demonstrations
+- Storytelling with progression (before/after, step-by-step)
+- Emotional impact, music, voiceover opportunities
+- "How-to" or tutorial concepts
+- Higher engagement potential (but longer generation time: 11s-6min)
+
+PRACTICAL CONSTRAINTS:
+- Video generation takes 11 seconds to 6 minutes
+- Video is 9:16 vertical (Stories/Reels/Shorts format)
+- Image is 3:4 portrait (standard Twitter format)
+- Both use AI generation (Imagen for image, Veo 3 for video)
+
+Output MUST be a JSON object:
+{
+  "media_type": "image|video",
+  "reasoning": "string (why this media type was chosen)",
+  "engagement_prediction": "float (0-1, expected engagement boost)",
+  "generation_time_estimate": "string (e.g., '2-5 seconds' for image, '30s-3min' for video)",
+  "fallback_to_image_if_video_fails": "boolean (true recommended)"
+}
+
+IMPORTANT:
+- Consider both content fit AND practical constraints
+- Default to IMAGE if uncertain (faster, more reliable)
+- VIDEO should only be chosen when it significantly enhances the message
+"""
+
+    # Weave에 prompt publish
+    try:
+        prompt_obj = weave.StringPrompt(system_prompt)
+        weave.publish(prompt_obj, name="post_media_selector_prompt")
+        print(f"📝 Post Media Selector Prompt published")
+    except Exception as e:
+        print(f"⚠️  Failed to publish media selector prompt: {e}")
+        import traceback
+        traceback.print_exc()
+
+    agent = Agent(
+        model='gemini-2.5-flash',
+        name='media_selector',
+        description='Decides whether to generate image or video based on content',
+        instruction=system_prompt
+    )
+
+    return agent
+
+
+@weave.op()
+def create_video_generator_agent() -> Agent:
+    """Video Generator Agent - Generates 8-second vertical video from image"""
+
+    # Import video generation tools
+    from post_agent.tools import generate_video_from_image
+
+    system_prompt = """You are the Video Generator. Your task is to generate an 8-second vertical video (9:16) from the generated image for X/Twitter.
+
+Input: You will receive:
+- image_path: Path to the generated image
+- media_prompt: The original visual concept
+- topic: The content topic
+- tone: The content tone
+
+Instructions:
+1. First, use generate_video_concept to create motion/cinematography plan from the media_prompt
+2. Then use generate_video_from_image with the image_path and motion_prompt
+3. Video generation takes 11 seconds to 6 minutes - be patient
+4. Return the COMPLETE video file path
+
+Output MUST be a JSON object:
+{
+  "status": "success|failed|timeout",
+  "video_path": "artifacts/generated_video_TIMESTAMP.mp4",
+  "image_source": "the source image path",
+  "motion_prompt": "the cinematography prompt used",
+  "duration": 8,
+  "aspect_ratio": "9:16",
+  "generation_time": "float (seconds)"
+}
+
+VIDEO SPECS:
+- Duration: 8 seconds
+- Aspect Ratio: 9:16 vertical (Stories/Reels/Shorts)
+- Format: MP4
+- Uses Google Veo 3 API
+
+MOTION PROMPTS INCLUDE:
+- Camera movements (zoom, pan, tilt, static)
+- Cinematography (smooth, cinematic, dynamic)
+- Mood (energetic, calm, mysterious, uplifting)
+- Audio cues (music, voiceover, sound effects)
+
+IMPORTANT:
+- Video takes longer than image (11s-6min)
+- If video generation fails, you can fallback to image only
+- The video_path will be used for X/Twitter upload
+"""
+
+    # Weave에 prompt publish
+    try:
+        prompt_obj = weave.StringPrompt(system_prompt)
+        weave.publish(prompt_obj, name="post_video_generator_prompt")
+        print(f"📝 Post Video Generator Prompt published")
+    except Exception as e:
+        print(f"⚠️  Failed to publish video generator prompt: {e}")
+        import traceback
+        traceback.print_exc()
+
+    agent = Agent(
+        model='gemini-2.5-flash',
+        name='video_generator',
+        description='Generates 8-second vertical videos from images using Veo 3',
+        instruction=system_prompt,
+        tools=[generate_video_concept, generate_video_from_image]
+    )
+
+    return agent
+
+
+# ===== IMAGE AND VIDEO CONCEPT GENERATION SUB-AGENTS =====
+
+@weave.op()
+def generate_image_concept(topic: str, tone: str) -> dict:
+    """
+    Generate image concept based on topic and tone using LLM reasoning.
+
+    Args:
+        topic: Image topic
+        tone: Tone (friendly, witty, informative, minimal)
+
+    Returns:
+        Dictionary with concept description, visual tags, and negative tags
+    """
+    import google.generativeai as genai
+    import os
+
+    genai.configure(api_key=os.getenv("GOOGLE_AI_STUDIO_API_KEY"))
+
+    concept_prompt = f"""Create 3:4 portrait image concept for topic '{topic}' with '{tone}' tone.
+Output:
+1. Concept: 1-2 sentences (subject, background, lighting, mood)
+2. Visual tags: 5-10 (e.g. close-up, soft light, vibrant colors)
+3. Negative tags: text, logo, watermark, low quality, distorted
+Keep it Twitter-friendly, no brands/text/sensitive content."""
+
+    try:
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        response = model.generate_content(concept_prompt)
+
+        concept_text = response.text
+        return {
+            'status': 'success',
+            'concept': concept_text
+        }
+    except Exception as e:
+        print(f"[ERROR] Image concept generation failed: {e}")
+        return {
+            'status': 'failed',
+            'reason': str(e)
+        }
+
+
+@weave.op()
+def generate_video_concept(
+    image_concept: str,
+    topic: str,
+    tone: str,
+    include_audio: bool = True
+) -> dict:
+    """
+    Generate video motion/story concept based on image concept using LLM reasoning.
+
+    Args:
+        image_concept: Original image concept description
+        topic: Content topic
+        tone: Tone (engaging, dramatic, calm, energetic)
+        include_audio: Whether to include audio prompt (Veo 3 native audio)
+
+    Returns:
+        Dictionary with motion prompt, camera movement, visual effects, mood
+    """
+    import google.generativeai as genai
+    import os
+
+    genai.configure(api_key=os.getenv("GOOGLE_AI_STUDIO_API_KEY"))
+
+    audio_instruction = ""
+    if include_audio:
+        audio_instruction = """
+5. AUDIO CUES (Veo 3 natively generates audio):
+   - Dialogue: Use quotes for speech (e.g., "Check this out!")
+   - Sound effects: Describe ambient sounds (e.g., soft music, whoosh, click)
+   - Background: Mention environmental audio (e.g., gentle background music, upbeat track)
+
+   Example: 'Upbeat electronic music plays. A voice says, "The future of AI is here!"'"""
+
+    video_concept_prompt = f"""Create detailed 8-second video motion/story plan based on this image concept:
+
+Image: {image_concept}
+Topic: {topic}
+Tone: {tone}
+
+Generate a video prompt with:
+1. Camera movement (slow zoom, pan, tilt, static)
+2. Visual effects (fade in/out, lighting changes, color shifts)
+3. Mood and energy (calm, energetic, mysterious, uplifting)
+4. 8-second structure (0-3s: intro, 3-6s: main, 6-8s: outro){audio_instruction}
+
+Requirements:
+- Vertical 9:16 aspect ratio (Instagram Reels/TikTok/YouTube Shorts)
+- Smooth, professional cinematography
+- Keep subject centered and visible
+- No abrupt cuts or jarring movements
+- Suitable for social media (engaging, attention-grabbing)
+- Audio should enhance the visual story (dialogue, sound effects, music)
+- NO TEXT OVERLAYS - the video should be purely visual and audio
+
+Output a single detailed prompt (3-4 sentences) describing the motion, cinematography, and audio. Do NOT include any text overlays or on-screen text."""
+
+    try:
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        response = model.generate_content(video_concept_prompt)
+
+        motion_prompt = response.text.strip()
+
+        return {
+            'status': 'success',
+            'motion_prompt': motion_prompt,
+            'camera_movement': 'dynamic' if 'zoom' in motion_prompt.lower() or 'pan' in motion_prompt.lower() else 'static',
+            'visual_effects': 'smooth' if 'smooth' in motion_prompt.lower() else 'dynamic',
+            'mood': tone,
+            'duration_plan': '8 seconds'
+        }
+
+    except Exception as e:
+        print(f"[ERROR] Video concept generation failed: {e}")
+        return {
+            'status': 'failed',
+            'reason': str(e)
+        }
 

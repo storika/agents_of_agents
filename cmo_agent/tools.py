@@ -278,8 +278,8 @@ def get_trending_context() -> str:
                 for category, tab_info in tabs_data.items():
                     topics_list = tab_info.get("trending_topics", [])
 
-                    # Get top 5 topics from each category
-                    for topic in topics_list[:5]:
+                    # Get top 10 topics from each category (Twitter has ~20 per tab)
+                    for topic in topics_list[:10]:
                         topic_name = topic.get("topic_name", "")
 
                         # Extract hashtags
@@ -312,8 +312,8 @@ def get_trending_context() -> str:
             if google_trends.get("collected") and google_trends.get("data"):
                 gt_data = google_trends.get("data", {})
 
-                # Extract trending searches
-                for trend_item in gt_data.get("trending_searches", [])[:5]:
+                # Extract trending searches (Google Trends usually has 10-20)
+                for trend_item in gt_data.get("trending_searches", [])[:10]:
                     trending_topics.append({
                         "topic": trend_item.get("title", ""),
                         "trend_score": 0.85,
@@ -322,18 +322,25 @@ def get_trending_context() -> str:
                         "url": trend_item.get("url", "")
                     })
 
-        # Extract from post analysis (keywords)
-        if "post_analysis" in data_sources:
-            post_analysis = data_sources["post_analysis"]
-            if post_analysis.get("collected"):
-                analysis_data = post_analysis.get("data", {})
-                for keyword_data in analysis_data.get("keywords", [])[:10]:
-                    keyword = keyword_data.get("keyword", "")
-                    keywords.add(keyword)
+        # Extract from trending posts analysis (keywords)
+        if "trending_posts" in data_sources:
+            trending_posts = data_sources["trending_posts"]
+            if trending_posts.get("collected"):
+                analysis_data = trending_posts.get("data", {})
+                # Extract keywords from results
+                for result_item in analysis_data.get("results", [])[:15]:
+                    keyword = result_item.get("keyword", "")
+                    if keyword:
+                        keywords.add(keyword)
 
-        # Sort trending topics by trend_score and limit to top 10
+                # Also get summary keywords if available
+                summary = analysis_data.get("summary", {})
+                for summary_keyword in summary.get("keywords", [])[:10]:
+                    keywords.add(summary_keyword)
+
+        # Sort trending topics by trend_score and limit to top 15
         trending_topics.sort(key=lambda x: (x.get("trend_score", 0), -x.get("rank", 999)), reverse=True)
-        trending_topics = trending_topics[:10]
+        trending_topics = trending_topics[:15]
 
         # Peak posting times (static recommendations based on research)
         peak_posting_times = [

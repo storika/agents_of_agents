@@ -14,18 +14,16 @@ Usage:
 
 import sys
 import os
-import asyncio
 from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from video_generation_agent.agent import root_agent as video_agent
-from video_generation_agent.tools import generate_video_concept, generate_video_from_image
-from google.adk.tools.tool_context import ToolContext
+from post_agent.sub_agents import generate_video_concept
+from post_agent.tools import generate_video_from_image
 
 
-async def main():
+def main():
     """
     Test video generation from existing image
     """
@@ -78,22 +76,14 @@ async def main():
     print("=" * 80)
     print()
 
-    # Create a mock tool context
-    class MockToolContext:
-        async def save_artifact(self, filename, part):
-            print(f"[DEBUG] Artifact saved: {filename}")
-
-    tool_context = MockToolContext()
-
     # Step 1: Generate video concept
     print("📝 Step 1: Generating motion/cinematography concept...")
     print()
 
-    concept_result = await generate_video_concept(
+    concept_result = generate_video_concept(
         image_concept=concept,
         topic=topic,
-        tone=tone,
-        tool_context=tool_context
+        tone=tone
     )
 
     if concept_result['status'] != 'success':
@@ -113,10 +103,9 @@ async def main():
     print("   (Typical: 1-3 minutes for 8-second video)")
     print()
 
-    video_result = await generate_video_from_image(
+    video_result = generate_video_from_image(
         image_path=image_path,
         motion_prompt=motion_prompt,
-        tool_context=tool_context,
         aspect_ratio="9:16",
         duration=8
     )
@@ -161,4 +150,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
