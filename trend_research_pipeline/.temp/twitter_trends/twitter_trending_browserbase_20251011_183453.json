@@ -1,0 +1,84 @@
+{
+  "scrape_timestamp": "2025-10-11T18:34:53.836565",
+  "scrape_timestamp_readable": "2025-10-11 18:34:53",
+  "total_tabs_scraped": 4,
+  "tabs": {
+    "trending": {
+      "tab": "trending",
+      "url": "https://x.com/explore/tabs/trending",
+      "timestamp": "2025-10-11T18:33:49.778203",
+      "timestamp_readable": "2025-10-11 18:33:49",
+      "trending_count": 1,
+      "trending_topics": [
+        {
+          "rank": 1,
+          "raw_text": "New to X?\nSign up now to get your own personalized timeline!\nSign up with Apple\nCreate account\nBy signing up, you agree to the Terms of Service and Privacy Policy, including Cookie Use.\nSomething went wrong. Try reloading.\nRetry\nTerms of Service\n |\nPrivacy Policy\n |\nCookie Policy\n |\nAccessibility\n |\nAds info\n |\nMore\n© 2025 X Corp.",
+          "timestamp": "2025-10-11T18:33:49.054017",
+          "category": "New to X?",
+          "topic_name": "Sign up now to get your own personalized timeline!",
+          "url": "https://x.com/i/flow/signup"
+        }
+      ],
+      "success": true
+    },
+    "news": {
+      "tab": "news",
+      "url": "https://x.com/explore/tabs/news",
+      "timestamp": "2025-10-11T18:34:10.013850",
+      "timestamp_readable": "2025-10-11 18:34:10",
+      "trending_count": 1,
+      "trending_topics": [
+        {
+          "rank": 1,
+          "raw_text": "New to X?\nSign up now to get your own personalized timeline!\nSign up with Apple\nCreate account\nBy signing up, you agree to the Terms of Service and Privacy Policy, including Cookie Use.\nSomething went wrong. Try reloading.\nRetry\nTerms of Service\n |\nPrivacy Policy\n |\nCookie Policy\n |\nAccessibility\n |\nAds info\n |\nMore\n© 2025 X Corp.",
+          "timestamp": "2025-10-11T18:34:09.314173",
+          "category": "New to X?",
+          "topic_name": "Sign up now to get your own personalized timeline!",
+          "url": "https://x.com/i/flow/signup"
+        }
+      ],
+      "success": true
+    },
+    "sports": {
+      "tab": "sports",
+      "url": "https://x.com/explore/tabs/sports",
+      "timestamp": "2025-10-11T18:34:30.352258",
+      "timestamp_readable": "2025-10-11 18:34:30",
+      "trending_count": 1,
+      "trending_topics": [
+        {
+          "rank": 1,
+          "raw_text": "New to X?\nSign up now to get your own personalized timeline!\nSign up with Apple\nCreate account\nBy signing up, you agree to the Terms of Service and Privacy Policy, including Cookie Use.\nSomething went wrong. Try reloading.\nRetry\nTerms of Service\n |\nPrivacy Policy\n |\nCookie Policy\n |\nAccessibility\n |\nAds info\n |\nMore\n© 2025 X Corp.",
+          "timestamp": "2025-10-11T18:34:29.625499",
+          "category": "New to X?",
+          "topic_name": "Sign up now to get your own personalized timeline!",
+          "url": "https://x.com/i/flow/signup"
+        }
+      ],
+      "success": true
+    },
+    "entertainment": {
+      "tab": "entertainment",
+      "url": "https://x.com/explore/tabs/entertainment",
+      "timestamp": "2025-10-11T18:34:50.833726",
+      "timestamp_readable": "2025-10-11 18:34:50",
+      "trending_count": 1,
+      "trending_topics": [
+        {
+          "rank": 1,
+          "raw_text": "New to X?\nSign up now to get your own personalized timeline!\nSign up with Apple\nCreate account\nBy signing up, you agree to the Terms of Service and Privacy Policy, including Cookie Use.\nSomething went wrong. Try reloading.\nRetry\nTerms of Service\n |\nPrivacy Policy\n |\nCookie Policy\n |\nAccessibility\n |\nAds info\n |\nMore\n© 2025 X Corp.",
+          "timestamp": "2025-10-11T18:34:49.964183",
+          "category": "New to X?",
+          "topic_name": "Sign up now to get your own personalized timeline!",
+          "url": "https://x.com/i/flow/signup"
+        }
+      ],
+      "success": true
+    }
+  },
+  "summary": {
+    "total_trending_topics": 4,
+    "successful_tabs": 4,
+    "failed_tabs": 0
+  }
+}

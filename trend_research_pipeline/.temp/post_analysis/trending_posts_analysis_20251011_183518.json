@@ -1,0 +1,107 @@
+{
+  "analysis_timestamp": "2025-10-11T18:35:18.466388",
+  "analysis_timestamp_readable": "2025-10-11 18:35:18",
+  "keywords_analyzed": 1,
+  "input_files": {
+    "google_trends_csv": null,
+    "twitter_trends_json": "/Users/jonghyunpark/Documents/agents_of_agents/trend_research_pipeline/.temp/twitter_trends/twitter_trending_browserbase_20251011_183453.json"
+  },
+  "results": [
+    {
+      "keyword": "Sign up now to get your own personalized timeline!",
+      "keyword_metadata": {
+        "keyword": "Sign up now to get your own personalized timeline!",
+        "category": "New to X?",
+        "post_count": "",
+        "tab": "trending",
+        "source": "twitter_trending",
+        "url": "https://x.com/i/flow/signup"
+      },
+      "tavily_search": {
+        "keyword": "Sign up now to get your own personalized timeline!",
+        "source": "tavily",
+        "results_count": 9,
+        "results": [
+          {
+            "url": "https://miro.com/strategic-planning/timeline/",
+            "title": "Free Timeline Maker | Create a Timeline",
+            "content": "Create a timeline fast. Make your own timeline in just a few clicks and add structure to your project, tracking deliverables at a glance. Sign up free.",
+            "score": 0.568057,
+            "raw_content": null
+          },
+          {
+            "url": "https://www.adobe.com/express/create/timeline",
+            "title": "Free Online Custom Timeline Maker | Adobe Express",
+            "content": "The Adobe Express free online timeline maker helps you easily create your own unique and custom timelines in minutes. All creative skill levels are welcome.",
+            "score": 0.509887,
+            "raw_content": null
+          },
+          {
+            "url": "https://time.graphics/",
+            "title": "Free online timeline maker",
+            "content": "This free online timeline maker is useful for educational, business, and personal purposes, including planning, analysis, and tracking personal achievements.",
+            "score": 0.4883572,
+            "raw_content": null
+          },
+          {
+            "url": "https://www.tiki-toki.com/",
+            "title": "Tiki-Toki: Online Timeline Maker | Make a timeline for free",
+            "content": "Tiki-Toki is an online timeline maker with 3D, multimedia, and interactive features, including text, images, videos, and audio. It works in your browser.",
+            "score": 0.39431813,
+            "raw_content": null
+          },
+          {
+            "url": "https://timeline.knightlab.com/",
+            "title": "Timeline",
+            "content": "TimelineJS works on any site or blog. Make your own in four easy steps. Having trouble? Watch our video, or see the help section below. Create your spreadsheet.",
+            "score": 0.38943097,
+            "raw_content": null
+          },
+          {
+            "url": "https://venngage.com/ai-tools/timeline-generator",
+            "title": "Free AI Timeline Generator",
+            "content": "Sign up for free ... It understands context, identifies key events, and generates a structured timeline layout—turning your input into a visually organized design",
+            "score": 0.38922203,
+            "raw_content": null
+          },
+          {
+            "url": "https://www.visme.co/timeline-maker/",
+            "title": "Free Online Timeline Maker",
+            "content": "Visme is an online timeline maker to quickly and easily makes different types of timelines. Make Gantt charts, interactive timelines, and more!",
+            "score": 0.3673843,
+            "raw_content": null
+          },
+          {
+            "url": "https://creately.com/lp/timeline-maker-online/",
+            "title": "Free Online Timeline Maker | Timeline Creator",
+            "content": "Creately's timeline maker offers drag-and-drop, various templates, real-time collaboration, and customization, making it a robust and intuitive tool.",
+            "score": 0.31371456,
+            "raw_content": null
+          },
+          {
+            "url": "https://asana.com/templates/project-timeline",
+            "title": "Free Customizable Timeline Template [2025]",
+            "content": "Need a timeline template? Download our free project timeline template to plan, track, and manage your projects more effectively!",
+            "score": 0.28326115,
+            "raw_content": null
+          }
+        ]
+      },
+      "browserbase_search": {
+        "keyword": "Sign up now to get your own personalized timeline!",
+        "source": "browserbase_search",
+        "search_url": "https://x.com/search?q=Sign up now to get your own personalized timeline!&src=typed_query&f=top",
+        "posts_count": 0,
+        "posts": [],
+        "success": true
+      },
+      "total_posts_found": 9
+    }
+  ],
+  "summary": {
+    "total_keywords_analyzed": 1,
+    "total_posts_extracted": 9,
+    "tavily_results": 9,
+    "browserbase_posts": 0
+  }
+}
