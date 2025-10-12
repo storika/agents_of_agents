@@ -319,7 +319,13 @@ def post_to_x_api(text: str, media_keys: Optional[List[str]] = None, max_retries
             rate_limit_headers = {
                 'limit': response.headers.get('x-rate-limit-limit'),
                 'remaining': response.headers.get('x-rate-limit-remaining'),
-                'reset': response.headers.get('x-rate-limit-reset')
+                'reset': response.headers.get('x-rate-limit-reset'),
+                'app_24h_limit': response.headers.get('x-app-limit-24hour-limit'),
+                'app_24h_remaining': response.headers.get('x-app-limit-24hour-remaining'),
+                'app_24h_reset': response.headers.get('x-app-limit-24hour-reset'),
+                'user_24h_limit': response.headers.get('x-user-limit-24hour-limit'),
+                'user_24h_remaining': response.headers.get('x-user-limit-24hour-remaining'),
+                'user_24h_reset': response.headers.get('x-user-limit-24hour-reset')
             }
 
             if rate_limit_headers['remaining'] is not None:
@@ -328,7 +334,17 @@ def post_to_x_api(text: str, media_keys: Optional[List[str]] = None, max_retries
                 reset_dt = datetime.fromtimestamp(reset_time) if reset_time > 0 else None
                 reset_str = reset_dt.strftime('%Y-%m-%d %H:%M:%S') if reset_dt else 'unknown'
 
-                print(f"[RATE_LIMIT] Remaining: {rate_limit_headers['remaining']}/{rate_limit_headers['limit']} (resets at {reset_str})")
+                print(f"[RATE_LIMIT] General: {rate_limit_headers['remaining']}/{rate_limit_headers['limit']} (resets at {reset_str})")
+
+            # Log 24-hour limits
+            if rate_limit_headers['app_24h_remaining'] is not None:
+                app_reset_time = int(rate_limit_headers['app_24h_reset']) if rate_limit_headers['app_24h_reset'] else 0
+                from datetime import datetime
+                app_reset_dt = datetime.fromtimestamp(app_reset_time) if app_reset_time > 0 else None
+                app_reset_str = app_reset_dt.strftime('%Y-%m-%d %H:%M:%S') if app_reset_dt else 'unknown'
+
+                print(f"[RATE_LIMIT] App 24h: {rate_limit_headers['app_24h_remaining']}/{rate_limit_headers['app_24h_limit']} (resets at {app_reset_str})")
+                print(f"[RATE_LIMIT] User 24h: {rate_limit_headers['user_24h_remaining']}/{rate_limit_headers['user_24h_limit']}")
 
             # Debug: Show actual HTTP status
             print(f"[DEBUG] HTTP Status: {response.status_code}")
@@ -341,22 +357,43 @@ def post_to_x_api(text: str, media_keys: Optional[List[str]] = None, max_retries
                 print(f"[ERROR] Response: {response.text}")
                 return None
             elif response.status_code == 429:
-                # Extract rate limit info from headers
-                print(f"[DEBUG] 429 Response body: {response.text}")
-                print(f"[DEBUG] 429 Response headers: {dict(response.headers)}")
+                # Determine which rate limit was hit
+                from datetime import datetime
+                import time as time_module
 
-                reset_timestamp = rate_limit_headers.get('reset')
-                if reset_timestamp:
-                    from datetime import datetime
-                    reset_dt = datetime.fromtimestamp(int(reset_timestamp))
-                    reset_str = reset_dt.strftime('%Y-%m-%d %H:%M:%S')
-                    wait_seconds = int(reset_timestamp) - int(time.time())
-                    print(f"[ERROR] Rate limit exceeded!")
-                    print(f"[ERROR] Limit: {rate_limit_headers['limit']} requests")
-                    print(f"[ERROR] Remaining: {rate_limit_headers['remaining']}")
-                    print(f"[ERROR] Resets at: {reset_str} (in {wait_seconds}s)")
+                app_24h_remaining = rate_limit_headers.get('app_24h_remaining')
+                user_24h_remaining = rate_limit_headers.get('user_24h_remaining')
+
+                if app_24h_remaining == '0' or user_24h_remaining == '0':
+                    # Hit the 24-hour limit
+                    reset_timestamp = rate_limit_headers.get('app_24h_reset')
+                    if reset_timestamp:
+                        reset_dt = datetime.fromtimestamp(int(reset_timestamp))
+                        reset_str = reset_dt.strftime('%Y-%m-%d %H:%M:%S')
+                        wait_seconds = int(reset_timestamp) - int(time_module.time())
+                        wait_hours = wait_seconds / 3600
+
+                        print(f"[ERROR] ⚠️  24-HOUR RATE LIMIT EXCEEDED!")
+                        print(f"[ERROR] Your app has a limit of {rate_limit_headers['app_24h_limit']} tweets per 24 hours")
+                        print(f"[ERROR] App remaining: {rate_limit_headers['app_24h_remaining']}/{rate_limit_headers['app_24h_limit']}")
+                        print(f"[ERROR] User remaining: {rate_limit_headers['user_24h_remaining']}/{rate_limit_headers['user_24h_limit']}")
+                        print(f"[ERROR] Resets at: {reset_str} (in {wait_hours:.1f} hours)")
+                        print(f"[INFO] This is separate from the general API rate limit (1.08M requests)")
+                    else:
+                        print(f"[ERROR] 24-hour rate limit exceeded (no reset time available)")
                 else:
-                    print(f"[ERROR] Rate limit exceeded (no reset time available)")
+                    # Hit the general rate limit
+                    reset_timestamp = rate_limit_headers.get('reset')
+                    if reset_timestamp:
+                        reset_dt = datetime.fromtimestamp(int(reset_timestamp))
+                        reset_str = reset_dt.strftime('%Y-%m-%d %H:%M:%S')
+                        wait_seconds = int(reset_timestamp) - int(time_module.time())
+                        print(f"[ERROR] General rate limit exceeded!")
+                        print(f"[ERROR] Limit: {rate_limit_headers['limit']} requests")
+                        print(f"[ERROR] Remaining: {rate_limit_headers['remaining']}")
+                        print(f"[ERROR] Resets at: {reset_str} (in {wait_seconds}s)")
+                    else:
+                        print(f"[ERROR] Rate limit exceeded (no reset time available)")
 
                 if attempt == max_retries:
                     return None
