@@ -25,6 +25,140 @@ gemini_image_client = genai.Client()
 
 
 @weave.op()
+def upload_video_chunked(oauth1_creds: dict, video_path: str) -> Optional[str]:
+    """
+    Upload video using Twitter's chunked upload API (required for videos)
+    https://developer.twitter.com/en/docs/media/upload-media/uploading-media/chunked-media-upload
+
+    Args:
+        oauth1_creds: OAuth 1.0a credentials
+        video_path: Path to video file
+
+    Returns:
+        media_id_string on success, None on failure
+    """
+    if not all(oauth1_creds.values()):
+        print(f"[ERROR] OAuth 1.0a credentials required for video upload")
+        return None
+
+    try:
+        from requests_oauthlib import OAuth1
+    except ImportError:
+        print(f"[ERROR] requests-oauthlib required: pip install requests-oauthlib")
+        return None
+
+    auth = OAuth1(
+        oauth1_creds["consumer_key"],
+        oauth1_creds["consumer_secret"],
+        oauth1_creds["access_token"],
+        oauth1_creds["access_secret"],
+        signature_type='auth_header'
+    )
+
+    # Get file size
+    video_size = os.path.getsize(video_path)
+    print(f"[INFO] Video size: {video_size / (1024*1024):.2f} MB")
+
+    try:
+        # Step 1: INIT
+        print(f"[INFO] Step 1: INIT chunked upload")
+        init_data = {
+            "command": "INIT",
+            "media_type": "video/mp4",
+            "total_bytes": video_size,
+            "media_category": "tweet_video"
+        }
+        response = requests.post(TWITTER_MEDIA_UPLOAD_V1_URL, auth=auth, data=init_data, timeout=30)
+
+        if response.status_code != 202:
+            print(f"[ERROR] INIT failed: {response.status_code} - {response.text}")
+            return None
+
+        media_id = response.json().get("media_id_string")
+        print(f"[INFO] Media ID: {media_id}")
+
+        # Step 2: APPEND (upload in chunks)
+        print(f"[INFO] Step 2: APPEND chunks")
+        chunk_size = 5 * 1024 * 1024  # 5MB chunks
+        segment_index = 0
+
+        with open(video_path, 'rb') as video_file:
+            while True:
+                chunk = video_file.read(chunk_size)
+                if not chunk:
+                    break
+
+                append_data = {
+                    "command": "APPEND",
+                    "media_id": media_id,
+                    "segment_index": segment_index
+                }
+                files = {"media": chunk}
+
+                response = requests.post(TWITTER_MEDIA_UPLOAD_V1_URL, auth=auth, data=append_data, files=files, timeout=60)
+
+                if response.status_code not in [200, 201, 204]:
+                    print(f"[ERROR] APPEND failed at segment {segment_index}: {response.status_code}")
+                    return None
+
+                segment_index += 1
+                print(f"[INFO] Uploaded segment {segment_index}")
+
+        # Step 3: FINALIZE
+        print(f"[INFO] Step 3: FINALIZE upload")
+        finalize_data = {
+            "command": "FINALIZE",
+            "media_id": media_id
+        }
+        response = requests.post(TWITTER_MEDIA_UPLOAD_V1_URL, auth=auth, data=finalize_data, timeout=30)
+
+        if response.status_code not in [200, 201]:
+            print(f"[ERROR] FINALIZE failed: {response.status_code} - {response.text}")
+            return None
+
+        result = response.json()
+        processing_info = result.get("processing_info")
+
+        # Step 4: STATUS check (if processing required)
+        if processing_info:
+            state = processing_info.get("state")
+            print(f"[INFO] Processing state: {state}")
+
+            while state in ["pending", "in_progress"]:
+                check_after_secs = processing_info.get("check_after_secs", 1)
+                print(f"[INFO] Waiting {check_after_secs}s for processing...")
+                time.sleep(check_after_secs)
+
+                status_params = {
+                    "command": "STATUS",
+                    "media_id": media_id
+                }
+                response = requests.get(TWITTER_MEDIA_UPLOAD_V1_URL, auth=auth, params=status_params, timeout=30)
+
+                if response.status_code != 200:
+                    print(f"[ERROR] STATUS check failed: {response.status_code}")
+                    return None
+
+                processing_info = response.json().get("processing_info", {})
+                state = processing_info.get("state")
+                print(f"[INFO] Processing state: {state}")
+
+            if state == "failed":
+                error = processing_info.get("error", {})
+                print(f"[ERROR] Video processing failed: {error}")
+                return None
+
+        print(f"[INFO] ✅ Video upload successful: {media_id}")
+        return media_id
+
+    except Exception as e:
+        print(f"[ERROR] Video upload error: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
+@weave.op()
 def upload_media_v2(oauth2_token: str, image_path: str) -> Optional[str]:
     """Upload media using Twitter API V2 (OAuth 2.0)"""
     print(f"[INFO] V2 API 시도: {image_path}")
@@ -95,9 +229,10 @@ def upload_media_v1(oauth1_creds: dict, image_path: str) -> Optional[str]:
 def upload_media_to_x(image_path: str) -> Optional[str]:
     """
     Upload media to X (V2 attempt → V1.1 fallback)
+    Supports both images and videos
 
     Args:
-        image_path: Path to image file
+        image_path: Path to image or video file
 
     Returns:
         media_id_string on success, None on failure
@@ -105,8 +240,22 @@ def upload_media_to_x(image_path: str) -> Optional[str]:
     load_dotenv()
 
     if not os.path.exists(image_path):
-        print(f"[ERROR] 이미지 파일을 찾을 수 없습니다: {image_path}")
+        print(f"[ERROR] 미디어 파일을 찾을 수 없습니다: {image_path}")
         return None
+
+    # Check if it's a video file
+    is_video = image_path.lower().endswith(('.mp4', '.mov', '.avi', '.webm'))
+
+    if is_video:
+        print(f"[INFO] 비디오 파일 감지: {image_path}")
+        # Videos must use OAuth 1.0a with chunked upload
+        oauth1_creds = {
+            "consumer_key": os.getenv("TW_CONSUMER_KEY"),
+            "consumer_secret": os.getenv("TW_CONSUMER_SECRET"),
+            "access_token": os.getenv("TW_ACCESS_TOKEN"),
+            "access_secret": os.getenv("TW_ACCESS_TOKEN_SECRET"),
+        }
+        return upload_video_chunked(oauth1_creds, image_path)
 
     oauth2_token = os.getenv("TW_OAUTH2_ACCESS_TOKEN")
     oauth1_creds = {
