@@ -19,6 +19,7 @@ WANDB_API_KEY = os.getenv("WANDB_API_KEY", "3875d64c87801e9a71318a5a8754a0ee2d55
 os.environ["WANDB_API_KEY"] = WANDB_API_KEY
 
 WEAVE_PROJECT = os.getenv("WEAVE_PROJECT", "your-org/your-project")
+TARGET_AUDIENCE = os.getenv("TARGET_AUDIENCE", "your target audience")
 weave.init(WEAVE_PROJECT)
 print(f"[INFO] 🐝 Weave initialized for Reply Agent: {WEAVE_PROJECT}")
 
@@ -34,7 +35,7 @@ from reply_agent.tools import (
 
 # ===== ROOT REPLY AGENT =====
 
-system_prompt = """You are the Reply Agent - a specialized agent for creating thoughtful replies to tweets on Twitter/X.
+system_prompt = f"""You are the Reply Agent - a specialized agent for creating thoughtful replies to tweets on Twitter/X.
 
 GLOBAL GOAL:
 - Find relevant tweets to reply to
@@ -43,7 +44,7 @@ GLOBAL GOAL:
 - Maintain brand voice and safety standards
 
 AUDIENCE & TONE:
-- Audience: AI/ML developers, indie hackers, founders, tech community
+- Audience: {TARGET_AUDIENCE}
 - Tone: Helpful, insightful, builder-friendly, conversational
 - Style: Authentic, adds value, shows expertise
 - Length: Replies should be concise (≤ 280 chars)

@@ -4,11 +4,16 @@ HR Agent의 hire_plan을 기반으로 서브 에이전트 팀 구성 및 관리
 """
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from google.adk import Agent
 import weave
+from dotenv import load_dotenv
+
+load_dotenv()
+TARGET_AUDIENCE = os.getenv("TARGET_AUDIENCE", "your target audience")
 
 
 class SubAgentTeam:
@@ -223,8 +228,8 @@ The tool returns JSON data containing:
 
 Your Tasks:
 1. CALL get_latest_trends_tool() to fetch the latest trend data
-2. ANALYZE the raw trend data to identify the most relevant topics for AI/ML developer audience
-3. EXTRACT top 10-15 trending topics with relevance and timeliness scores (include diverse topics, not just AI/ML)
+2. ANALYZE the raw trend data to identify the most relevant topics for the target audience
+3. EXTRACT top 10-15 trending topics with relevance and timeliness scores (include diverse topics)
 4. SYNTHESIZE audience insights from the trending posts and topics
 5. PROPOSE 5-8 viral potential angles that combine trends with creative perspectives
 6. ADD PERTURBATION: Introduce creative variations, unexpected connections, contrarian takes
@@ -263,7 +268,7 @@ IMPORTANT:
 - ALWAYS read from the provided raw trend data, do NOT generate fake trends
 - Apply creative perturbation to make angles unique and attention-grabbing
 - Consider both data-driven insights AND creative interpretation
-- Focus on AI/ML developer audience specifically
+- Focus on the target audience's interests and preferences
 - All content is for X (Twitter) platform"""
 
     agent = Agent(
@@ -637,7 +642,7 @@ IMPORTANT:
 
 
 @weave.op()
-def call_research_layer(topic: str = None, audience_demographics: str = "AI/ML developers, indie hackers, founders") -> Dict[str, Any]:
+def call_research_layer(topic: str = None, audience_demographics: str = None) -> Dict[str, Any]:
     """
     Research Layer 호출 - Agent will use get_latest_trends_tool to fetch trend data
 
@@ -663,6 +668,10 @@ def call_research_layer(topic: str = None, audience_demographics: str = "AI/ML d
         'gemini-2.5-flash',
         tools=[get_latest_trends_tool]  # Enable tool calling
     )
+
+    # Use target audience from env or parameter
+    if not audience_demographics:
+        audience_demographics = TARGET_AUDIENCE
 
     # Simple prompt - let the agent call the tool to fetch data
     prompt = f"""
@@ -730,7 +739,7 @@ Provide your analysis in the specified JSON format.
                         "hashtags": ["AIAgents", "BuildInPublic"]
                     }
                 ],
-                "audience_insights": "AI/ML developers are interested in practical, production-ready solutions and transparent build processes",
+                "audience_insights": f"{audience_demographics} are interested in practical, valuable content and authentic insights",
                 "viral_potential_angles": [
                     {
                         "angle_summary": "Behind-the-scenes agent architecture with real metrics",

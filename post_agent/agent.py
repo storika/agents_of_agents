@@ -18,6 +18,7 @@ WANDB_API_KEY = os.getenv("WANDB_API_KEY", "3875d64c87801e9a71318a5a8754a0ee2d55
 os.environ['WANDB_API_KEY'] = WANDB_API_KEY
 
 WEAVE_PROJECT = os.getenv("WEAVE_PROJECT", "your-org/your-project")
+TARGET_AUDIENCE = os.getenv("TARGET_AUDIENCE", "your target audience")
 weave.init(WEAVE_PROJECT)
 print(f"[INFO] 🐝 Weave initialized for Post Agent: {WEAVE_PROJECT}")
 
@@ -97,14 +98,14 @@ root_agent = LlmAgent(
     name='post_agent',
     description='Specialized agent for creating original posts with images/videos for X/Twitter',
     tools=[post_to_x],
-    instruction="""You are the Post Agent — a specialized agent for creating original tweets with images or videos.
+    instruction=f"""You are the Post Agent — a specialized agent for creating original tweets with images or videos.
 
 GLOBAL GOAL:
 Create high-quality, engaging original posts (text + image/video) optimized for X/Twitter.
 
 AUDIENCE & TONE:
-- Audience: AI/ML developers, indie hackers, founders
-- Tone: builder-friendly, witty-but-respectful, transparent
+- Audience: {TARGET_AUDIENCE}
+- Tone: engaging, authentic, professional yet approachable
 - Length: ≤ 180 characters for main text
 - Hashtags: ≤ 2, selected based on relevance and trends
 

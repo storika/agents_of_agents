@@ -19,6 +19,7 @@ WANDB_API_KEY = os.getenv("WANDB_API_KEY", "3875d64c87801e9a71318a5a8754a0ee2d55
 os.environ["WANDB_API_KEY"] = WANDB_API_KEY
 
 WEAVE_PROJECT = os.getenv("WEAVE_PROJECT", "your-org/your-project")
+TARGET_AUDIENCE = os.getenv("TARGET_AUDIENCE", "your target audience")
 weave.init(WEAVE_PROJECT)
 print(f"[INFO] 🐝 Weave initialized for Repost Agent: {WEAVE_PROJECT}")
 
@@ -33,7 +34,7 @@ from repost_agent.tools import (
 
 # ===== ROOT REPOST AGENT =====
 
-system_prompt = """You are the Repost Agent - a specialized agent for reposting (retweeting) tweets without comments on Twitter/X.
+system_prompt = f"""You are the Repost Agent - a specialized agent for reposting (retweeting) tweets without comments on Twitter/X.
 
 GLOBAL GOAL:
 - Find valuable tweets to amplify
@@ -42,14 +43,14 @@ GLOBAL GOAL:
 - Support the community by amplifying good content
 
 AUDIENCE & TONE:
-- Audience: AI/ML developers, indie hackers, founders, tech community
+- Audience: {TARGET_AUDIENCE}
 - Purpose: Curate and amplify valuable content
 - Strategy: Be selective - only repost high-quality, relevant content
 
 REPOST CRITERIA:
 1. Alignment: Content aligns with brand values and expertise
 2. Quality: High-quality, valuable information
-3. Relevance: Relevant to target audience (AI/ML developers, builders)
+3. Relevance: Relevant to target audience
 4. Authority: From credible sources or contains verified information
 5. Timeliness: Current and timely content
 

@@ -17,6 +17,7 @@ WANDB_API_KEY = os.getenv("WANDB_API_KEY", "3875d64c87801e9a71318a5a8754a0ee2d55
 os.environ["WANDB_API_KEY"] = WANDB_API_KEY
 
 WEAVE_PROJECT = os.getenv("WEAVE_PROJECT", "your-org/your-project")
+TARGET_AUDIENCE = os.getenv("TARGET_AUDIENCE", "your target audience")
 weave.init(WEAVE_PROJECT)
 print(f"[INFO] 🐝 Weave initialized for Quote Agent: {WEAVE_PROJECT}")
 
@@ -35,7 +36,7 @@ from quote_agent.tools import (
 
 # ===== ROOT REPOST AGENT =====
 
-system_prompt = """You are the Quote Agent - a specialized agent for creating engaging quote tweets (reposts with comments) on Twitter/X.
+system_prompt = f"""You are the Quote Agent - a specialized agent for creating engaging quote tweets (reposts with comments) on Twitter/X.
 
 GLOBAL GOAL
 - Find trending or relevant tweets to repost
@@ -44,9 +45,9 @@ GLOBAL GOAL
 - Maintain brand voice and safety standards
 
 AUDIENCE & TONE
-- Audience: AI/ML developers, indie hackers, founders, tech community
-- Tone: Conversational, witty-but-respectful, builder-friendly
-- Style: Authentic, adds perspective or insight to original tweet
+- Audience: {TARGET_AUDIENCE}
+- Tone: Conversational, authentic, engaging
+- Style: Adds perspective or insight to original tweet
 - Length: Comments should be concise (≤ 180 chars recommended)
 
 REPOST STRATEGIES
