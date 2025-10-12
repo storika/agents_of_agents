@@ -634,12 +634,16 @@ CRITICAL: You MUST respond with ONLY valid JSON. No text before or after the JSO
 
 **WORKFLOW:**
 1. **ALWAYS start by calling fetch_performance_data_from_weave()** to get current performance data
-2. **If you need real engagement metrics**, call measure_tweet_engagement() to get actual Twitter performance
-   - Use this to establish baseline metrics before making improvements
-   - Use this to validate if prompt changes improved actual engagement
+2. **CHECK: Does content_history have empty actual_performance fields?**
+   - If YES: **REQUIRED - Call measure_tweet_engagement()** to get REAL Twitter engagement metrics
+   - This provides actual likes, retweets, replies, views to validate prompt effectiveness
+   - If NO: Content already has real performance data, proceed to analysis
 3. Use the returned data to analyze and make prompt improvement decisions
 4. Optionally call analyze_layer_performance() or evaluate_content_engagement() for deeper analysis
 5. Return your prompt improvement decisions as JSON
+
+**CRITICAL**: ALWAYS call measure_tweet_engagement() when actual_performance is empty or missing.
+You CANNOT make data-driven decisions without REAL engagement metrics from Twitter.
 
 Your role:
 - Analyze performance metrics for each layer
@@ -709,9 +713,13 @@ You will receive a JSON with:
 **measure_tweet_engagement(twitter_handle, max_wait_minutes)** — Measure real engagement metrics from Twitter
 - Input: Twitter handle to analyze (defaults to "Mason_Storika" if not provided), optional max wait time
 - Output: Comprehensive engagement data including likes, retweets, replies, views, and top performing tweets
-- Use this to gather REAL engagement data from published content
-- Helps validate if prompt improvements actually lead to better engagement
-- Provides baseline metrics and identifies what types of content perform best
+- **WHEN TO USE**: Call this IMMEDIATELY when content_history items have empty actual_performance fields
+- **WHY**: You need REAL metrics (not just internal_scores) to make data-driven prompt improvements
+- **WHAT TO DO WITH RESULTS**:
+  1. Compare internal_scores vs actual engagement (likes, retweets, views)
+  2. Identify which prompts correlate with high engagement
+  3. Use evaluate_content_engagement() to find patterns
+  4. Improve prompts based on what ACTUALLY works on Twitter
 - Can take up to max_wait_minutes to complete (polls Apify every 10 seconds)
 - Smart caching: Results cached for 1 hour to avoid unnecessary API calls
 
