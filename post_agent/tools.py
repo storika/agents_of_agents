@@ -166,17 +166,46 @@ def post_to_x_api(text: str, media_keys: Optional[List[str]] = None, max_retries
                 timeout=10
             )
 
+            # Log rate limit headers for debugging
+            rate_limit_headers = {
+                'limit': response.headers.get('x-rate-limit-limit'),
+                'remaining': response.headers.get('x-rate-limit-remaining'),
+                'reset': response.headers.get('x-rate-limit-reset')
+            }
+
+            if rate_limit_headers['remaining'] is not None:
+                reset_time = int(rate_limit_headers['reset']) if rate_limit_headers['reset'] else 0
+                from datetime import datetime
+                reset_dt = datetime.fromtimestamp(reset_time) if reset_time > 0 else None
+                reset_str = reset_dt.strftime('%Y-%m-%d %H:%M:%S') if reset_dt else 'unknown'
+
+                print(f"[RATE_LIMIT] Remaining: {rate_limit_headers['remaining']}/{rate_limit_headers['limit']} (resets at {reset_str})")
+
             if response.status_code == 201:
                 data = response.json()
                 return data.get("data", {})
             elif response.status_code == 403:
                 print(f"[ERROR] 403 Forbidden - X API 권한 문제")
+                print(f"[ERROR] Response: {response.text}")
                 return None
             elif response.status_code == 429:
+                # Extract rate limit info from headers
+                reset_timestamp = rate_limit_headers.get('reset')
+                if reset_timestamp:
+                    from datetime import datetime
+                    reset_dt = datetime.fromtimestamp(int(reset_timestamp))
+                    reset_str = reset_dt.strftime('%Y-%m-%d %H:%M:%S')
+                    wait_seconds = int(reset_timestamp) - int(time.time())
+                    print(f"[ERROR] Rate limit exceeded!")
+                    print(f"[ERROR] Limit: {rate_limit_headers['limit']} requests")
+                    print(f"[ERROR] Remaining: {rate_limit_headers['remaining']}")
+                    print(f"[ERROR] Resets at: {reset_str} (in {wait_seconds}s)")
+                else:
+                    print(f"[ERROR] Rate limit exceeded (no reset time available)")
+
                 if attempt == max_retries:
-                    print(f"[ERROR] Rate limit 초과")
                     return None
-                print(f"[WARN] Rate limited. Retry in {delay}s")
+                print(f"[WARN] Rate limited. Retry #{attempt} in {delay}s")
                 time.sleep(delay)
                 delay *= 2
             else:
