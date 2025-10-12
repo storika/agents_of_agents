@@ -30,7 +30,6 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_AI_STUDIO_API_KEY")
 genai.configure(api_key=GOOGLE_API_KEY)
 
 
-@weave.op()
 def generate_repost_comments(
     original_post: str,
     author: str = "@unknown",
@@ -200,7 +199,6 @@ Return ONLY valid JSON with the specified format."""
         }
 
 
-@weave.op()
 def generate_single_comment(
     original_post: str,
     author: str = "@unknown",

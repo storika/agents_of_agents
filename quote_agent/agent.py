@@ -203,7 +203,6 @@ root_agent = LlmAgent(
 )
 
 
-@weave.op()
 def create_quote_tweet(
     tweet_url: str = None,
     tweet_text: str = None,
@@ -315,7 +314,6 @@ def create_quote_tweet(
         return {"error": str(e), "status": "failed"}
 
 
-@weave.op()
 def post_quote_tweet(tweet_url: str, comment: str, dry_run: bool = True) -> dict:
     """
     Post a quote tweet to Twitter/X
@@ -339,7 +337,6 @@ def post_quote_tweet(tweet_url: str, comment: str, dry_run: bool = True) -> dict
 
 # ===== A2A PROTOCOL INTERFACE =====
 
-@weave.op()
 def execute(request: dict) -> dict:
     """
     A2A Protocol Entry Point for Quote Agent

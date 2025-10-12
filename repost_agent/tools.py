@@ -7,7 +7,6 @@ import weave
 from typing import Optional
 
 
-@weave.op()
 def analyze_tweet_for_repost(tweet_url: str) -> str:
     """
     Analyze a tweet for repost worthiness
@@ -56,7 +55,6 @@ def analyze_tweet_for_repost(tweet_url: str) -> str:
     return json.dumps(mock_analysis, indent=2)
 
 
-@weave.op()
 def repost_tweet(
     tweet_url: str,
     dry_run: bool = False

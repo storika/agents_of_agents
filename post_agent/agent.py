@@ -227,7 +227,6 @@ IMPORTANT:
 
 # ===== A2A PROTOCOL INTERFACE =====
 
-@weave.op()
 def execute(request: Dict[str, Any]) -> Dict[str, Any]:
     """
     A2A Protocol Entry Point for Post Agent
@@ -431,7 +430,6 @@ def execute(request: Dict[str, Any]) -> Dict[str, Any]:
 
 # ===== CONVENIENCE FUNCTIONS =====
 
-@weave.op()
 def create_post(
     topic: str = None,
     tone: str = "witty",

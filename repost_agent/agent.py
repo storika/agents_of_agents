@@ -156,7 +156,6 @@ root_agent = LlmAgent(
 
 # ===== A2A PROTOCOL INTERFACE =====
 
-@weave.op()
 def execute(request: Dict[str, Any]) -> Dict[str, Any]:
     """
     A2A Protocol Entry Point for Repost Agent
@@ -271,7 +270,6 @@ def execute(request: Dict[str, Any]) -> Dict[str, Any]:
 
 # ===== CONVENIENCE FUNCTIONS =====
 
-@weave.op()
 def simple_repost(
     tweet_url: str,
     context: Dict[str, Any] = None,
