@@ -5,7 +5,7 @@ Clean pipeline for collecting trending data from X (Twitter) and Google Trends.
 ## Overview
 
 The Trend Research Pipeline automatically scrapes and analyzes trending topics from multiple sources:
-- **Google Trends**: Top trending searches with search volumes (via Browserbase)
+- **Google Trends**: Top trending searches with search volumes (via Browserbase + Gemini Vision OCR)
 - **Twitter/X**: Trending topics from various categories (via Tavily API)
 - **Post Analysis**: Actual posts related to trending keywords (via Tavily API)
 
@@ -16,7 +16,7 @@ Results are saved to `trend_data/` directory as timestamped JSON files, which ar
 ```
 trend_research_pipeline/
 ├── scrapers/
-│   ├── google_trends.py           # Google Trends scraper (Browserbase)
+│   ├── google_trends_gemini.py    # Google Trends scraper (Browserbase + Gemini OCR)
 │   ├── twitter_trends_tavily.py   # Twitter scraper (Tavily API)
 │   └── post_analyzer.py           # Post content analyzer (Tavily API)
 ├── pipeline.py                    # Main orchestrator
@@ -61,13 +61,19 @@ pip install -r requirements.txt
 Create a `.env` file in project root:
 
 ```env
-# Required for Google Trends scraping
+# Required for Google Trends OCR (via Gemini Vision)
+GOOGLE_API_KEY=your_google_api_key
 BROWSERBASE_API_KEY=your_browserbase_key
 BROWSERBASE_PROJECT_ID=your_project_id
 
 # Required for Twitter trends and post analysis
 TAVILY_API_KEY=your_tavily_key
 ```
+
+**Getting API Keys**:
+- **Google API Key**: Get from [Google AI Studio](https://aistudio.google.com/apikey) (free tier available)
+- **Browserbase**: For remote browser sessions (Google Trends screenshots)
+- **Tavily**: For Twitter trends discovery (no login required)
 
 **Note**: Twitter login credentials are no longer required. The pipeline uses Tavily API to discover trending topics from Twitter/X without requiring browser automation or authentication.
 
