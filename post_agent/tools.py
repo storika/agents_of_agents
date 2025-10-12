@@ -11,11 +11,17 @@ from pathlib import Path
 import weave
 import requests
 from dotenv import load_dotenv
+from google import genai
+from google.genai import Client, types
 
 # Twitter API URLs
 TWITTER_API_V2_URL = "https://api.twitter.com/2/tweets"
 TWITTER_MEDIA_UPLOAD_V2_URL = "https://upload.twitter.com/2/media/upload.json"
 TWITTER_MEDIA_UPLOAD_V1_URL = "https://upload.twitter.com/1.1/media/upload.json"
+
+# Initialize Gemini clients for image/video generation
+gemini_text_client = Client()
+gemini_image_client = genai.Client()
 
 
 @weave.op()
@@ -340,3 +346,215 @@ def post_to_x(text: str, image_path: str = "", hashtags: str = "", actually_post
         actually_post=actually_post,
         require_approval=False
     )
+
+
+# ===== IMAGE GENERATION TOOLS =====
+
+@weave.op()
+def generate_twitter_image(concept: str, retry: bool = False) -> dict:
+    """
+    Generate a 3:4 portrait image for Twitter based on a concept.
+
+    Args:
+        concept: Image concept description
+        retry: If True, simplify the prompt for retry
+
+    Returns:
+        Dictionary with status, file_path, and other metadata
+    """
+    # Prepare prompt
+    if retry:
+        prompt = f"Simple, clean image: {concept[:200]}"
+    else:
+        prompt = concept
+
+    # Add aspect ratio specification
+    prompt = f"{prompt}. Aspect ratio: 3:4 portrait, high quality, professional, suitable for social media."
+
+    try:
+        response = gemini_image_client.models.generate_content(
+            model='gemini-2.5-flash-image',
+            contents=[prompt],
+        )
+
+        # Extract image data from response
+        image_bytes = None
+        for part in response.candidates[0].content.parts:
+            if part.inline_data is not None:
+                image_bytes = part.inline_data.data
+                break
+
+        if image_bytes is None:
+            return {
+                'status': 'failed',
+                'reason': 'No image generated in response'
+            }
+
+        # Create artifacts directory
+        artifacts_dir = 'artifacts'
+        os.makedirs(artifacts_dir, exist_ok=True)
+
+        # Generate unique filename with timestamp
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f'generated_image_{timestamp}.png'
+        file_path = os.path.join(artifacts_dir, filename)
+
+        # Save to file system (for X API upload)
+        with open(file_path, 'wb') as f:
+            f.write(image_bytes)
+
+        print(f"[INFO] Image saved to: {file_path}")
+
+        return {
+            'status': 'success',
+            'detail': f'Image saved to {file_path} (3:4 portrait)',
+            'filename': filename,
+            'file_path': file_path,
+            'concept_used': concept
+        }
+
+    except Exception as e:
+        return {
+            'status': 'failed',
+            'reason': f'Image generation error: {str(e)}'
+        }
+
+
+# ===== VIDEO GENERATION TOOLS =====
+
+@weave.op()
+def generate_video_from_image(
+    image_path: str,
+    motion_prompt: str,
+    aspect_ratio: str = "9:16",
+    duration: int = 8
+) -> dict:
+    """
+    Generate video from image using Veo 3 API.
+
+    Args:
+        image_path: Path to reference image file
+        motion_prompt: Motion/story prompt for the video
+        aspect_ratio: Video aspect ratio (9:16 for vertical, 16:9 for horizontal)
+        duration: Video length in seconds (max 8)
+
+    Returns:
+        Dictionary with status, video_path, and metadata
+    """
+    start_time = time.time()
+
+    try:
+        # Check if image file exists
+        if not os.path.exists(image_path):
+            return {
+                'status': 'failed',
+                'reason': f'Image file not found: {image_path}'
+            }
+
+        print(f"[INFO] Loading reference image: {image_path}")
+
+        # Read image file as bytes
+        with open(image_path, 'rb') as f:
+            image_bytes = f.read()
+
+        print(f"[INFO] Image loaded ({len(image_bytes)} bytes)")
+
+        # Enhance prompt for vertical video with audio
+        enhanced_prompt = f"{motion_prompt}. Vertical 9:16 format optimized for social media stories and reels. Professional cinematography with smooth camera movements and audio."
+
+        print(f"[INFO] Starting video generation with Veo 3...")
+        print(f"[INFO] Prompt: {enhanced_prompt[:100]}...")
+        print(f"[INFO] Aspect ratio: {aspect_ratio}, Duration: {duration}s")
+
+        # Generate video using Veo 3 with image bytes
+        operation = gemini_text_client.models.generate_videos(
+            model="veo-3.0-generate-001",
+            prompt=enhanced_prompt,
+            image={
+                "imageBytes": image_bytes,
+                "mimeType": "image/png"
+            },
+            config=types.GenerateVideosConfig(
+                aspect_ratio=aspect_ratio,
+            )
+        )
+
+        operation_name = operation.name
+        print(f"[INFO] Operation started: {operation_name}")
+        print(f"[INFO] Polling for completion (this may take 11 seconds to 6 minutes)...")
+
+        # Poll until operation is done
+        poll_count = 0
+        max_polls = 60  # 10 minutes max (60 * 10s = 600s)
+
+        while not operation.done:
+            poll_count += 1
+            elapsed = time.time() - start_time
+
+            if poll_count % 6 == 0:  # Log every minute
+                print(f"[INFO] Still generating... (elapsed: {elapsed:.0f}s)")
+
+            if poll_count >= max_polls:
+                return {
+                    'status': 'failed',
+                    'reason': f'Video generation timed out after {elapsed:.0f}s'
+                }
+
+            time.sleep(10)  # Poll every 10 seconds
+            operation = gemini_text_client.operations.get(operation)
+
+        generation_time = time.time() - start_time
+        print(f"[INFO] Video generation completed in {generation_time:.1f}s")
+
+        # Get the generated video
+        if not operation.response or not operation.response.generated_videos:
+            return {
+                'status': 'failed',
+                'reason': 'No video generated in response'
+            }
+
+        generated_video = operation.response.generated_videos[0]
+
+        # Create artifacts directory
+        artifacts_dir = 'artifacts'
+        os.makedirs(artifacts_dir, exist_ok=True)
+
+        # Generate unique filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f'generated_video_{timestamp}.mp4'
+        file_path = os.path.join(artifacts_dir, filename)
+
+        # Download video
+        print(f"[INFO] Downloading video to: {file_path}")
+        video_bytes = gemini_text_client.files.download(file=generated_video.video)
+
+        # Write video bytes to file
+        with open(file_path, 'wb') as f:
+            f.write(video_bytes)
+
+        print(f"[INFO] Video saved successfully: {file_path}")
+
+        return {
+            'status': 'success',
+            'video_path': file_path,
+            'filename': filename,
+            'duration': duration,
+            'aspect_ratio': aspect_ratio,
+            'motion_prompt': motion_prompt,
+            'generation_time': generation_time,
+            'detail': f'Video saved to {file_path} ({aspect_ratio}, {duration}s)'
+        }
+
+    except Exception as e:
+        import traceback
+        generation_time = time.time() - start_time
+        error_msg = f'Video generation error after {generation_time:.1f}s: {str(e)}'
+        print(f"[ERROR] {error_msg}")
+        print(f"[ERROR] Traceback:")
+        traceback.print_exc()
+
+        return {
+            'status': 'failed',
+            'reason': error_msg,
+            'generation_time': generation_time
+        }

@@ -1134,6 +1134,129 @@ CRITICAL:
         instruction=system_prompt,
         tools=[generate_twitter_image]
     )
-    
+
     return agent
+
+
+# ===== IMAGE AND VIDEO CONCEPT GENERATION SUB-AGENTS =====
+
+@weave.op()
+def generate_image_concept(topic: str, tone: str) -> dict:
+    """
+    Generate image concept based on topic and tone using LLM reasoning.
+
+    Args:
+        topic: Image topic
+        tone: Tone (friendly, witty, informative, minimal)
+
+    Returns:
+        Dictionary with concept description, visual tags, and negative tags
+    """
+    import google.generativeai as genai
+    import os
+
+    genai.configure(api_key=os.getenv("GOOGLE_AI_STUDIO_API_KEY"))
+
+    concept_prompt = f"""Create 3:4 portrait image concept for topic '{topic}' with '{tone}' tone.
+Output:
+1. Concept: 1-2 sentences (subject, background, lighting, mood)
+2. Visual tags: 5-10 (e.g. close-up, soft light, vibrant colors)
+3. Negative tags: text, logo, watermark, low quality, distorted
+Keep it Twitter-friendly, no brands/text/sensitive content."""
+
+    try:
+        model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        response = model.generate_content(concept_prompt)
+
+        concept_text = response.text
+        return {
+            'status': 'success',
+            'concept': concept_text
+        }
+    except Exception as e:
+        print(f"[ERROR] Image concept generation failed: {e}")
+        return {
+            'status': 'failed',
+            'reason': str(e)
+        }
+
+
+@weave.op()
+def generate_video_concept(
+    image_concept: str,
+    topic: str,
+    tone: str,
+    include_audio: bool = True
+) -> dict:
+    """
+    Generate video motion/story concept based on image concept using LLM reasoning.
+
+    Args:
+        image_concept: Original image concept description
+        topic: Content topic
+        tone: Tone (engaging, dramatic, calm, energetic)
+        include_audio: Whether to include audio prompt (Veo 3 native audio)
+
+    Returns:
+        Dictionary with motion prompt, camera movement, visual effects, mood
+    """
+    import google.generativeai as genai
+    import os
+
+    genai.configure(api_key=os.getenv("GOOGLE_AI_STUDIO_API_KEY"))
+
+    audio_instruction = ""
+    if include_audio:
+        audio_instruction = """
+5. AUDIO CUES (Veo 3 natively generates audio):
+   - Dialogue: Use quotes for speech (e.g., "Check this out!")
+   - Sound effects: Describe ambient sounds (e.g., soft music, whoosh, click)
+   - Background: Mention environmental audio (e.g., gentle background music, upbeat track)
+
+   Example: 'Upbeat electronic music plays. A voice says, "The future of AI is here!"'"""
+
+    video_concept_prompt = f"""Create detailed 8-second video motion/story plan based on this image concept:
+
+Image: {image_concept}
+Topic: {topic}
+Tone: {tone}
+
+Generate a video prompt with:
+1. Camera movement (slow zoom, pan, tilt, static)
+2. Visual effects (fade in/out, lighting changes, color shifts)
+3. Mood and energy (calm, energetic, mysterious, uplifting)
+4. 8-second structure (0-3s: intro, 3-6s: main, 6-8s: outro){audio_instruction}
+
+Requirements:
+- Vertical 9:16 aspect ratio (Instagram Reels/TikTok/YouTube Shorts)
+- Smooth, professional cinematography
+- Keep subject centered and visible
+- No abrupt cuts or jarring movements
+- Suitable for social media (engaging, attention-grabbing)
+- Audio should enhance the visual story (dialogue, sound effects, music)
+- NO TEXT OVERLAYS - the video should be purely visual and audio
+
+Output a single detailed prompt (3-4 sentences) describing the motion, cinematography, and audio. Do NOT include any text overlays or on-screen text."""
+
+    try:
+        model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        response = model.generate_content(video_concept_prompt)
+
+        motion_prompt = response.text.strip()
+
+        return {
+            'status': 'success',
+            'motion_prompt': motion_prompt,
+            'camera_movement': 'dynamic' if 'zoom' in motion_prompt.lower() or 'pan' in motion_prompt.lower() else 'static',
+            'visual_effects': 'smooth' if 'smooth' in motion_prompt.lower() else 'dynamic',
+            'mood': tone,
+            'duration_plan': '8 seconds'
+        }
+
+    except Exception as e:
+        print(f"[ERROR] Video concept generation failed: {e}")
+        return {
+            'status': 'failed',
+            'reason': str(e)
+        }
 

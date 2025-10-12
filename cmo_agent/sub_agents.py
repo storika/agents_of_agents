@@ -1041,9 +1041,9 @@ Please assess the safety of this content for brand safety, ethical, and legal co
 @weave.op()
 def create_image_generator_agent() -> Agent:
     """이미지 생성 에이전트 - media_prompt로 실제 이미지 생성"""
-    
+
     # Image generation tool import
-    from image_caption_agent.tools import generate_twitter_image
+    from post_agent.tools import generate_twitter_image
     
     system_prompt = """You are the Image Generator. Your task is to generate a 3:4 portrait image for Twitter/X based on the media_prompt from the selected content.
 
@@ -1099,7 +1099,8 @@ def create_video_generator_agent() -> Agent:
     """비디오 생성 에이전트 - 이미지로부터 8초 짧은 비디오 생성 (optional)"""
 
     # Video generation tool import
-    from video_generation_agent.tools import generate_video_concept, generate_video_from_image
+    from post_agent.sub_agents import generate_video_concept
+    from post_agent.tools import generate_video_from_image
 
     system_prompt = """You are the Video Generator. Your task is to generate an 8-second vertical video (9:16) from the generated image for social media platforms like Instagram Reels, TikTok, and YouTube Shorts.
 
