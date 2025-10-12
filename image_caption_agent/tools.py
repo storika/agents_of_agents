@@ -15,12 +15,16 @@
 import base64
 import re
 from typing import Optional
+from google import genai
 from google.genai import Client
 from google.genai import types
 from google.adk.tools.tool_context import ToolContext
 
-# Vertex AI 클라이언트 초기화
+# 기본 클라이언트 (텍스트 생성용)
 client = Client()
+
+# 이미지 생성용 클라이언트 (gemini-2.5-flash-image 호환)
+image_client = genai.Client()
 
 
 async def generate_image_concept(
@@ -85,34 +89,36 @@ async def generate_twitter_image(
     prompt = f"{prompt}. Aspect ratio: 3:4 portrait, high quality, professional, suitable for social media."
     
     try:
-        response = client.models.generate_images(
-            model='imagen-3.0-generate-002',
-            prompt=prompt,
-            config={
-                'number_of_images': 1,
-                'aspect_ratio': '3:4',  # 3:4 세로형 비율
-            },
+        response = image_client.models.generate_content(
+            model='gemini-2.5-flash-image',
+            contents=[prompt],
         )
-        
-        if not response.generated_images:
+
+        # 응답에서 이미지 데이터 추출
+        image_bytes = None
+        for part in response.candidates[0].content.parts:
+            if part.inline_data is not None:
+                image_bytes = part.inline_data.data
+                break
+
+        if image_bytes is None:
             return {
                 'status': 'failed',
-                'reason': 'No images generated'
+                'reason': 'No image generated in response'
             }
-        
+
         # 이미지를 artifact에 저장 (토큰 절약)
-        image_bytes = response.generated_images[0].image.image_bytes
         await tool_context.save_artifact(
             'twitter_image.png',
             types.Part.from_bytes(data=image_bytes, mime_type='image/png'),
         )
-        
+
         return {
             'status': 'success',
-            'detail': 'Image saved to artifacts as twitter_image.png (3:4 portrait, 896×1280)',
+            'detail': 'Image saved to artifacts as twitter_image.png (3:4 portrait)',
             'filename': 'twitter_image.png'
         }
-    
+
     except Exception as e:
         return {
             'status': 'failed',
