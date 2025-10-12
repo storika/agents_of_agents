@@ -12,6 +12,8 @@ from apify_client import ApifyClient
 from datetime import datetime
 from weave.trace_server.trace_server_interface import CallsFilter
 
+from weave.trace_server.trace_server_interface import CallsFilter
+
 
 def get_recent_calls_as_json(
     limit: int = 10,
