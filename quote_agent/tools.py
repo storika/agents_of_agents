@@ -18,7 +18,8 @@ load_dotenv()
 # Initialize Weave
 WANDB_API_KEY = os.getenv("WANDB_API_KEY", "3875d64c87801e9a71318a5a8754a0ee2d556946")
 os.environ["WANDB_API_KEY"] = WANDB_API_KEY
-weave.init("mason-choi-storika/WeaveHacks2")
+WEAVE_PROJECT = os.getenv("WEAVE_PROJECT", "your-org/your-project")
+weave.init(WEAVE_PROJECT)
 
 # Initialize Gemini for LLM
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")

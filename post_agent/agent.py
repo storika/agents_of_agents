@@ -17,8 +17,9 @@ load_dotenv()
 WANDB_API_KEY = os.getenv("WANDB_API_KEY", "3875d64c87801e9a71318a5a8754a0ee2d556946")
 os.environ['WANDB_API_KEY'] = WANDB_API_KEY
 
-weave.init("mason-choi-storika/WeaveHacks2")
-print("[INFO] 🐝 Weave initialized for Post Agent: mason-choi-storika/WeaveHacks2")
+WEAVE_PROJECT = os.getenv("WEAVE_PROJECT", "your-org/your-project")
+weave.init(WEAVE_PROJECT)
+print(f"[INFO] 🐝 Weave initialized for Post Agent: {WEAVE_PROJECT}")
 
 # Now import ADK
 from google.adk.agents import LoopAgent, SequentialAgent

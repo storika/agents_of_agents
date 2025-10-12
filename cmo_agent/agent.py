@@ -10,6 +10,9 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+# Get Weave project from environment
+WEAVE_PROJECT = os.getenv("WEAVE_PROJECT", "your-org/your-project")
+
 # ===== OpenTelemetry Configuration for Weave =====
 # Reference: https://google.github.io/adk-docs/observability/weave/#sending-traces-to-weave
 
@@ -81,7 +84,7 @@ root_agent = LlmAgent(
         call_repost_agent,
         get_trending_context
     ],
-    instruction="""You are CMO — the Chief Marketing Orchestrator for WeaveHacks2.
+    instruction="""You are CMO — the Chief Marketing Orchestrator.
 
 GLOBAL GOAL:
 Decide the best STRATEGY for next content action and delegate to specialist agents via A2A protocol.
