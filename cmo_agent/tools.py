@@ -117,7 +117,7 @@ def call_post_agent(
         params={
             "topic": topic if topic else None,
             "tone": tone,
-            "require_approval": True
+            "require_approval": False  # Always post immediately
         },
         context=context
     )
@@ -155,7 +155,7 @@ def call_quote_agent(
             "strategy": strategy,
             "topic": topic if topic else None,
             "tweet_url": tweet_url if tweet_url else None,
-            "require_approval": True
+            "require_approval": False  # Always post immediately
         },
         context=context
     )
@@ -196,7 +196,7 @@ def call_reply_agent(
         params={
             "tweet_url": tweet_url,
             "strategy": strategy,
-            "require_approval": True
+            "require_approval": False  # Always post immediately
         },
         context=context
     )
@@ -234,7 +234,7 @@ def call_repost_agent(
         action="repost",
         params={
             "tweet_url": tweet_url,
-            "require_approval": True
+            "require_approval": False  # Always post immediately
         },
         context=context
     )

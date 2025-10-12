@@ -99,7 +99,7 @@ def generate_reply(
 def post_reply(
     tweet_url: str,
     reply_text: str,
-    dry_run: bool = True
+    dry_run: bool = False
 ) -> str:
     """
     Post a reply to a tweet
@@ -107,11 +107,21 @@ def post_reply(
     Args:
         tweet_url: URL of tweet to reply to
         reply_text: Reply text
-        dry_run: If True, simulate posting (default: True)
+        dry_run: If True, simulate posting (default: False - always post)
 
     Returns:
         JSON string with posting status
     """
+    # Validate tweet URL contains tweet ID
+    if "/status/" not in tweet_url:
+        result = {
+            "status": "error",
+            "error": "Invalid tweet URL - must contain /status/[tweet_id]",
+            "tweet_url": tweet_url,
+            "message": "❌ URL must be an actual tweet URL, not a search or profile URL"
+        }
+        return json.dumps(result, indent=2)
+
     # TODO: Implement actual reply posting using X API
     # For now, return mock response
 

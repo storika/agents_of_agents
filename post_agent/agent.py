@@ -255,13 +255,37 @@ def execute(request: Dict[str, Any]) -> Dict[str, Any]:
 
             response_text = json.dumps(generator_result, indent=2)
 
-            # Parse response
-            # TODO: Extract structured data from response_text
+            # Extract content and actually post it
+            posting_result = None
+            if generator_result and "content_pieces" in generator_result:
+                content_pieces = generator_result.get("content_pieces", [])
+                if content_pieces:
+                    # Get the first content piece (for X/Twitter)
+                    first_piece = content_pieces[0]
+                    tweet_text = first_piece.get("content", "")
+                    hashtags = " ".join(f"#{tag}" for tag in first_piece.get("hashtags", []))
+
+                    # Combine text and hashtags
+                    full_text = f"{tweet_text} {hashtags}".strip()
+
+                    print(f"[POST_AGENT] Posting to X: {full_text[:80]}...")
+
+                    # Actually post to X
+                    posting_result = post_to_x(
+                        text=full_text,
+                        image_path="",  # No image for now
+                        hashtags="",  # Already included in text
+                        actually_post=True  # Always post immediately
+                    )
+
+                    print(f"[POST_AGENT] Posting result: {posting_result}")
 
             return {
                 "status": "success",
                 "result": {
                     "content_generated": True,
+                    "content_posted": posting_result is not None,
+                    "posting_result": posting_result,
                     "response": response_text,
                     "requires_approval": require_approval
                 },

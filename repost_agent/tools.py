@@ -18,6 +18,16 @@ def analyze_tweet_for_repost(tweet_url: str) -> str:
     Returns:
         JSON string with analysis results
     """
+    # Validate tweet URL contains tweet ID
+    if "/status/" not in tweet_url:
+        result = {
+            "status": "error",
+            "error": "Invalid tweet URL - must contain /status/[tweet_id]",
+            "tweet_url": tweet_url,
+            "message": "❌ URL must be an actual tweet URL, not a search or profile URL"
+        }
+        return json.dumps(result, indent=2)
+
     # TODO: Implement actual tweet analysis using X API + LLM
     # For now, return mock analysis
 
@@ -49,18 +59,28 @@ def analyze_tweet_for_repost(tweet_url: str) -> str:
 @weave.op()
 def repost_tweet(
     tweet_url: str,
-    dry_run: bool = True
+    dry_run: bool = False
 ) -> str:
     """
     Repost (retweet) a tweet without comment
 
     Args:
         tweet_url: URL of tweet to repost
-        dry_run: If True, simulate reposting (default: True)
+        dry_run: If True, simulate reposting (default: False - always post)
 
     Returns:
         JSON string with repost status
     """
+    # Validate tweet URL contains tweet ID
+    if "/status/" not in tweet_url:
+        result = {
+            "status": "error",
+            "error": "Invalid tweet URL - must contain /status/[tweet_id]",
+            "tweet_url": tweet_url,
+            "message": "❌ URL must be an actual tweet URL, not a search or profile URL"
+        }
+        return json.dumps(result, indent=2)
+
     # TODO: Implement actual reposting using X API
     # For now, return mock response
 

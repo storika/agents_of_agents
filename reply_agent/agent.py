@@ -218,6 +218,19 @@ def execute(request: Dict[str, Any]) -> Dict[str, Any]:
                     }
                 }
 
+            # Validate tweet URL contains /status/
+            if "/status/" not in tweet_url:
+                return {
+                    "status": "failed",
+                    "error": f"Invalid tweet URL: {tweet_url} - must contain /status/[tweet_id]",
+                    "message": "URL must be an actual tweet, not a search or profile page",
+                    "metadata": {
+                        "agent": "reply_agent",
+                        "action": action,
+                        "timestamp": datetime.utcnow().isoformat()
+                    }
+                }
+
             # Build prompt
             prompt = f"Create a {strategy} reply to the tweet at {tweet_url}"
             if context:

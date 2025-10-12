@@ -28,34 +28,16 @@ genai.configure(api_key=GOOGLE_API_KEY)
 try:
     from pytwitter import Api
 
-    # Try OAuth 2.0 first (user preference)
+    # Use OAuth 2.0 for write operations (same as post_agent)
     TW_OAUTH2_ACCESS_TOKEN = os.getenv("TW_OAUTH2_ACCESS_TOKEN")
 
     if TW_OAUTH2_ACCESS_TOKEN:
         twitter_api = Api(bearer_token=TW_OAUTH2_ACCESS_TOKEN)
         print("✅ Twitter API initialized with OAuth 2.0 (TW_OAUTH2_ACCESS_TOKEN)")
     else:
-        # Fall back to OAuth 1.0a
-        TW_ACCESS_TOKEN = os.getenv("TW_ACCESS_TOKEN")
-        TW_ACCESS_SECRET = os.getenv("TW_ACCESS_SECRET")
-        TW_CLIENT_ID = os.getenv("TW_CLIENT_ID")
-        TW_CLIENT_SECRET = os.getenv("TW_CLIENT_SECRET")
-
-        if all([TW_CLIENT_ID, TW_CLIENT_SECRET, TW_ACCESS_TOKEN, TW_ACCESS_SECRET]):
-            twitter_api = Api(
-                consumer_key=TW_CLIENT_ID,
-                consumer_secret=TW_CLIENT_SECRET,
-                access_token=TW_ACCESS_TOKEN,
-                access_secret=TW_ACCESS_SECRET,
-            )
-            print("✅ Twitter API initialized with OAuth 1.0a (TW_* credentials)")
-        else:
-            twitter_api = None
-            print("⚠️ Twitter API credentials not found in .env - will use mock mode")
-            print("   Expected: TW_OAUTH2_ACCESS_TOKEN (preferred)")
-            print(
-                "   Or: TW_CLIENT_ID + TW_CLIENT_SECRET + TW_ACCESS_TOKEN + TW_ACCESS_SECRET"
-            )
+        twitter_api = None
+        print("⚠️ Twitter API credentials not found in .env - will use mock mode")
+        print("   Required: TW_OAUTH2_ACCESS_TOKEN")
 
 except ImportError:
     twitter_api = None
@@ -102,17 +84,23 @@ def load_trending_posts_from_data(max_results: int = 10) -> List[Dict[str, Any]]
                 for category, tab_info in tabs_data.items():
                     topics_list = tab_info.get("trending_topics", [])
                     for topic in topics_list[:max_results]:
+                        url = topic.get("url", "")
+
+                        # Skip search URLs - only include actual tweet URLs (with /status/)
+                        if "/search?" in url or not "/status/" in url:
+                            continue
+
                         posts.append({
-                            "id": topic.get("url", "").split("/")[-1] if "/" in topic.get("url", "") else f"trend_{topic.get('rank', 0)}",
+                            "id": url.split("/status/")[1].split("?")[0] if "/status/" in url else f"trend_{topic.get('rank', 0)}",
                             "text": topic.get("raw_text", topic.get("topic_name", ""))[:280],
                             "author_id": "trending_user",
                             "created_at": topic.get("timestamp", ""),
                             "metrics": {
-                                "likes": 100 + (topic.get("rank", 10) * 10),  # Estimated
-                                "retweets": 50 + (topic.get("rank", 10) * 5),  # Estimated
-                                "replies": 20 + (topic.get("rank", 10) * 2),  # Estimated
+                                "likes": 150 + (topic.get("rank", 10) * 10),  # Estimated
+                                "retweets": 75 + (topic.get("rank", 10) * 5),  # Estimated
+                                "replies": 30 + (topic.get("rank", 10) * 2),  # Estimated
                             },
-                            "url": topic.get("url", ""),
+                            "url": url,
                             "source": f"trend_data/{category}",
                             "engagement_hint": topic.get("engagement_hint", "unknown")
                         })
@@ -432,6 +420,151 @@ def quote_tweet_post(
     except Exception as e:
         print(f"❌ Error posting quote tweet: {e}")
         return {"status": "error", "error": str(e), "post_id": post_id}
+
+
+@weave.op()
+def quote_to_x(
+    tweet_url: str,
+    comment: str,
+    actually_post: bool = True,
+    require_approval: bool = False
+) -> str:
+    """
+    Publish quote tweet to Twitter/X (similar to post_to_x for regular posts)
+
+    Args:
+        tweet_url: URL of the tweet to quote
+        comment: Your comment text for the quote tweet
+        actually_post: If True, actually post; if False, simulate (default: True - always post)
+        require_approval: If True, queue for approval (default: False - no approval needed)
+
+    Returns:
+        JSON string with posting status
+
+    Workflow:
+        1. Extract tweet ID from URL
+        2. Validate comment length
+        3. Post quote tweet with comment
+    """
+    from datetime import datetime
+
+    # Extract tweet ID from URL
+    # URLs like: https://twitter.com/user/status/123456 or https://x.com/user/status/123456
+    tweet_id = None
+    if "/status/" in tweet_url:
+        tweet_id = tweet_url.split("/status/")[1].split("?")[0].split("/")[0]
+    else:
+        result = {
+            "status": "failed",
+            "error": "Invalid tweet URL - cannot extract tweet ID",
+            "tweet_url": tweet_url,
+            "message": "❌ 올바른 트윗 URL이 아닙니다."
+        }
+        return json.dumps(result, indent=2, ensure_ascii=False)
+
+    # If approval required, queue only
+    if require_approval:
+        result = {
+            "status": "queued",
+            "quote_id": f"queued_{datetime.now().timestamp()}",
+            "tweet_url": tweet_url,
+            "tweet_id": tweet_id,
+            "comment": comment,
+            "scheduled_time": datetime.now().isoformat(),
+            "requires_approval": True,
+            "message": "승인 대기 중입니다."
+        }
+        return json.dumps(result, indent=2, ensure_ascii=False)
+
+    # Validate comment length
+    if len(comment) > 280:
+        result = {
+            "status": "failed",
+            "error": f"Comment too long: {len(comment)} chars (max: 280)",
+            "comment": comment,
+            "message": f"❌ 댓글이 너무 깁니다 ({len(comment)}/280자)"
+        }
+        return json.dumps(result, indent=2, ensure_ascii=False)
+
+    # Actually post
+    if actually_post:
+        print(f"[INFO] ==========================================")
+        print(f"[INFO] 인용 트윗 발행 중...")
+        print(f"[INFO] 원본 트윗: {tweet_url}")
+        print(f"[INFO] 댓글: {comment[:50]}{'...' if len(comment) > 50 else ''}")
+        print(f"[INFO] ==========================================")
+
+        try:
+            if twitter_api:
+                # Real API call
+                response = twitter_api.create_tweet(text=comment, quote_tweet_id=tweet_id)
+
+                # Handle both Response.data and direct Tweet object
+                tweet_data = None
+                if response:
+                    if hasattr(response, 'data') and response.data:
+                        tweet_data = response.data
+                    elif hasattr(response, 'id'):
+                        # Direct Tweet object
+                        tweet_data = response
+
+                if tweet_data and hasattr(tweet_data, 'id'):
+                    result = {
+                        "status": "published",
+                        "quote_id": tweet_data.id,
+                        "tweet_url": tweet_url,
+                        "quoted_tweet_id": tweet_id,
+                        "comment": comment,
+                        "character_count": len(comment),
+                        "published_time": datetime.now().isoformat(),
+                        "message": "✅ 성공적으로 X에 인용 트윗이 발행되었습니다!",
+                        "url": f"https://twitter.com/i/web/status/{tweet_data.id}"
+                    }
+                    print(f"[INFO] ✅ 성공: {result['url']}")
+                else:
+                    result = {
+                        "status": "failed",
+                        "error": "Failed to create quote tweet - no response data",
+                        "tweet_url": tweet_url,
+                        "comment": comment,
+                        "message": "❌ 트윗 생성 실패 - 응답 데이터 없음"
+                    }
+                    print(f"[ERROR] ❌ 실패: 응답 데이터 없음")
+            else:
+                # No API configured - simulation mode
+                result = {
+                    "status": "simulated",
+                    "quote_id": f"sim_{datetime.now().timestamp()}",
+                    "tweet_url": tweet_url,
+                    "quoted_tweet_id": tweet_id,
+                    "comment": comment,
+                    "message": "⚠️ Twitter API가 설정되지 않아 시뮬레이션 모드로 처리되었습니다.",
+                    "note": "실제로 포스팅하려면 .env에 Twitter 자격증명을 설정하세요"
+                }
+                print(f"[WARN] ⚠️ API 미설정 - 시뮬레이션 모드")
+
+        except Exception as e:
+            result = {
+                "status": "failed",
+                "error": str(e),
+                "tweet_url": tweet_url,
+                "comment": comment,
+                "message": f"❌ 인용 트윗 발행 실패: {str(e)}"
+            }
+            print(f"[ERROR] ❌ 예외 발생: {e}")
+    else:
+        # Simulation mode
+        result = {
+            "status": "simulated",
+            "quote_id": f"sim_{datetime.now().timestamp()}",
+            "tweet_url": tweet_url,
+            "quoted_tweet_id": tweet_id,
+            "comment": comment,
+            "scheduled_time": datetime.now().isoformat(),
+            "message": "시뮬레이션: 실제로는 X에 발행되지 않았습니다."
+        }
+
+    return json.dumps(result, indent=2, ensure_ascii=False)
 
 
 @weave.op()

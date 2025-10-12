@@ -193,6 +193,19 @@ def execute(request: Dict[str, Any]) -> Dict[str, Any]:
                     }
                 }
 
+            # Validate tweet URL contains /status/
+            if "/status/" not in tweet_url:
+                return {
+                    "status": "failed",
+                    "error": f"Invalid tweet URL: {tweet_url} - must contain /status/[tweet_id]",
+                    "message": "URL must be an actual tweet, not a search or profile page",
+                    "metadata": {
+                        "agent": "repost_agent",
+                        "action": action,
+                        "timestamp": datetime.utcnow().isoformat()
+                    }
+                }
+
             # Build prompt
             prompt = f"Analyze and repost the tweet at {tweet_url}"
             if context:
@@ -206,8 +219,8 @@ def execute(request: Dict[str, Any]) -> Dict[str, Any]:
             analysis_str = analyze_tweet_for_repost(tweet_url)
             analysis = json.loads(analysis_str)
 
-            # Perform repost
-            repost_result_str = repost_tweet(tweet_url, dry_run=True)
+            # Perform repost (always post immediately)
+            repost_result_str = repost_tweet(tweet_url, dry_run=False)
             response_text = repost_result_str
 
             return {

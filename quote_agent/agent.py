@@ -29,6 +29,7 @@ from quote_agent.tools import (
     generate_repost_comment_tool,
     post_quote_tweet_tool,
     auto_trending_repost,
+    quote_to_x,
 )
 
 # ===== ROOT REPOST AGENT =====
@@ -90,53 +91,73 @@ When user requests a repost:
      * Safety: Is it respectful and safe? (0-1)
    - Select the highest-scoring comment
 
-4. POSTING THE REPOST
-   After calling auto_trending_repost() and getting the result:
-   - Extract the post ID and comment from the result
-   - AUTOMATICALLY call post_quote_tweet_tool(post_id, comment, dry_run=True) to post it
-   - Present the final result to the user with posting status
+4. POSTING THE QUOTE TWEET - **CRITICAL STEP**
+   After calling auto_trending_repost() and getting the result, you MUST post it:
 
-   For manual repost requests, return JSON with:
-   {
-     "original_tweet": {
-       "url": "https://twitter.com/user/status/123",
-       "text": "Original tweet text...",
-       "summary": "Brief summary of main point"
-     },
-     "selected_comment": {
-       "comment": "Selected comment text",
-       "character_count": 142
-     },
-     "quote_tweet_preview": "How your quote tweet will appear",
-     "status": "ready_to_post"
-   }
+   Step 4a: Extract from auto_trending_repost() result:
+   - tweet_url = result['selected_post']['url'] or result['selected_post']['id']
+   - comment = result['generated_comment']['text']
+
+   Step 4b: IMMEDIATELY call quote_to_x() to post:
+   quote_to_x(
+     tweet_url=tweet_url,
+     comment=comment,
+     actually_post=False,  # Use False for safety (simulation mode)
+     require_approval=True  # Queue for approval
+   )
+
+   Step 4c: Report the complete result to user with:
+   - Original tweet URL and summary
+   - Generated comment
+   - Posting status (queued/published/simulated)
+
+   **DO NOT STOP after auto_trending_repost() - you MUST call quote_to_x() to complete the task!**
 
 TOOLS AVAILABLE
 You have access to:
 1. auto_trending_repost() - **USE THIS** to automatically pick a random trending post and generate a comment (PREFERRED for "pick from trending" requests)
 2. find_trending_tweets_tool(topic, max_results) - Find trending tweets on a specific topic
 3. generate_repost_comment_tool(tweet_text, author, strategy) - Generate comment with specific strategy
-4. post_quote_tweet_tool(original_tweet_url, comment) - Actually post the quote tweet
+4. post_quote_tweet_tool(original_tweet_url, comment) - Post quote tweet (basic version)
+5. quote_to_x(tweet_url, comment, actually_post, require_approval) - **RECOMMENDED** Full-featured quote tweet posting with approval queue and error handling
 
-IMPORTANT NOTES
-- When user says "pick from trending topics" or similar, IMMEDIATELY call auto_trending_repost() - do NOT ask for a topic
-- After auto_trending_repost() returns, IMMEDIATELY call post_quote_tweet_tool() with the result
-- auto_trending_repost() returns a dict with 'selected_post' (containing 'id') and 'generated_comment' (containing 'text')
-- Extract result['selected_post']['id'] and result['generated_comment']['text'] to call post_quote_tweet_tool
-- Always provide options - let the system or user choose the best comment
-- Quality over quantity - one great repost is better than many mediocre ones
+IMPORTANT NOTES - WORKFLOW REQUIREMENTS
+- When user says "pick from trending topics" or "make a quote", IMMEDIATELY call auto_trending_repost()
+- After auto_trending_repost() returns, you MUST call quote_to_x() to actually post/queue the tweet
+- **NEVER stop after just calling auto_trending_repost()** - that only generates the comment, you must post it!
+- The complete workflow is: auto_trending_repost() → quote_to_x() → report to user
+- auto_trending_repost() returns: {'selected_post': {...}, 'generated_comment': {'text': '...'}}
+- Use quote_to_x() with require_approval=True to queue tweets safely
+- Quality over quantity - one great quote tweet is better than many mediocre ones
 - Add genuine value - your comment should make the original tweet more valuable
 - Be respectful - quote tweets can be seen as endorsements or criticisms
 - Stay on brand - maintain consistent voice across all reposts
 
-EXAMPLE WORKFLOW FOR "pick from trending":
-1. User: "pick one from trending topics"
-2. You: Call auto_trending_repost() -> get result
-3. You: Extract post_id = result['selected_post']['id'], comment = result['generated_comment']['text']
-4. You: Call post_quote_tweet_tool(post_id, comment, dry_run=True)
-5. You: Present both results to user showing what was selected and posting status
+EXAMPLE COMPLETE WORKFLOW:
 
-EXAMPLES OF GOOD REPOST COMMENTS
+User: "let's make a quote"
+
+Step 1: Call auto_trending_repost()
+You: <call auto_trending_repost()>
+Result: {
+  "selected_post": {"url": "https://twitter.com/user/status/123", "text": "Original tweet..."},
+  "generated_comment": {"text": "Great insight! This reminds me of..."}
+}
+
+Step 2: IMMEDIATELY call quote_to_x() with the result
+You: <call quote_to_x(
+  tweet_url="https://twitter.com/user/status/123",
+  comment="Great insight! This reminds me of...",
+  actually_post=False,
+  require_approval=True
+)>
+
+Step 3: Report complete result to user
+You: "✅ Quote tweet created and queued for approval! Original post about [topic], with comment: 'Great insight!...'"
+
+CRITICAL: Must complete all 3 steps - don't stop after Step 1!
+
+EXAMPLES OF GOOD QUOTE TWEET COMMENTS
 
 Original: "Just shipped a new AI feature in 2 hours using Claude"
 Good Comment: "This is exactly why we integrated Claude into our workflow. What used to take days now takes hours. The productivity gains are real. 🚀"
@@ -175,6 +196,7 @@ root_agent = LlmAgent(
         find_trending_tweets_tool,
         generate_repost_comment_tool,
         post_quote_tweet_tool,
+        quote_to_x,
     ],
 )
 
@@ -372,11 +394,29 @@ def execute(request: dict) -> dict:
 
             # Execute via tools directly
             print(f"[QUOTE_AGENT] Executing quote tweet generation...")
-            from quote_agent.tools import search_recent_posts, generate_quote_tweet_comment, auto_trending_repost
+            from quote_agent.tools import search_recent_posts, generate_quote_tweet_comment, auto_trending_repost, quote_to_x
 
             # Use auto_trending_repost for trending strategy
             if strategy == "trending":
                 result = auto_trending_repost()
+
+                # Now actually post/queue the quote tweet
+                if result.get("status") == "ready" and result.get("selected_post") and result.get("generated_comment"):
+                    tweet_url = result["selected_post"].get("url", "")
+                    comment = result["generated_comment"].get("text", "")
+
+                    print(f"[QUOTE_AGENT] Posting quote tweet to: {tweet_url}")
+                    posting_result = quote_to_x(
+                        tweet_url=tweet_url,
+                        comment=comment,
+                        actually_post=True,  # Actually post to X
+                        require_approval=False  # Post immediately, no approval needed
+                    )
+
+                    # Combine both results
+                    result["posting_status"] = json.loads(posting_result)
+                    print(f"[QUOTE_AGENT] Quote tweet posted/queued: {result['posting_status'].get('status')}")
+
                 response_text = json.dumps(result, indent=2)
             else:
                 # Manual strategy with topic or URL
@@ -388,10 +428,29 @@ def execute(request: dict) -> dict:
                 if posts_data.get("posts"):
                     first_post = posts_data["posts"][0]
                     comment = generate_quote_tweet_comment(first_post["text"])
-                    response_text = json.dumps({
-                        "post": first_post,
-                        "comment": comment
-                    }, indent=2)
+
+                    # Post/queue the quote tweet
+                    tweet_url = first_post.get("url", "")
+                    if tweet_url:
+                        print(f"[QUOTE_AGENT] Posting quote tweet to: {tweet_url}")
+                        posting_result = quote_to_x(
+                            tweet_url=tweet_url,
+                            comment=comment,
+                            actually_post=True,  # Actually post to X
+                            require_approval=False  # Post immediately
+                        )
+
+                        response_text = json.dumps({
+                            "post": first_post,
+                            "comment": comment,
+                            "posting_status": json.loads(posting_result)
+                        }, indent=2)
+                    else:
+                        response_text = json.dumps({
+                            "post": first_post,
+                            "comment": comment,
+                            "error": "No URL found for posting"
+                        }, indent=2)
                 else:
                     response_text = json.dumps({"error": "No posts found"}, indent=2)
 

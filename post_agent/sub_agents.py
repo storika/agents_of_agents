@@ -779,25 +779,36 @@ Provide your analysis in the specified JSON format.
 def call_creative_writer_layer(research_output: Dict[str, Any]) -> Dict[str, Any]:
     """
     Creative Writer Layer 호출
-    
+
     Args:
         research_output: Research layer의 출력
-    
+
     Returns:
         Creative Writer layer 출력
     """
+    import google.generativeai as genai
+    import os
+
+    genai.configure(api_key=os.getenv("GOOGLE_AI_STUDIO_API_KEY"))
+
+    # Get system prompt from agent
     agent = create_creative_writer_agent()
-    
+    system_instruction = agent.instruction
+
+    # Create model
+    model = genai.GenerativeModel('gemini-2.0-flash-exp')
+
     prompt = f"""
 Research Output:
 {json.dumps(research_output, indent=2, ensure_ascii=False)}
 
 Based on this research, please generate at least 3 creative content ideas.
 """
-    
+
     try:
         print(f"✍️ Creative Writer Layer 실행 중...")
-        response = agent.send_message(prompt)
+        chat = model.start_chat()
+        response = chat.send_message(f"{system_instruction}\n\n{prompt}")
         response_text = response.text if hasattr(response, 'text') else str(response)
         result = parse_agent_response(response_text, "creative_writer_layer")
         
@@ -846,25 +857,36 @@ Based on this research, please generate at least 3 creative content ideas.
 def call_generator_layer(content_idea: Dict[str, Any]) -> Dict[str, Any]:
     """
     Generator Layer 호출
-    
+
     Args:
         content_idea: 선택된 콘텐츠 아이디어
-    
+
     Returns:
         Generator layer 출력
     """
+    import google.generativeai as genai
+    import os
+
+    genai.configure(api_key=os.getenv("GOOGLE_AI_STUDIO_API_KEY"))
+
+    # Get system prompt from agent
     agent = create_generator_agent()
-    
+    system_instruction = agent.instruction
+
+    # Create model
+    model = genai.GenerativeModel('gemini-2.0-flash-exp')
+
     prompt = f"""
 Content Idea:
 {json.dumps(content_idea, indent=2, ensure_ascii=False)}
 
 Please generate actual shareable content for the specified platforms.
 """
-    
+
     try:
         print(f"⚙️ Generator Layer 실행 중...")
-        response = agent.send_message(prompt)
+        chat = model.start_chat()
+        response = chat.send_message(f"{system_instruction}\n\n{prompt}")
         response_text = response.text if hasattr(response, 'text') else str(response)
         result = parse_agent_response(response_text, "generator_layer")
         
@@ -916,25 +938,36 @@ Please generate actual shareable content for the specified platforms.
 def call_critic_layer(generator_output: Dict[str, Any]) -> Dict[str, Any]:
     """
     Critic Layer 호출
-    
+
     Args:
         generator_output: Generator layer의 출력
-    
+
     Returns:
         Critic layer 출력
     """
+    import google.generativeai as genai
+    import os
+
+    genai.configure(api_key=os.getenv("GOOGLE_AI_STUDIO_API_KEY"))
+
+    # Get system prompt from agent
     agent = create_critic_agent()
-    
+    system_instruction = agent.instruction
+
+    # Create model
+    model = genai.GenerativeModel('gemini-2.0-flash-exp')
+
     prompt = f"""
 Generated Content:
 {json.dumps(generator_output, indent=2, ensure_ascii=False)}
 
 Please evaluate the quality of this content across accuracy, objectivity, and thoroughness.
 """
-    
+
     try:
         print(f"🔎 Critic Layer 실행 중...")
-        response = agent.send_message(prompt)
+        chat = model.start_chat()
+        response = chat.send_message(f"{system_instruction}\n\n{prompt}")
         response_text = response.text if hasattr(response, 'text') else str(response)
         result = parse_agent_response(response_text, "critic_layer")
         
@@ -984,16 +1017,26 @@ Please evaluate the quality of this content across accuracy, objectivity, and th
 def call_safety_layer(generator_output: Dict[str, Any], critic_output: Dict[str, Any]) -> Dict[str, Any]:
     """
     Safety Layer 호출
-    
+
     Args:
         generator_output: Generator layer의 출력
         critic_output: Critic layer의 출력
-    
+
     Returns:
         Safety layer 출력
     """
+    import google.generativeai as genai
+    import os
+
+    genai.configure(api_key=os.getenv("GOOGLE_AI_STUDIO_API_KEY"))
+
+    # Get system prompt from agent
     agent = create_safety_agent()
-    
+    system_instruction = agent.instruction
+
+    # Create model
+    model = genai.GenerativeModel('gemini-2.0-flash-exp')
+
     prompt = f"""
 Generated Content:
 {json.dumps(generator_output, indent=2, ensure_ascii=False)}
@@ -1003,10 +1046,11 @@ Critic Evaluation:
 
 Please assess the safety of this content for brand safety, ethical, and legal compliance.
 """
-    
+
     try:
         print(f"🛡️ Safety Layer 실행 중...")
-        response = agent.send_message(prompt)
+        chat = model.start_chat()
+        response = chat.send_message(f"{system_instruction}\n\n{prompt}")
         response_text = response.text if hasattr(response, 'text') else str(response)
         result = parse_agent_response(response_text, "safety_layer")
         
