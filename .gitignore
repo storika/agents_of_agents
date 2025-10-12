@@ -33,6 +33,8 @@ env/
 *.swo
 *~
 .DS_Store
+.claude/
+.history/
 
 # Testing
 .pytest_cache/
@@ -59,3 +61,10 @@ google_credentials.json
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb
+
+# Trending data pipeline outputs and temp files
+trend_research_pipeline/.temp/
+trend_data/*.json
+!trend_data/README.md
+*.png
+debug_*.png
