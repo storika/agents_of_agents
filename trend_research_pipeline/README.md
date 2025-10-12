@@ -5,9 +5,9 @@ Clean pipeline for collecting trending data from X (Twitter) and Google Trends.
 ## Overview
 
 The Trend Research Pipeline automatically scrapes and analyzes trending topics from multiple sources:
-- **Google Trends**: Top trending searches with search volumes
-- **Twitter/X**: Trending topics from various tabs (For You, Trending, News, etc.)
-- **Post Analysis**: Actual posts related to trending keywords
+- **Google Trends**: Top trending searches with search volumes (via Browserbase)
+- **Twitter/X**: Trending topics from various categories (via Tavily API)
+- **Post Analysis**: Actual posts related to trending keywords (via Tavily API)
 
 Results are saved to `trend_data/` directory as timestamped JSON files, which are then consumed by the CMO agent's research layer.
 
@@ -16,15 +16,15 @@ Results are saved to `trend_data/` directory as timestamped JSON files, which ar
 ```
 trend_research_pipeline/
 ├── scrapers/
-│   ├── google_trends.py      # Google Trends scraper (Browserbase)
-│   ├── twitter_trends.py     # Twitter scraper (Browserbase)
-│   └── post_analyzer.py      # Post content analyzer
-├── pipeline.py               # Main orchestrator
-├── scheduler.py              # 3-hour scheduler
-├── config.py                 # Configuration
+│   ├── google_trends.py           # Google Trends scraper (Browserbase)
+│   ├── twitter_trends_tavily.py   # Twitter scraper (Tavily API)
+│   └── post_analyzer.py           # Post content analyzer (Tavily API)
+├── pipeline.py                    # Main orchestrator
+├── scheduler.py                   # 3-hour scheduler
+├── config.py                      # Configuration
 └── requirements.txt
 
-trend_data/                   # Output directory
+trend_data/                        # Output directory
 └── trending_YYYYMMDD_HHMMSS.json
 ```
 
@@ -61,11 +61,15 @@ pip install -r requirements.txt
 Create a `.env` file in project root:
 
 ```env
+# Required for Google Trends scraping
 BROWSERBASE_API_KEY=your_browserbase_key
 BROWSERBASE_PROJECT_ID=your_project_id
-TWITTER_EMAIL=your_twitter_email
-TWITTER_PASSWORD=your_twitter_password
+
+# Required for Twitter trends and post analysis
+TAVILY_API_KEY=your_tavily_key
 ```
+
+**Note**: Twitter login credentials are no longer required. The pipeline uses Tavily API to discover trending topics from Twitter/X without requiring browser automation or authentication.
 
 ### 3. Verify Setup
 

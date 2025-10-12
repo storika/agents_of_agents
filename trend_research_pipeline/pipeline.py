@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).parent / "scrapers"))
 
 # Import our custom scrapers
 import google_trends as google_scraper
-import twitter_trends as twitter_scraper
+import twitter_trends_tavily as twitter_scraper
 import post_analyzer
 
 # Import config

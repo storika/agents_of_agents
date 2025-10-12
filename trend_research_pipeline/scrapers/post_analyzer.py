@@ -3,11 +3,10 @@
 Twitter Post Analyzer - Analyzes trending keywords and extracts actual trending posts.
 
 This script:
-1. Reads trending keywords from Google Trends CSV and Twitter Browserbase JSON
+1. Reads trending keywords from Google Trends CSV and Twitter Tavily JSON
 2. Uses Tavily to search for posts about those keywords on x.com
-3. Uses Browserbase to directly scrape x.com search results
-4. Extracts post content, engagement metrics, and metadata
-5. Saves structured JSON output for analysis
+3. Extracts post content, engagement metrics, and metadata
+4. Saves structured JSON output for analysis
 """
 
 import os
@@ -19,15 +18,11 @@ from pathlib import Path
 from typing import List, Dict, Any
 from dotenv import load_dotenv
 from tavily import TavilyClient
-from browserbase import Browserbase
-from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
 
 # Load environment variables from project root
 load_dotenv(Path(__file__).parent.parent.parent / ".env")
 
 # Configuration
-BROWSERBASE_API_KEY = os.getenv("BROWSERBASE_API_KEY")
-BROWSERBASE_PROJECT_ID = os.getenv("BROWSERBASE_PROJECT_ID")
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "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")
 # Intermediate files saved to temp location (not trend_data/)
 OUTPUT_DIR = Path(__file__).parent.parent / ".temp" / "post_analysis"
@@ -151,160 +146,6 @@ def search_twitter_posts_tavily(keyword: str, client: TavilyClient) -> Dict[str,
         }
 
 
-def scrape_twitter_search_browserbase(keyword: str, bb: Browserbase) -> Dict[str, Any]:
-    """
-    Scrape Twitter search results directly using Browserbase.
-
-    Args:
-        keyword (str): Search keyword
-        bb: Browserbase client instance
-
-    Returns:
-        Dict: Scraped posts with metadata
-    """
-    print(f"  Scraping Twitter search with Browserbase for: {keyword}")
-
-    session = None
-    session_id = None
-
-    try:
-        # Create search URL (using "Top" filter for most relevant posts)
-        search_url = f"https://x.com/search?q={keyword}&src=typed_query&f=top"
-        print(f"  URL: {search_url}")
-
-        # Create Browserbase session
-        session = bb.sessions.create(
-            project_id=BROWSERBASE_PROJECT_ID,
-            browser_settings={
-                "block_ads": True,
-                "viewport": {"width": 1920, "height": 1080}
-            }
-        )
-        session_id = session.id
-
-        posts = []
-
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.connect_over_cdp(session.connect_url)
-            context = browser.contexts[0]
-
-            if context.pages:
-                page = context.pages[0]
-            else:
-                page = context.new_page()
-
-            # Navigate to Twitter search
-            page.goto(search_url, wait_until="domcontentloaded", timeout=60000)
-            time.sleep(8)  # Wait for Twitter to load
-
-            # Scroll to load more posts
-            for _ in range(3):
-                page.evaluate("window.scrollBy(0, 1000)")
-                time.sleep(2)
-
-            # Extract posts (Twitter uses article tags for tweets)
-            try:
-                post_elements = page.query_selector_all('article[data-testid="tweet"]')
-
-                if not post_elements:
-                    # Fallback selectors
-                    post_elements = page.query_selector_all('article')
-
-                print(f"  Found {len(post_elements)} posts")
-
-                for i, element in enumerate(post_elements[:15]):  # Limit to 15 posts
-                    try:
-                        post_data = {
-                            "rank": i + 1,
-                            "keyword": keyword,
-                            "timestamp": datetime.now().isoformat()
-                        }
-
-                        # Extract text content
-                        text_content = element.inner_text()
-                        post_data["raw_text"] = text_content
-
-                        # Try to extract structured data
-                        lines = text_content.split('\n')
-
-                        # Try to find username/handle
-                        for line in lines[:5]:
-                            if line.startswith('@'):
-                                post_data["username"] = line.strip()
-                                break
-
-                        # Post content is usually in the middle
-                        if len(lines) > 3:
-                            post_data["content"] = '\n'.join(lines[2:-3]).strip()
-
-                        # Try to extract engagement metrics (likes, retweets, replies)
-                        engagement_keywords = ['like', 'retweet', 'reply', 'view']
-                        for line in lines:
-                            line_lower = line.lower()
-                            for keyword in engagement_keywords:
-                                if keyword in line_lower:
-                                    post_data[f"{keyword}s"] = line.strip()
-
-                        # Try to get post URL
-                        try:
-                            link = element.query_selector('a[href*="/status/"]')
-                            if link:
-                                href = link.get_attribute('href')
-                                if href:
-                                    post_data["url"] = f"https://x.com{href}" if href.startswith('/') else href
-                        except:
-                            pass
-
-                        posts.append(post_data)
-
-                    except Exception as e:
-                        print(f"  Error extracting post {i}: {e}")
-                        continue
-
-            except Exception as e:
-                print(f"  Error finding posts: {e}")
-
-            # Take screenshot for debugging
-            try:
-                screenshot_path = f"debug_search_{keyword.replace(' ', '_')[:30]}_{datetime.now().strftime('%H%M%S')}.png"
-                page.screenshot(path=screenshot_path)
-                print(f"  Screenshot saved: {screenshot_path}")
-            except:
-                pass
-
-            browser.close()
-
-        return {
-            "keyword": keyword,
-            "source": "browserbase_search",
-            "search_url": search_url,
-            "posts_count": len(posts),
-            "posts": posts,
-            "success": True
-        }
-
-    except Exception as e:
-        print(f"  ✗ Error scraping Twitter search for '{keyword}': {e}")
-        import traceback
-        traceback.print_exc()
-
-        return {
-            "keyword": keyword,
-            "source": "browserbase_search",
-            "error": str(e),
-            "posts_count": 0,
-            "posts": [],
-            "success": False
-        }
-
-    finally:
-        if session_id:
-            try:
-                print(f"  Closing session {session_id}")
-            except:
-                pass
-
-
 def analyze_trending_keywords(
     google_trends_csv: str = None,
     twitter_trends_json: str = None,
@@ -322,11 +163,11 @@ def analyze_trending_keywords(
         str: Path to output JSON file
     """
     # Validate credentials
-    if not BROWSERBASE_API_KEY or not BROWSERBASE_PROJECT_ID:
-        raise ValueError("Missing BROWSERBASE_API_KEY or BROWSERBASE_PROJECT_ID in .env file")
+    if not TAVILY_API_KEY:
+        raise ValueError("Missing TAVILY_API_KEY in .env file")
 
     print("=" * 80)
-    print("Twitter Post Analyzer")
+    print("Twitter Post Analyzer (Tavily)")
     print("=" * 80)
     print(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 80)
@@ -360,9 +201,8 @@ def analyze_trending_keywords(
     keywords_to_analyze = unique_keywords[:max_keywords]
     print(f"Analyzing top {len(keywords_to_analyze)} unique keywords")
 
-    # Initialize clients
+    # Initialize Tavily client
     tavily_client = TavilyClient(TAVILY_API_KEY)
-    bb = Browserbase(api_key=BROWSERBASE_API_KEY)
 
     # Analyze each keyword
     results = []
@@ -371,28 +211,21 @@ def analyze_trending_keywords(
         keyword = kw_data.get("keyword", "")
         print(f"\n[{i+1}/{len(keywords_to_analyze)}] Analyzing: {keyword}")
 
-        # Search with Tavily
+        # Search with Tavily only
         tavily_results = search_twitter_posts_tavily(keyword, tavily_client)
 
-        # Scrape with Browserbase
-        browserbase_results = scrape_twitter_search_browserbase(keyword, bb)
-
-        # Combine results
+        # Store results
         combined = {
             "keyword": keyword,
             "keyword_metadata": kw_data,
             "tavily_search": tavily_results,
-            "browserbase_search": browserbase_results,
-            "total_posts_found": (
-                tavily_results.get("results_count", 0) +
-                browserbase_results.get("posts_count", 0)
-            )
+            "total_posts_found": tavily_results.get("results_count", 0)
         }
 
         results.append(combined)
 
         # Wait between keywords to avoid rate limits
-        time.sleep(3)
+        time.sleep(2)
 
     # Create output
     output = {
@@ -407,8 +240,7 @@ def analyze_trending_keywords(
         "summary": {
             "total_keywords_analyzed": len(results),
             "total_posts_extracted": sum(r.get("total_posts_found", 0) for r in results),
-            "tavily_results": sum(r.get("tavily_search", {}).get("results_count", 0) for r in results),
-            "browserbase_posts": sum(r.get("browserbase_search", {}).get("posts_count", 0) for r in results)
+            "tavily_results": sum(r.get("tavily_search", {}).get("results_count", 0) for r in results)
         }
     }
 
@@ -427,7 +259,6 @@ def analyze_trending_keywords(
         print(f"Keywords analyzed: {output['summary']['total_keywords_analyzed']}")
         print(f"Total posts extracted: {output['summary']['total_posts_extracted']}")
         print(f"  - Tavily results: {output['summary']['tavily_results']}")
-        print(f"  - Browserbase posts: {output['summary']['browserbase_posts']}")
 
         return str(filepath)
 

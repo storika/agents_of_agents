@@ -27,6 +27,9 @@ load_dotenv(Path(__file__).parent.parent.parent / ".env")
 # Configuration
 BROWSERBASE_API_KEY = os.getenv("BROWSERBASE_API_KEY")
 BROWSERBASE_PROJECT_ID = os.getenv("BROWSERBASE_PROJECT_ID")
+TWITTER_USERNAME = os.getenv("TWITTER_USERNAME")
+TWITTER_EMAIL = os.getenv("TWITTER_EMAIL")
+TWITTER_PASSWORD = os.getenv("TWITTER_PASSWORD")
 # Intermediate files saved to temp location (not trend_data/)
 OUTPUT_DIR = Path(__file__).parent.parent / ".temp" / "twitter_trends"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -41,6 +44,87 @@ TWITTER_URLS = {
 
 # Note: Credentials are validated when scraping functions are called
 # Not at import time to allow module inspection without .env
+
+
+def login_to_twitter(page):
+    """
+    Log in to Twitter/X using credentials from .env
+
+    Args:
+        page: Playwright page object
+
+    Returns:
+        bool: True if login successful, False otherwise
+    """
+    try:
+        print("  Attempting to log in to Twitter...")
+
+        # Go to Twitter login page
+        page.goto("https://x.com/i/flow/login", wait_until="domcontentloaded", timeout=60000)
+        time.sleep(3)
+
+        # Enter username or email
+        print("  Entering username/email...")
+        try:
+            # Try username first
+            username_input = page.wait_for_selector('input[autocomplete="username"]', timeout=10000)
+            username_input.fill(TWITTER_USERNAME if TWITTER_USERNAME else TWITTER_EMAIL)
+            time.sleep(1)
+
+            # Click Next button
+            page.click('button:has-text("Next")')
+            time.sleep(3)
+
+        except Exception as e:
+            print(f"  Username entry failed: {e}")
+            return False
+
+        # Check if we need to verify email (sometimes Twitter asks for this)
+        try:
+            email_verification = page.wait_for_selector('input[data-testid="ocfEnterTextTextInput"]', timeout=5000)
+            if email_verification:
+                print("  Email verification required, entering email...")
+                email_verification.fill(TWITTER_EMAIL)
+                page.click('button:has-text("Next")')
+                time.sleep(3)
+        except:
+            # No email verification needed
+            pass
+
+        # Enter password
+        print("  Entering password...")
+        try:
+            password_input = page.wait_for_selector('input[name="password"]', timeout=10000)
+            password_input.fill(TWITTER_PASSWORD)
+            time.sleep(1)
+
+            # Click Log in button
+            page.click('button[data-testid="LoginForm_Login_Button"]')
+            time.sleep(5)
+
+        except Exception as e:
+            print(f"  Password entry failed: {e}")
+            return False
+
+        # Wait for redirect to home page or explore
+        try:
+            page.wait_for_url("https://x.com/home", timeout=15000)
+            print("  ✓ Successfully logged in to Twitter!")
+            return True
+        except:
+            # Check if we're on explore page (also valid)
+            if "x.com" in page.url and "login" not in page.url:
+                print("  ✓ Successfully logged in to Twitter!")
+                return True
+            else:
+                print(f"  Login may have failed, current URL: {page.url}")
+                return False
+
+    except Exception as e:
+        print(f"  ✗ Login failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
 
 
 def extract_trending_topics(page):
@@ -196,7 +280,12 @@ def scrape_twitter_tab(tab_name, url, bb):
             else:
                 page = context.new_page()
 
-            # Navigate to Twitter
+            # Log in to Twitter first
+            login_success = login_to_twitter(page)
+            if not login_success:
+                print("  ⚠️ Login failed, but continuing anyway...")
+
+            # Navigate to Twitter trending page
             print(f"  Navigating to URL...")
             page.goto(url, wait_until="domcontentloaded", timeout=60000)
 
@@ -261,6 +350,14 @@ def scrape_all_twitter_trends():
     # Validate credentials
     if not BROWSERBASE_API_KEY or not BROWSERBASE_PROJECT_ID:
         raise ValueError("Missing BROWSERBASE_API_KEY or BROWSERBASE_PROJECT_ID in .env file")
+
+    if not TWITTER_USERNAME and not TWITTER_EMAIL:
+        print("⚠️ Warning: No Twitter credentials found in .env file")
+        print("   Scraping may fail if Twitter requires login")
+
+    if not TWITTER_PASSWORD:
+        print("⚠️ Warning: TWITTER_PASSWORD not found in .env file")
+        print("   Login will fail without password")
 
     print("=" * 80)
     print("Twitter Browserbase Scraper")
