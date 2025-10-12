@@ -33,6 +33,12 @@ from cmo_agent.tools_version import (
     get_version_metadata
 )
 
+# Import prompt loader tools
+from hr_validation_agent.tools_prompt_loader import (
+    load_current_cmo_prompts,
+    create_hr_input_from_posts
+)
+
 
 # ===== FIXED 5-LAYER ARCHITECTURE =====
 
@@ -92,7 +98,22 @@ def analyze_layer_performance(performance_json: str) -> str:
         JSON string with analysis summary for each layer
     """
     try:
-        data = json.loads(performance_json)
+        # Try to parse with json-repair if direct parsing fails (optional dependency)
+        try:
+            data = json.loads(performance_json)
+        except json.JSONDecodeError as parse_error:
+            print(f"⚠️ [ANALYZE] Direct parse failed, trying json-repair: {str(parse_error)[:100]}")
+            try:
+                from json_repair import repair_json
+                repaired = repair_json(performance_json)
+                data = json.loads(repaired)
+                print("✅ [ANALYZE] json-repair successful")
+            except ImportError:
+                print("ℹ️ [ANALYZE] json-repair not available, returning parse error")
+                raise parse_error
+            except Exception as repair_error:
+                print(f"❌ [ANALYZE] json-repair also failed: {str(repair_error)[:100]}")
+                raise parse_error  # Raise original error
         
         analysis = {
             "valid": True,
@@ -520,9 +541,36 @@ analyzer_agent = Agent(
     model='gemini-2.5-flash',
     name='analyzer',
     description='Analyzes layer performance metrics',
-    instruction="""You are the Analyzer. Call analyze_layer_performance with the input JSON to get performance metrics.
-Output the analysis results.""",
-    tools=[analyze_layer_performance]
+    instruction="""You are the Analyzer. MANDATORY WORKFLOW:
+
+STEP 1: ALWAYS start by calling load_current_cmo_prompts()
+   → This loads all current prompts from cmo_agent/sub_agents.py
+   → You MUST do this first before any analysis
+
+STEP 2: Check input format
+   - If input is raw posts array (not full HR JSON):
+     → Call create_hr_input_from_posts(recent_posts_json, iteration)
+   - If input is already complete HR JSON:
+     → Use it directly
+
+STEP 3: Call analyze_layer_performance(complete_hr_json)
+   → Pass the JSON string AS-IS from previous steps
+   → DO NOT modify or reformat the JSON
+   → Analyzes all layer metrics
+   → Identifies improvements needed
+
+STEP 4: Output the analysis results
+
+CRITICAL RULES:
+- MUST call load_current_cmo_prompts() first
+- Pass JSON strings directly to functions WITHOUT modification
+- Do NOT try to parse, edit, or reformat the JSON
+- The JSON is already properly formatted and escaped""",
+    tools=[
+        analyze_layer_performance,
+        create_hr_input_from_posts,
+        load_current_cmo_prompts
+    ]
 )
 
 # Step 2: Evaluator Agent

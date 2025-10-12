@@ -87,8 +87,9 @@ def apply_prompt_improvements(
         return repaired
     
     try:
-        # JSON 파싱 (ultra-robust 처리)
+        # JSON 파싱 (ultra-robust with json-repair library)
         import re
+        from json_repair import repair_json as json_repair_lib
         
         # 1. 마크다운 코드 블록 제거
         cleaned = hr_decisions_json
@@ -103,9 +104,17 @@ def apply_prompt_improvements(
             end = cleaned.rfind("}") + 1
             cleaned = cleaned[start:end]
         
-        # 3. Multiple parsing strategies
+        # 3. Multiple parsing strategies (with optional json-repair)
         hr_output = None
         last_error = None
+        
+        # Check if json-repair is available
+        try:
+            from json_repair import repair_json as json_repair_lib
+            HAS_JSON_REPAIR = True
+        except ImportError:
+            HAS_JSON_REPAIR = False
+            print("ℹ️ [JSON] json-repair library not available, using custom repair only")
         
         # Strategy 1: Direct parsing (fastest)
         try:
@@ -115,28 +124,48 @@ def apply_prompt_improvements(
             last_error = e
             print(f"⚠️ [JSON] Direct parsing failed: {str(e)[:100]}")
             
-            # Strategy 2: Repair and retry
-            try:
-                repaired = repair_json(cleaned)
-                hr_output = json.loads(repaired)
-                print("✅ [JSON] Repair successful")
-            except Exception as e2:
-                print(f"⚠️ [JSON] Repair failed: {str(e2)[:100]}")
-                
-                # Strategy 3: Pydantic validation (most lenient)
+            # Strategy 2: json-repair library (if available)
+            if HAS_JSON_REPAIR:
                 try:
-                    from hr_validation_agent.schemas import PromptOptimizationDecision
-                    hr_output = PromptOptimizationDecision.model_validate_json(cleaned).model_dump()
-                    print("✅ [JSON] Pydantic validation successful")
+                    repaired = json_repair_lib(cleaned)
+                    hr_output = json.loads(repaired)
+                    print("✅ [JSON] json-repair library successful")
+                except Exception as e2:
+                    print(f"⚠️ [JSON] json-repair failed: {str(e2)[:100]}")
+            
+            # Strategy 3: Custom repair
+            if hr_output is None:
+                try:
+                    custom_repaired = repair_json(cleaned)
+                    hr_output = json.loads(custom_repaired)
+                    print("✅ [JSON] Custom repair successful")
                 except Exception as e3:
-                    print(f"⚠️ [JSON] Pydantic failed: {str(e3)[:100]}")
-                    # Last resort: try repaired with Pydantic
-                    try:
-                        hr_output = PromptOptimizationDecision.model_validate_json(repaired).model_dump()
-                        print("✅ [JSON] Repaired + Pydantic successful")
-                    except Exception as e4:
-                        # All methods failed
-                        raise last_error
+                    print(f"⚠️ [JSON] Custom repair failed: {str(e3)[:100]}")
+                    
+                    # Strategy 4: Custom + json-repair combo (if available)
+                    if HAS_JSON_REPAIR:
+                        try:
+                            double_repaired = json_repair_lib(custom_repaired)
+                            hr_output = json.loads(double_repaired)
+                            print("✅ [JSON] Double repair successful")
+                        except Exception as e4:
+                            print(f"⚠️ [JSON] Double repair failed: {str(e4)[:100]}")
+                    
+                    # Strategy 5: Pydantic validation (last resort)
+                    if hr_output is None:
+                        try:
+                            from hr_validation_agent.schemas import PromptOptimizationDecision
+                            # Try with best available repaired version
+                            repaired_for_pydantic = double_repaired if HAS_JSON_REPAIR and 'double_repaired' in locals() else custom_repaired
+                            hr_output = PromptOptimizationDecision.model_validate_json(repaired_for_pydantic).model_dump()
+                            print("✅ [JSON] Pydantic validation successful")
+                        except Exception as e5:
+                            print(f"⚠️ [JSON] Pydantic failed: {str(e5)[:100]}")
+                            # All methods failed
+                            if last_error:
+                                raise last_error
+                            else:
+                                raise ValueError("Failed to parse JSON after all repair attempts")
         
         if hr_output is None:
             raise ValueError("Failed to parse JSON after all repair attempts")

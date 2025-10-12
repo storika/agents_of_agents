@@ -8,6 +8,7 @@ dependencies = [
     "browserbase>=1.4.0",
     "google-adk[ui]>=1.16.0",
     "google-generativeai>=0.8.5",
+    "json-repair>=0.52.0",
     "playwright>=1.55.0",
     "python-dotenv>=1.1.1",
     "schedule>=1.2.2",
