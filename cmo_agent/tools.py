@@ -329,14 +329,21 @@ def get_trending_context() -> str:
                         "url": trend_item.get("url", "")
                     })
 
-        # Extract from post analysis (keywords)
-        if "post_analysis" in data_sources:
-            post_analysis = data_sources["post_analysis"]
-            if post_analysis.get("collected"):
-                analysis_data = post_analysis.get("data", {})
-                for keyword_data in analysis_data.get("keywords", [])[:10]:
-                    keyword = keyword_data.get("keyword", "")
-                    keywords.add(keyword)
+        # Extract from trending posts analysis (keywords)
+        if "trending_posts" in data_sources:
+            trending_posts = data_sources["trending_posts"]
+            if trending_posts.get("collected"):
+                analysis_data = trending_posts.get("data", {})
+                # Extract keywords from results
+                for result_item in analysis_data.get("results", [])[:15]:
+                    keyword = result_item.get("keyword", "")
+                    if keyword:
+                        keywords.add(keyword)
+
+                # Also get summary keywords if available
+                summary = analysis_data.get("summary", {})
+                for summary_keyword in summary.get("keywords", [])[:10]:
+                    keywords.add(summary_keyword)
 
         # Sort trending topics by trend_score and limit to top 10
         trending_topics.sort(key=lambda x: (x.get("trend_score", 0), -x.get("rank", 999)), reverse=True)
