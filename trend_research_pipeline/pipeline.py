@@ -8,39 +8,38 @@ This pipeline:
 3. Supplements with Tavily searches for additional context
 4. Analyzes trending keywords and extracts actual posts
 5. Generates a unified JSON output ready for analysis
-6. Can be scheduled to run every 3-4 hours
-
-Usage:
-    python trending_data_pipeline.py                    # Run full pipeline once
-    python trending_data_pipeline.py --schedule         # Run on schedule (every 4 hours)
-    python trending_data_pipeline.py --schedule 3       # Run on schedule (custom hours)
+6. Saves to trend_data/ directory with timestamp
 """
 
 import os
 import sys
-import time
 import json
-import schedule
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional
 
+# Add scrapers directory to path
+sys.path.insert(0, str(Path(__file__).parent / "scrapers"))
+
 # Import our custom scrapers
-import google_trends_browserbase_scraper as google_scraper
-import twitter_browserbase_scraper as twitter_scraper
-import twitter_post_analyzer as post_analyzer
+import google_trends as google_scraper
+import twitter_trends as twitter_scraper
+import post_analyzer
 
-
-# Configuration
-OUTPUT_DIR = Path("../outputs/pipeline_results")
-SCHEDULE_INTERVAL_HOURS = 4
+# Import config
+from config import (
+    TREND_DATA_DIR,
+    OUTPUT_FILENAME_PATTERN,
+    TIMESTAMP_FORMAT,
+    MAX_KEYWORDS_TO_ANALYZE
+)
 
 
 class TrendingDataPipeline:
     """Main pipeline orchestrator for trending data collection."""
 
     def __init__(self):
-        self.output_dir = OUTPUT_DIR
+        self.output_dir = TREND_DATA_DIR
         self.output_dir.mkdir(exist_ok=True)
         self.run_timestamp = None
         self.results = {}
@@ -215,7 +214,7 @@ class TrendingDataPipeline:
             posts_json = post_analyzer.analyze_trending_keywords(
                 google_trends_csv=google_csv,
                 twitter_trends_json=twitter_json,
-                max_keywords=10
+                max_keywords=MAX_KEYWORDS_TO_ANALYZE
             )
 
             if posts_json:
@@ -253,7 +252,7 @@ class TrendingDataPipeline:
         posts_json: Optional[str]
     ) -> Optional[str]:
         """
-        Step 4: Generate unified final output JSON.
+        Step 4: Generate unified final output JSON and save to trend_data/.
 
         Args:
             google_csv: Path to Google Trends CSV
@@ -261,7 +260,7 @@ class TrendingDataPipeline:
             posts_json: Path to posts analysis JSON
 
         Returns:
-            str: Path to final output JSON
+            str: Path to final output JSON in trend_data/
         """
         print("\n" + "-" * 100)
         self.log("STEP 4/4: Generating Final Unified Output", "STEP")
@@ -279,7 +278,8 @@ class TrendingDataPipeline:
                     "pipeline_timestamp": self.run_timestamp.isoformat(),
                     "pipeline_timestamp_readable": self.run_timestamp.strftime('%Y-%m-%d %H:%M:%S'),
                     "pipeline_version": "1.0",
-                    "pipeline_description": "Comprehensive trending data collection from Google Trends and Twitter"
+                    "pipeline_description": "Comprehensive trending data collection from Google Trends and Twitter",
+                    "collection_interval_hours": 3
                 },
                 "data_sources": {
                     "google_trends": {
@@ -312,8 +312,9 @@ class TrendingDataPipeline:
                 "key_insights": self._generate_insights(google_data, twitter_data, posts_data)
             }
 
-            # Save to file
-            filename = f"trending_data_pipeline_{self.run_timestamp.strftime('%Y%m%d_%H%M%S')}.json"
+            # Save to trend_data/ with timestamp
+            timestamp_str = self.run_timestamp.strftime(TIMESTAMP_FORMAT)
+            filename = OUTPUT_FILENAME_PATTERN.format(timestamp=timestamp_str)
             filepath = self.output_dir / filename
 
             with open(filepath, 'w', encoding='utf-8') as f:
@@ -417,67 +418,18 @@ def run_pipeline_once():
         return 1
 
 
-def run_pipeline_scheduled(interval_hours: int = SCHEDULE_INTERVAL_HOURS):
-    """
-    Run the pipeline on a schedule.
-
-    Args:
-        interval_hours (int): Hours between each run
-    """
-    print("=" * 100)
-    print(" " * 30 + "TRENDING DATA PIPELINE - SCHEDULED MODE")
-    print("=" * 100)
-    print(f"Schedule: Every {interval_hours} hours")
-    print(f"Output directory: {OUTPUT_DIR.absolute()}")
-    print(f"Next run: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("=" * 100)
-    print("\nPress Ctrl+C to stop\n")
-
-    # Run immediately on start
-    run_pipeline_once()
-
-    # Schedule future runs
-    schedule.every(interval_hours).hours.do(run_pipeline_once)
-
-    # Keep running
-    try:
-        while True:
-            schedule.run_pending()
-            time.sleep(60)  # Check every minute
-    except KeyboardInterrupt:
-        print("\n\nPipeline scheduler stopped by user.")
-        print(f"Total output files: {len(list(OUTPUT_DIR.glob('trending_data_pipeline_*.json')))}")
-
-
 def main():
     """Main entry point."""
     if "--help" in sys.argv or "-h" in sys.argv:
         print(__doc__)
-        print("\nOptions:")
-        print("  --schedule [hours]    Run on schedule (default: 4 hours)")
-        print("  --help, -h            Show this help message")
-        print()
-        print("Examples:")
-        print("  python trending_data_pipeline.py")
-        print("  python trending_data_pipeline.py --schedule")
-        print("  python trending_data_pipeline.py --schedule 3")
+        print("\nUsage:")
+        print("  python pipeline.py              Run pipeline once")
+        print("  python pipeline.py --help       Show this help")
         return
 
-    if "--schedule" in sys.argv:
-        # Get custom interval if provided
-        interval = SCHEDULE_INTERVAL_HOURS
-        try:
-            schedule_idx = sys.argv.index("--schedule")
-            if len(sys.argv) > schedule_idx + 1:
-                interval = int(sys.argv[schedule_idx + 1])
-        except (ValueError, IndexError):
-            pass
-
-        run_pipeline_scheduled(interval_hours=interval)
-    else:
-        # Run once
-        exit_code = run_pipeline_once()
-        sys.exit(exit_code)
+    # Run once
+    exit_code = run_pipeline_once()
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":

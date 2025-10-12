@@ -1,0 +1,3 @@
+# This directory stores timestamped trend data collected by trend_research_pipeline
+# Files are named: trending_YYYYMMDD_HHMMSS.json
+# Collected every 3 hours by scheduler.py

@@ -21,13 +21,15 @@ from dotenv import load_dotenv
 from browserbase import Browserbase
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
 
-# Load environment variables from parent directory
-load_dotenv(Path(__file__).parent.parent / ".env")
+# Load environment variables from project root
+load_dotenv(Path(__file__).parent.parent.parent / ".env")
 
 # Configuration
 BROWSERBASE_API_KEY = os.getenv("BROWSERBASE_API_KEY")
 BROWSERBASE_PROJECT_ID = os.getenv("BROWSERBASE_PROJECT_ID")
-OUTPUT_DIR = Path("../outputs/twitter_trends")
+# Intermediate files saved to temp location (not trend_data/)
+OUTPUT_DIR = Path(__file__).parent.parent / ".temp" / "twitter_trends"
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Twitter trending URLs to scrape
 TWITTER_URLS = {
@@ -37,9 +39,8 @@ TWITTER_URLS = {
     "entertainment": "https://x.com/explore/tabs/entertainment"
 }
 
-# Validate credentials
-if not BROWSERBASE_API_KEY or not BROWSERBASE_PROJECT_ID:
-    raise ValueError("Missing BROWSERBASE_API_KEY or BROWSERBASE_PROJECT_ID in .env file")
+# Note: Credentials are validated when scraping functions are called
+# Not at import time to allow module inspection without .env
 
 
 def extract_trending_topics(page):
@@ -257,6 +258,10 @@ def scrape_all_twitter_trends():
     Returns:
         str: Path to saved JSON file, or None if failed
     """
+    # Validate credentials
+    if not BROWSERBASE_API_KEY or not BROWSERBASE_PROJECT_ID:
+        raise ValueError("Missing BROWSERBASE_API_KEY or BROWSERBASE_PROJECT_ID in .env file")
+
     print("=" * 80)
     print("Twitter Browserbase Scraper")
     print("=" * 80)
@@ -299,8 +304,6 @@ def scrape_all_twitter_trends():
 
     # Save to JSON file
     try:
-        OUTPUT_DIR.mkdir(exist_ok=True)
-
         filename = f"twitter_trending_browserbase_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         filepath = OUTPUT_DIR / filename
 

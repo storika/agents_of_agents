@@ -4,6 +4,7 @@ HR Agent의 hire_plan을 기반으로 서브 에이전트 팀 구성 및 관리
 """
 
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from google.adk.agents.llm_agent import Agent
@@ -155,19 +156,56 @@ def parse_agent_response(response: str, agent_name: str) -> Optional[Dict[str, A
 
 # ===== NEW LAYER AGENTS =====
 
+def load_latest_trend_data() -> Optional[Dict[str, Any]]:
+    """
+    Load the most recent trending data from trend_data/ directory.
+
+    Returns:
+        Dict with trend data or None if no data found
+    """
+    trend_data_dir = Path(__file__).parent.parent / "trend_data"
+
+    if not trend_data_dir.exists():
+        print("⚠️ trend_data/ directory not found")
+        return None
+
+    # Find most recent trending_*.json file
+    trend_files = sorted(trend_data_dir.glob("trending_*.json"), reverse=True)
+
+    if not trend_files:
+        print("⚠️ No trend data files found in trend_data/")
+        return None
+
+    latest_file = trend_files[0]
+    print(f"📊 Loading trend data from: {latest_file.name}")
+
+    try:
+        with open(latest_file, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"❌ Error loading trend data: {e}")
+        return None
+
+
 @weave.op()
 def create_research_agent() -> Agent:
-    """Research Layer 에이전트 생성"""
-    
-    system_prompt = """You are the Research layer. Your task is to identify trending topics, analyze audience interests, and pinpoint viral opportunities for content creation. Focus on relevance, timeliness, and data quality.
+    """Research Layer 에이전트 생성 - Reads from trend_data/ and applies perturbation"""
 
-Input: A broad topic or industry to investigate, target audience demographics, current events context.
+    system_prompt = """You are the Research layer. Your task is to read collected trend data from trend_data/, apply perturbation and analysis, and format it for content generation.
 
-Instructions:
-1.  Identify at least 3 current trending topics relevant to the input topic/industry.
-2.  Analyze typical audience interests and pain points within the specified demographics related to these trends.
-3.  Propose unique angles or narratives that have high viral potential.
-4.  Specify the data sources you would use (e.g., social media trends, news aggregators, search engine data, forum discussions).
+Input: You will receive raw trending data collected from Google Trends and Twitter, including:
+- Google Trends: Top trending searches with search volumes
+- Twitter Trends: Trending topics from various tabs (For You, Trending, News, etc.)
+- Post Analysis: Actual posts related to trending keywords
+- Pipeline metadata: Collection timestamp, data sources
+
+Your Tasks:
+1. ANALYZE the raw trend data to identify the most relevant topics for AI/ML developer audience
+2. EXTRACT top 3-5 trending topics with relevance and timeliness scores
+3. SYNTHESIZE audience insights from the trending posts and topics
+4. PROPOSE 3-5 viral potential angles that combine trends with unique perspectives
+5. ADD PERTURBATION: Introduce creative variations, unexpected connections, contrarian takes
+6. ENRICH with hashtag recommendations, timing insights, and engagement predictions
 
 Output MUST be a JSON object with the following structure:
 {
@@ -175,37 +213,43 @@ Output MUST be a JSON object with the following structure:
     {
       "topic_name": "string",
       "relevance_score": "float (0-1)",
-      "timeliness_score": "float (0-1)"
+      "timeliness_score": "float (0-1)",
+      "source": "Google Trends|Twitter|Both",
+      "tweet_volume_24h": "integer (if available)",
+      "hashtags": ["array", "of", "relevant", "hashtags"]
     }
   ],
-  "audience_insights": "string (summary of audience interests and pain points)",
+  "audience_insights": "string (summary of audience interests and pain points from analyzed posts)",
   "viral_potential_angles": [
     {
-      "angle_summary": "string",
-      "potential_platforms": "array of strings",
-      "engagement_likelihood": "float (0-1)"
+      "angle_summary": "string (specific angle combining trends)",
+      "potential_platforms": ["X"],
+      "engagement_likelihood": "float (0-1)",
+      "hook_template": "string (tweet hook template)",
+      "why_viral": "string (reason this angle has viral potential)"
     }
   ],
-  "data_sources_used": "array of strings (e.g., 'Google Trends', 'Twitter Analytics')"
-}"""
-    
-    # Weave에 prompt publish
-    try:
-        prompt_obj = weave.StringPrompt(system_prompt)
-        weave.publish(prompt_obj, name="cmo_research_prompt")
-        print(f"📝 CMO Research Prompt published")
-    except Exception as e:
-        print(f"⚠️  Failed to publish CMO research prompt: {e}")
-        import traceback
-        traceback.print_exc()
-    
+  "data_sources_used": ["Google Trends", "Twitter Trending Tabs", "Post Analysis"],
+  "collection_timestamp": "ISO timestamp from input data",
+  "perturbations_applied": [
+    "string (description of creative variations added)"
+  ]
+}
+
+IMPORTANT:
+- ALWAYS read from the provided raw trend data, do NOT generate fake trends
+- Apply creative perturbation to make angles unique and attention-grabbing
+- Consider both data-driven insights AND creative interpretation
+- Focus on AI/ML developer audience specifically
+- All content is for X (Twitter) platform"""
+
     agent = Agent(
         model='gemini-2.5-flash',
         name='research_layer',
-        description='Research layer for identifying trends and viral opportunities',
+        description='Research layer that reads trend_data/ and enriches it with analysis',
         instruction=system_prompt
     )
-    
+
     return agent
 
 
@@ -569,59 +613,114 @@ IMPORTANT:
 
 
 @weave.op()
-def call_research_layer(topic: str, audience_demographics: str = "developers, tech enthusiasts") -> Dict[str, Any]:
+def call_research_layer(topic: str = None, audience_demographics: str = "AI/ML developers, indie hackers, founders") -> Dict[str, Any]:
     """
-    Research Layer 호출
-    
+    Research Layer 호출 - Loads from trend_data/ and applies analysis
+
     Args:
-        topic: 조사할 주제
+        topic: 조사할 주제 (optional, will use trend data if None)
         audience_demographics: 타겟 청중
-    
+
     Returns:
-        Research layer 출력
+        Research layer 출력 with enriched trend analysis
     """
     agent = create_research_agent()
-    
-    prompt = f"""
-Topic: {topic}
+
+    # Load latest trend data from trend_data/
+    trend_data = load_latest_trend_data()
+
+    if trend_data:
+        # Use real trend data
+        prompt = f"""
+Raw Trend Data (from trend_data/):
+{json.dumps(trend_data, indent=2, ensure_ascii=False)}
+
+Target Audience: {audience_demographics}
+Topic Focus: {topic if topic else "Discover from trend data"}
+
+Your Task:
+1. Analyze the raw trend data above
+2. Extract the most relevant trending topics for the target audience
+3. Synthesize audience insights from the collected posts and topics
+4. Propose viral angles that combine trends with creative perturbation
+5. Add hashtag recommendations and timing insights
+
+Please provide your analysis in the specified JSON format.
+"""
+    else:
+        # Fallback if no trend data available
+        print("⚠️ No trend data available, using fallback research mode")
+        prompt = f"""
+Topic: {topic if topic else "AI Agents and Multi-Agent Systems"}
 Target Audience: {audience_demographics}
 Current Context: Latest developments in AI and technology
 
-Please provide trending topics, audience insights, and viral angles for this topic.
+No pre-collected trend data available. Please identify trending topics based on your knowledge
+and provide audience insights and viral angles.
 """
-    
+
     try:
         print(f"🔍 Research Layer 실행 중...")
         response = agent.execute(prompt)
         result = parse_agent_response(response, "research_layer")
-        
-        if result:
+
+        if result and "trending_topics" in result:
             print(f"✓ {len(result.get('trending_topics', []))}개의 트렌딩 토픽 발견")
             return result
         else:
             print(f"⚠️ Research Layer JSON 파싱 실패, 기본값 사용")
             return {
                 "trending_topics": [
-                    {"topic_name": topic, "relevance_score": 0.8, "timeliness_score": 0.7}
+                    {
+                        "topic_name": topic if topic else "Multi-Agent Systems",
+                        "relevance_score": 0.8,
+                        "timeliness_score": 0.7,
+                        "source": "Fallback",
+                        "hashtags": ["AIAgents", "BuildInPublic"]
+                    }
                 ],
-                "audience_insights": "Developers are interested in practical, actionable insights",
+                "audience_insights": "AI/ML developers are interested in practical, production-ready solutions and transparent build processes",
                 "viral_potential_angles": [
-                    {"angle_summary": "Behind-the-scenes look", "potential_platforms": ["Twitter", "LinkedIn"], "engagement_likelihood": 0.75}
+                    {
+                        "angle_summary": "Behind-the-scenes agent architecture with real metrics",
+                        "potential_platforms": ["X"],
+                        "engagement_likelihood": 0.75,
+                        "hook_template": "We built [X] with agents. Here's what actually worked:",
+                        "why_viral": "Transparency and real numbers resonate with builder community"
+                    }
                 ],
-                "data_sources_used": ["Google Trends", "Twitter"]
+                "data_sources_used": ["Fallback - No trend data"],
+                "collection_timestamp": datetime.now().isoformat(),
+                "perturbations_applied": []
             }
-    
+
     except Exception as e:
         print(f"❌ Research Layer 오류: {e}")
+        import traceback
+        traceback.print_exc()
         return {
             "trending_topics": [
-                {"topic_name": topic, "relevance_score": 0.8, "timeliness_score": 0.7}
+                {
+                    "topic_name": topic if topic else "AI Agents",
+                    "relevance_score": 0.75,
+                    "timeliness_score": 0.65,
+                    "source": "Error Fallback",
+                    "hashtags": ["AI"]
+                }
             ],
-            "audience_insights": "Developers are interested in practical, actionable insights",
+            "audience_insights": "Developers value practical insights and real-world examples",
             "viral_potential_angles": [
-                {"angle_summary": "Behind-the-scenes look", "potential_platforms": ["Twitter", "LinkedIn"], "engagement_likelihood": 0.75}
+                {
+                    "angle_summary": "Practical AI implementation",
+                    "potential_platforms": ["X"],
+                    "engagement_likelihood": 0.7,
+                    "hook_template": "Here's what I learned building with AI:",
+                    "why_viral": "Learning-focused content performs well"
+                }
             ],
-            "data_sources_used": ["Google Trends", "Twitter"]
+            "data_sources_used": ["Error - using fallback"],
+            "collection_timestamp": datetime.now().isoformat(),
+            "perturbations_applied": []
         }
 
 

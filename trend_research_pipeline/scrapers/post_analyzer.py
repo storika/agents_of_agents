@@ -22,18 +22,19 @@ from tavily import TavilyClient
 from browserbase import Browserbase
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
 
-# Load environment variables from parent directory
-load_dotenv(Path(__file__).parent.parent / ".env")
+# Load environment variables from project root
+load_dotenv(Path(__file__).parent.parent.parent / ".env")
 
 # Configuration
 BROWSERBASE_API_KEY = os.getenv("BROWSERBASE_API_KEY")
 BROWSERBASE_PROJECT_ID = os.getenv("BROWSERBASE_PROJECT_ID")
-TAVILY_API_KEY = "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"
-OUTPUT_DIR = Path("../outputs/posts_analysis")
+TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "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")
+# Intermediate files saved to temp location (not trend_data/)
+OUTPUT_DIR = Path(__file__).parent.parent / ".temp" / "post_analysis"
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-# Validate credentials
-if not BROWSERBASE_API_KEY or not BROWSERBASE_PROJECT_ID:
-    raise ValueError("Missing BROWSERBASE_API_KEY or BROWSERBASE_PROJECT_ID in .env file")
+# Note: Credentials are validated when analyze functions are called
+# Not at import time to allow module inspection without .env
 
 
 def read_google_trends_keywords(csv_path: str) -> List[Dict[str, Any]]:
@@ -320,6 +321,10 @@ def analyze_trending_keywords(
     Returns:
         str: Path to output JSON file
     """
+    # Validate credentials
+    if not BROWSERBASE_API_KEY or not BROWSERBASE_PROJECT_ID:
+        raise ValueError("Missing BROWSERBASE_API_KEY or BROWSERBASE_PROJECT_ID in .env file")
+
     print("=" * 80)
     print("Twitter Post Analyzer")
     print("=" * 80)
@@ -409,8 +414,6 @@ def analyze_trending_keywords(
 
     # Save to JSON
     try:
-        OUTPUT_DIR.mkdir(exist_ok=True)
-
         filename = f"trending_posts_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         filepath = OUTPUT_DIR / filename
 
