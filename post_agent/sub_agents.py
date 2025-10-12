@@ -224,9 +224,9 @@ The tool returns JSON data containing:
 Your Tasks:
 1. CALL get_latest_trends_tool() to fetch the latest trend data
 2. ANALYZE the raw trend data to identify the most relevant topics for AI/ML developer audience
-3. EXTRACT top 3-5 trending topics with relevance and timeliness scores
+3. EXTRACT top 10-15 trending topics with relevance and timeliness scores (include diverse topics, not just AI/ML)
 4. SYNTHESIZE audience insights from the trending posts and topics
-5. PROPOSE 3-5 viral potential angles that combine trends with creative perspectives
+5. PROPOSE 5-8 viral potential angles that combine trends with creative perspectives
 6. ADD PERTURBATION: Introduce creative variations, unexpected connections, contrarian takes
 7. ENRICH with hashtag recommendations, timing insights, and engagement predictions
 

@@ -285,8 +285,8 @@ def get_trending_context() -> str:
                 for category, tab_info in tabs_data.items():
                     topics_list = tab_info.get("trending_topics", [])
 
-                    # Get top 5 topics from each category
-                    for topic in topics_list[:5]:
+                    # Get top 10 topics from each category (Twitter has ~20 per tab)
+                    for topic in topics_list[:10]:
                         topic_name = topic.get("topic_name", "")
 
                         # Extract hashtags
@@ -319,8 +319,8 @@ def get_trending_context() -> str:
             if google_trends.get("collected") and google_trends.get("data"):
                 gt_data = google_trends.get("data", {})
 
-                # Extract trending searches
-                for trend_item in gt_data.get("trending_searches", [])[:5]:
+                # Extract trending searches (Google Trends usually has 10-20)
+                for trend_item in gt_data.get("trending_searches", [])[:10]:
                     trending_topics.append({
                         "topic": trend_item.get("title", ""),
                         "trend_score": 0.85,
@@ -345,9 +345,9 @@ def get_trending_context() -> str:
                 for summary_keyword in summary.get("keywords", [])[:10]:
                     keywords.add(summary_keyword)
 
-        # Sort trending topics by trend_score and limit to top 10
+        # Sort trending topics by trend_score and limit to top 15
         trending_topics.sort(key=lambda x: (x.get("trend_score", 0), -x.get("rank", 999)), reverse=True)
-        trending_topics = trending_topics[:10]
+        trending_topics = trending_topics[:15]
 
         # Peak posting times (static recommendations based on research)
         peak_posting_times = [
