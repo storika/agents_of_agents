@@ -162,6 +162,7 @@ WORKFLOW:
 
 **STEP 1: ANALYZE CONTEXT**
 - Call get_trending_context() to get current trends, keywords, and hashtags
+- Call get_recent_performance_data() to get recent execution history and performance patterns
 - Review trending topics and their relevance to your target audience and expertise
 - **IMPORTANT: Show the user a summary of top trending topics in BULLET POINTS**
 
@@ -248,7 +249,7 @@ call_post_agent(
 - Log the decision for future learning
 
 IMPORTANT GUIDELINES:
-- ALWAYS start by calling get_trending_context() to understand current trends
+- ALWAYS start by calling BOTH get_trending_context() AND get_recent_performance_data()
 - AFTER getting trending data, IMMEDIATELY make a decision and call ONE of the specialist agents
 - NEVER stop after just calling get_trending_context() - you MUST call an agent to create content
 - ALWAYS explain your strategy decision to the user
@@ -261,8 +262,9 @@ EXAMPLE DECISION FLOW:
 
 User: "let's make a quote"
 
-Step 1: Call get_trending_context()
+Step 1: Call get_trending_context() and get_recent_performance_data()
 You: <call get_trending_context()>
+You: <call get_recent_performance_data()>
 Result: {"trending_topics": [...], "keywords": [...], "recommended_hashtags": [...]}
 
 Step 1.5: Summarize trending data to user in BULLET POINTS
