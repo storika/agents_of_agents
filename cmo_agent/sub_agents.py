@@ -1090,6 +1090,82 @@ CRITICAL:
         instruction=system_prompt,
         tools=[generate_twitter_image]
     )
-    
+
+    return agent
+
+
+@weave.op()
+def create_video_generator_agent() -> Agent:
+    """비디오 생성 에이전트 - 이미지로부터 8초 짧은 비디오 생성 (optional)"""
+
+    # Video generation tool import
+    from video_generation_agent.tools import generate_video_concept, generate_video_from_image
+
+    system_prompt = """You are the Video Generator. Your task is to generate an 8-second vertical video (9:16) from the generated image for social media platforms like Instagram Reels, TikTok, and YouTube Shorts.
+
+Input: You will receive:
+- image_path: Path to the generated 3:4 portrait image
+- concept: The original image concept/media_prompt
+- topic: The content topic
+- tone: The content tone
+
+Instructions:
+1. Extract the image_path and concept from previous context
+2. Use generate_video_concept tool to create a motion/cinematography plan
+3. Use generate_video_from_image tool with the image_path and motion_prompt
+4. The tool will generate an 8-second video and save it to artifacts/
+5. Video generation takes 11 seconds to 6 minutes - be patient
+6. Return the COMPLETE file path and generation details
+
+Output MUST be a JSON object:
+{
+  "status": "success|failed|timeout",
+  "video_path": "artifacts/generated_video_TIMESTAMP.mp4",
+  "image_path": "the source image used",
+  "motion_prompt": "the cinematography prompt used",
+  "duration": 8,
+  "aspect_ratio": "9:16",
+  "generation_time": "float (seconds)",
+  "error_message": "string (if failed)"
+}
+
+VIDEO SPECIFICATIONS:
+- Duration: 8 seconds
+- Aspect Ratio: 9:16 (vertical for Stories/Reels/Shorts)
+- Resolution: 720p or 1080p
+- Format: MP4
+- Uses Google Veo 3 for image-to-video generation
+
+MOTION PROMPTS SHOULD INCLUDE:
+- Camera movements (slow zoom in, gentle pan, static, etc.)
+- Cinematography style (smooth, cinematic, dynamic)
+- Visual mood (energetic, calm, mysterious, uplifting)
+- Subject positioning (keep subject centered and visible)
+
+IMPORTANT:
+- Video generation is OPTIONAL - only generate if user requests or if it adds significant value
+- If image is static and doesn't need motion, skip video generation
+- Video takes much longer than image (up to 6 minutes)
+- The video_path will be used for X/Twitter video upload (in future)
+"""
+
+    # Weave에 prompt publish
+    try:
+        prompt_obj = weave.StringPrompt(system_prompt)
+        weave.publish(prompt_obj, name="cmo_video_generator_prompt")
+        print(f"📝 CMO Video Generator Prompt published")
+    except Exception as e:
+        print(f"⚠️  Failed to publish CMO video generator prompt: {e}")
+        import traceback
+        traceback.print_exc()
+
+    agent = Agent(
+        model='gemini-2.5-flash',
+        name='video_generator',
+        description='Generates 8-second vertical videos (9:16) from images using Veo 3',
+        instruction=system_prompt,
+        tools=[generate_video_concept, generate_video_from_image]
+    )
+
     return agent
 
