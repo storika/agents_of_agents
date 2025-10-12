@@ -10,8 +10,8 @@ from cmo_agent.version_updater import CMOVersionUpdater
 
 def apply_prompt_improvements(
     hr_decisions_json: str,
-    version_name: Optional[str] = None,
-    backup_current: bool = True
+    version_name: Optional[str],
+    backup_current: bool
 ) -> str:
     """
     HR Agent의 프롬프트 개선 결정을 CMO Agent에 실제 적용
@@ -55,6 +55,12 @@ def apply_prompt_improvements(
         >>> result = json.loads(result_json)
         >>> print(f"CMO Agent 업데이트 완료: {result['version_name']}")
     """
+    # Apply default values (Google AI doesn't support default values in function declarations)
+    if version_name is None:
+        version_name = None  # Will be auto-generated as timestamp
+    if backup_current is None:
+        backup_current = True
+    
     def repair_json(text: str) -> str:
         """Repair malformed JSON by fixing common issues"""
         import re

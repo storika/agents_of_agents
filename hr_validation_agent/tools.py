@@ -10,19 +10,20 @@ from typing import List, Dict, Any, Optional
 import weave
 from apify_client import ApifyClient
 from datetime import datetime
+from weave.trace_server.trace_server_interface import CallsFilter
 
 
 def get_recent_calls_as_json(
-    limit: int = 100,
+    limit: int = 10,
     filter: Optional[dict] = None,
-    include_costs: bool = True,
-    include_feedback: bool = True
+    include_costs: bool = False,
+    include_feedback: bool = False
 ) -> str:
     """
     Weave에서 최근 calls를 가져와서 JSON 형식으로 반환
     
     Args:
-        limit: 가져올 call 개수
+        limit: 가져올 call 개수 (기본값: 10)
         filter: 필터 조건
         include_costs: 비용 정보 포함 여부
         include_feedback: 피드백 정보 포함 여부
@@ -32,20 +33,33 @@ def get_recent_calls_as_json(
     """
     # Use existing Weave client (initialized in agent.py via OTEL)
     import os
-    client = weave.init(os.getenv("WANDB_PROJECT_ID", "mason-choi-storika/WeaveHacks2"))
     
-    # Get calls with minimal columns (only output)
-    calls_iter = client.get_calls(
-        limit=limit,
-        filter=filter,
-        include_costs=include_costs,
-        include_feedback=include_feedback,
-        columns=["output"],  # Only fetch output column for performance
-        sort_by=[{"field": "started_at", "direction": "desc"}]
-    )
-    
-    calls = list(calls_iter)
-    print(f"[HR_TOOLS] Found {len(calls)} calls")
+    try:
+        client = weave.init(os.getenv("WANDB_PROJECT_ID", "mason-choi-storika/WeaveHacks2"))
+        
+        print(f"[HR_TOOLS] Fetching {limit} calls from Weave...")
+        calls_iter = client.get_calls(
+            filter=filter,
+            limit=limit,
+            include_costs=False,
+            include_feedback=False,
+            sort_by=[{"field": "started_at", "direction": "desc"}]
+        )
+        
+        calls = list(calls_iter)
+        print(f"[HR_TOOLS] ✓ Successfully fetched {len(calls)} calls")
+        
+    except Exception as e:
+        print(f"[HR_TOOLS] ❌ Failed to fetch calls from Weave: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        return json.dumps({
+            "error": "Weave API Error",
+            "message": str(e),
+            "suggestion": "The Weave server returned an error. Try again in a few moments.",
+            "calls": []
+        }, indent=2)
     
     # Convert to JSON-serializable format
     calls_data = []
@@ -67,40 +81,58 @@ def get_recent_calls_as_json(
 
 
 def get_calls_for_hr_validation(
-    limit: int = 50,
+    limit: int = 3,
     op_name_filter: Optional[str] = None
-) -> Dict[str, Any]:
+) -> str:
     """
     HR Validation Agent용 input 형식으로 calls 데이터 변환
     
     Args:
-        limit: 가져올 call 개수
+        limit: 가져올 call 개수 (기본값: 3, Weave server 과부하 방지)
         op_name_filter: 특정 operation만 필터링 (예: "CMOAgent.run")
     
     Returns:
-        HR agent input 형식의 dict
+        JSON string with HR agent input format or error message
     """
     # Use existing Weave client (initialized in agent.py via OTEL)
     import os
-    client = weave.init(os.getenv("WANDB_PROJECT_ID", "mason-choi-storika/WeaveHacks2"))
     
-    # Build filter
-    filter_dict = None
-    if op_name_filter:
-        filter_dict = {"op_names": [op_name_filter]}
-    
-    # Get calls with minimal columns (only output)
-    calls_iter = client.get_calls(
-        limit=limit,
-        filter=filter_dict,
-        include_costs=True,
-        include_feedback=True,
-        columns=["output"],  # Only fetch output column for performance
-        sort_by=[{"field": "started_at", "direction": "desc"}]
-    )
-    
-    calls = list(calls_iter)
-    print(f"[HR_TOOLS] Found {len(calls)} calls for HR validation")
+    try:
+        client = weave.init(os.getenv("WANDB_PROJECT_ID", "mason-choi-storika/WeaveHacks2"))
+        
+        print(f"[HR_TOOLS] Fetching {limit} calls from Weave for HR validation...")
+        calls_iter = client.get_calls(
+            filter=CallsFilter(op_names=['execute_tool call_post_agent']),
+            limit=limit,
+            include_costs=False,
+            include_feedback=False,
+            columns=["output"],
+            sort_by=[{"field": "started_at", "direction": "desc"}]
+        )
+
+        print(f"[HR_TOOLS] Calls iterator: {calls_iter}")
+        print(f"[HR_TOOLS] Converting iterator to list...")
+        
+        calls = list(calls_iter)
+        print(f"[HR_TOOLS] ✓ Successfully fetched {len(calls)} calls for HR validation")
+        
+    except Exception as e:
+        print(f"[HR_TOOLS] ❌ Failed to fetch calls from Weave: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # Return empty result with error message (allows pipeline to continue)
+        error_result = {
+            "status": "error",
+            "error": "Weave API Error",
+            "error_message": str(e),
+            "suggestion": "The Weave server returned a 500 error. This may be temporary. Continuing with empty data.",
+            "agents_performance": [],
+            "iteration": 1,
+            "layers": {}
+        }
+        print(f"[HR_TOOLS] Returning error result to allow pipeline continuation")
+        return json.dumps(error_result, indent=2)
     
     if calls:
         print(f"[HR_TOOLS] Sample call (entire object):")
@@ -160,7 +192,7 @@ if __name__ == "__main__":
     print("\n" + "=" * 70)
     print("Test 2: Get for HR validation")
     print("=" * 70)
-    hr_input = get_calls_for_hr_validation(limit=10)
+    hr_input = get_calls_for_hr_validation(limit=3)
     print(json.dumps(hr_input, indent=2, default=str)[:800] + "...")
 
 

@@ -12,6 +12,7 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 from pathlib import Path
 from apify_client import ApifyClient
+from weave.trace_server.trace_server_interface import CallsFilter
 
 
 # ===== A2A PROTOCOL LAYER =====
@@ -478,15 +479,15 @@ def get_recent_performance_data(
         # Use existing Weave client
         client = weave.init(os.getenv("WANDB_PROJECT_ID", "mason-choi-storika/WeaveHacks2"))
         
-        # Build filter
-        filter_dict = None
+        # Build filter using CallsFilter
+        filter_arg = None
         if filter_op_name:
-            filter_dict = {"op_names": [filter_op_name]}
+            filter_arg = CallsFilter(op_names=[filter_op_name])
         
         # Get calls with minimal columns (output only, no costs/feedback)
         calls_iter = client.get_calls(
             limit=limit,
-            filter=filter_dict,
+            filter=filter_arg,
             include_costs=False,  # 비용 정보 제외
             include_feedback=False,  # 피드백 정보 제외
             columns=["output"],

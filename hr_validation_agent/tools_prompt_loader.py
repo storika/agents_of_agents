@@ -148,6 +148,12 @@ def create_hr_input_from_posts(
         >>> hr_input = create_hr_input_from_posts(json.dumps(posts), iteration=1)
         >>> # Use with HR agent
     """
+    # Apply default values (Google AI doesn't support default values in function declarations)
+    if recent_posts_json is None:
+        recent_posts_json = "[]"
+    if iteration is None:
+        iteration = 1
+    
     try:
         # Load current prompts
         current_prompts = json.loads(load_current_cmo_prompts())

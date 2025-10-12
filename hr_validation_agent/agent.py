@@ -615,10 +615,13 @@ fetch_weave_data_agent = Agent(
 - ONLY execute the function call below
 
 FUNCTION TO EXECUTE:
-get_calls_for_hr_validation(limit=50)
+get_calls_for_hr_validation()
+
+Default parameters: limit=3, op_name_filter=None
+(Using limit=3 to avoid Weave server errors)
 
 ACTION:
-1. Call the function immediately (no questions asked)
+1. Call the function immediately without parameters
 2. Return only the function result
 3. Stop immediately after returning the result
 
