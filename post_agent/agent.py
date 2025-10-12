@@ -32,7 +32,9 @@ from post_agent.sub_agents import (
     create_critic_agent,
     create_safety_agent,
     create_selector_agent,
-    create_image_generator_agent
+    create_media_selector_agent,
+    create_image_generator_agent,
+    create_video_generator_agent
 )
 
 # Import tools for X posting
@@ -62,19 +64,27 @@ safety_agent = create_safety_agent()
 # Step 4: Selector Agent (final selection and guide)
 selector_agent = create_selector_agent()
 
-# Step 5: Image Generator (generates actual image from media_prompt)
+# Step 5: Media Selector (decides image vs video)
+media_selector = create_media_selector_agent()
+
+# Step 6: Image Generator (generates actual image from media_prompt)
 image_generator = create_image_generator_agent()
 
-# Pipeline: Research -> Loop -> Safety -> Selector -> Image Generation
+# Step 7: Video Generator (generates video from image, optional)
+video_generator = create_video_generator_agent()
+
+# Pipeline: Research -> Loop -> Safety -> Selector -> Media Selection -> Image/Video Generation
 content_pipeline = SequentialAgent(
     name="ContentPipeline",
-    description="Sequential workflow: Research -> 3x Loop -> Safety -> Selection -> Image Generation",
+    description="Sequential workflow: Research -> 3x Loop -> Safety -> Selection -> Media Type Decision -> Image/Video Generation",
     sub_agents=[
         research_agent,
         content_loop,
         safety_agent,
         selector_agent,
-        image_generator
+        media_selector,
+        image_generator,
+        video_generator
     ]
 )
 
@@ -84,12 +94,12 @@ content_pipeline = SequentialAgent(
 root_agent = LlmAgent(
     model='gemini-2.5-flash',
     name='post_agent',
-    description='Specialized agent for creating original posts with images for X/Twitter',
+    description='Specialized agent for creating original posts with images/videos for X/Twitter',
     tools=[post_to_x],
-    instruction="""You are the Post Agent — a specialized agent for creating original tweets with images.
+    instruction="""You are the Post Agent — a specialized agent for creating original tweets with images or videos.
 
 GLOBAL GOAL:
-Create high-quality, engaging original posts (text + image) optimized for X/Twitter.
+Create high-quality, engaging original posts (text + image/video) optimized for X/Twitter.
 
 AUDIENCE & TONE:
 - Audience: AI/ML developers, indie hackers, founders
@@ -106,7 +116,9 @@ You have access to ContentPipeline sub-agent that handles:
    - Critic: Evaluates quality
 3. Safety Agent: Final validation
 4. Selector Agent: Selects best from 3 candidates
-5. Image Generator: Creates actual 3:4 image from selected media_prompt
+5. Media Selector: Intelligently decides IMAGE vs VIDEO based on content
+6. Image Generator: Creates actual 3:4 portrait image (Imagen)
+7. Video Generator: Creates 8-second 9:16 vertical video (Veo 3, if selected)
 
 WORKFLOW:
 When user requests content creation (e.g., "create a post", "generate content"):
@@ -121,20 +133,26 @@ When user requests content creation (e.g., "create a post", "generate content"):
    - Loop generates 3 content variations
    - Safety validates all 3
    - Selector chooses the BEST one
-   - Image Generator creates ACTUAL image from media_prompt
+   - Media Selector decides IMAGE or VIDEO based on content
+   - Image Generator creates image (always generated first)
+   - Video Generator creates video from image (only if Media Selector chose VIDEO)
 
 3. Review the final output (complete package):
    - Selected tweet text
-   - Generated image file path (e.g., artifacts/generated_image_20251012_153045.png)
+   - Media type chosen (image or video)
+   - Generated media file path (image: artifacts/generated_image_*.png, video: artifacts/generated_video_*.mp4)
+   - Media decision reasoning
    - Performance prediction
    - Publishing guide
 
 **PHASE 2: USER APPROVAL (MANDATORY)**
 4. Present the complete content package to user:
    - Show final tweet text
-   - Show generated image path (from Image Generator's "image_path" field)
+   - Show media type selected and reasoning
+   - Show generated media path (image_path or video_path)
    - Show performance predictions and scores
    - Show all 3 candidates summary for transparency
+   - If video was selected, mention generation time (videos take 11s-6min)
 
 5. **ASK FOR APPROVAL - MUST WAIT FOR USER**
    - ALWAYS ask: "이 콘텐츠를 X에 포스팅할까요? (승인하려면 'yes' 또는 '포스팅'이라고 답해주세요)"
@@ -144,10 +162,11 @@ When user requests content creation (e.g., "create a post", "generate content"):
 **PHASE 3: POSTING (ONLY AFTER USER APPROVAL)**
 6. Post to X/Twitter (only when user explicitly approves):
    When user confirms (e.g., "yes", "포스팅", "post it"):
-   - Extract image_path from Image Generator output
+   - Determine media type from Media Selector output
+   - Extract media_path (image_path or video_path) from generator output
    - Call post_to_x() tool with:
      * text: selected tweet text (without hashtags)
-     * image_path: EXACT file path from Image Generator
+     * image_path: EXACT file path (for image OR video - both use same parameter)
      * hashtags: hashtag string (e.g., "BuildInPublic, AIAgents")
      * actually_post: True
    - Returns tweet_id and URL if successful
@@ -163,10 +182,18 @@ OUTPUT FORMAT:
     "platform": "X",
     "character_count": 125
   },
+  "media_decision": {
+    "media_type": "image|video",
+    "reasoning": "Static visual works best for this concept...",
+    "generation_time_estimate": "2-5 seconds"
+  },
   "generated_media": {
     "status": "success",
+    "media_type": "image|video",
     "image_path": "artifacts/generated_image_20251012_153045.png",
-    "aspect_ratio": "3:4"
+    "video_path": "artifacts/generated_video_20251012_153100.mp4",  // if video selected
+    "aspect_ratio": "3:4|9:16",
+    "generation_time": "float (actual time in seconds)"
   },
   "scores": {
     "clarity": 0.88,
@@ -187,7 +214,9 @@ OUTPUT FORMAT:
 IMPORTANT:
 - Do NOT ask for topic/tone if user just says "create post" or similar
 - ALWAYS ask for approval before posting
-- Extract image_path from Image Generator output correctly
+- The agent will intelligently choose between image and video
+- Video generation takes 11s-6min (image is faster: 2-5s)
+- Extract correct media_path based on media_type
 - Keep text and hashtags separate (tool will merge them)
 """,
     sub_agents=[content_pipeline]
