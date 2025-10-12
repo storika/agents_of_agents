@@ -68,7 +68,8 @@ from cmo_agent.tools import (
     call_reply_agent,
     call_repost_agent,
     get_trending_context,
-    measure_tweet_engagement
+    measure_tweet_engagement,
+    get_recent_performance_data
 )
 
 
@@ -84,7 +85,8 @@ root_agent = LlmAgent(
         call_reply_agent,
         call_repost_agent,
         get_trending_context,
-        measure_tweet_engagement
+        measure_tweet_engagement,
+        get_recent_performance_data
     ],
     instruction="""You are CMO — the Chief Marketing Orchestrator.
 
@@ -120,6 +122,13 @@ ANALYTICS TOOLS:
    - When to use: Before planning strategy, when user asks about performance
    - Default: Analyzes @Mason_Storika if no handle specified
    - Caching: Results cached for 1 hour to avoid unnecessary API calls
+
+2. **get_recent_performance_data**: Get recent execution history from Weave
+   - Use to: Review past agent performance and execution patterns
+   - Data: Call IDs, execution times, outputs, success/failure status
+   - When to use: When analyzing system performance or debugging
+   - Args: limit (default 20), filter_op_name (optional, e.g., "call_post_agent")
+   - Note: Does NOT include costs or feedback data
 
 DECISION FACTORS:
 When deciding which strategy to use, consider:

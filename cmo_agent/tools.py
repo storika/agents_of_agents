@@ -7,6 +7,7 @@ import json
 import os
 import re
 import time
+import weave
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 from pathlib import Path
@@ -23,13 +24,13 @@ def call_agent_via_a2a(
 ) -> Dict[str, Any]:
     """
     Universal A2A protocol caller
-
+    
     Args:
         agent_name: Target agent (post_agent, quote_agent, reply_agent, repost_agent)
         action: Action to perform
         params: Action-specific parameters
         context: Shared context (trends, history, etc.)
-
+    
     Returns:
         Standardized A2A response
     """
@@ -100,13 +101,13 @@ def call_post_agent(
 ) -> str:
     """
     Convenience wrapper for post_agent
-
+    
     Args:
         tone: Content tone (default: "witty")
         topic: Content topic (empty string means auto-discover from trends)
         context_json: JSON string with trending context data
         media_type: Type of media to generate - "image" or "video" (default: "image")
-
+    
     Returns:
         JSON string with response
     """
@@ -147,13 +148,13 @@ def call_quote_agent(
 ) -> str:
     """
     Convenience wrapper for quote_agent
-
+    
     Args:
         strategy: Quote tweet strategy (trending, topic, manual)
         topic: Topic to find tweets about (empty string if none)
         tweet_url: Specific tweet URL to quote (empty string if none)
         context_json: JSON string with trending context data
-
+    
     Returns:
         JSON string with response
     """
@@ -242,11 +243,11 @@ def call_repost_agent(
 ) -> str:
     """
     Convenience wrapper for repost_agent
-
+    
     Args:
         tweet_url: Tweet URL to repost
         context_json: JSON string with trending context data
-
+    
     Returns:
         JSON string with response
     """
@@ -286,7 +287,7 @@ def call_repost_agent(
 def get_trending_context() -> str:
     """
     Get current trending topics and context from real trend_data/ directory
-
+    
     Returns:
         JSON string with trending context
     """
@@ -417,7 +418,7 @@ def get_trending_context() -> str:
         for tag in default_hashtags:
             if tag not in recommended_hashtags and len(recommended_hashtags) < 8:
                 recommended_hashtags.append(tag)
-
+    
         result = {
             "status": "success",
             "source": "trend_data",
@@ -459,6 +460,85 @@ def _get_fallback_trending_context() -> str:
     return json.dumps(trends, indent=2)
 
 
+def get_recent_performance_data(
+    limit: int = 20,
+    filter_op_name: str = None
+) -> str:
+    """
+    Weave에서 최근 실행 기록을 가져와서 성능 분석용 JSON으로 반환
+    
+    Args:
+        limit: 가져올 call 개수 (기본: 20)
+        filter_op_name: 특정 operation만 필터링 (예: "call_post_agent")
+    
+    Returns:
+        JSON string with call performance data (costs/feedback 제외)
+    """
+    try:
+        # Use existing Weave client
+        client = weave.init(os.getenv("WANDB_PROJECT_ID", "mason-choi-storika/WeaveHacks2"))
+        
+        # Build filter
+        filter_dict = None
+        if filter_op_name:
+            filter_dict = {"op_names": [filter_op_name]}
+        
+        # Get calls with minimal columns (output only, no costs/feedback)
+        calls_iter = client.get_calls(
+            limit=limit,
+            filter=filter_dict,
+            include_costs=False,  # 비용 정보 제외
+            include_feedback=False,  # 피드백 정보 제외
+            columns=["output"],
+            sort_by=[{"field": "started_at", "direction": "desc"}]
+        )
+        
+        calls = list(calls_iter)
+        print(f"[CMO_TOOLS] Found {len(calls)} recent calls")
+        
+        # Convert to JSON-serializable format
+        calls_data = []
+        for call in calls:
+            call_dict = {
+                "id": call.id,
+                "trace_id": call.trace_id,
+                "op_name": call.op_name,
+                "started_at": call.started_at.isoformat() if call.started_at else None,
+                "ended_at": call.ended_at.isoformat() if call.ended_at else None,
+                "output": call.output if hasattr(call, 'output') else None,
+                "exception": call.exception if hasattr(call, 'exception') else None,
+                "success": call.exception is None
+            }
+            
+            # Calculate execution time
+            if call.started_at and call.ended_at:
+                duration = (call.ended_at - call.started_at).total_seconds() * 1000
+                call_dict["execution_time_ms"] = round(duration, 2)
+            
+            calls_data.append(call_dict)
+        
+        result = {
+            "status": "success",
+            "total_calls": len(calls_data),
+            "filter": filter_op_name if filter_op_name else "all",
+            "calls": calls_data,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+        return json.dumps(result, indent=2, default=str)
+        
+    except Exception as e:
+        print(f"[CMO_TOOLS ERROR] Failed to get performance data: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        return json.dumps({
+            "status": "failed",
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }, indent=2)
+
+
 def measure_tweet_engagement(
     twitter_handle: str = "Mason_Storika",
     max_wait_minutes: int = 30
@@ -470,11 +550,11 @@ def measure_tweet_engagement(
     - Checks for recent cached data (< 1 hour old)
     - Returns cached data if available
     - Otherwise, launches new Apify job and caches results
-
+    
     Args:
         twitter_handle: Twitter handle to analyze (default: "Mason_Storika")
         max_wait_minutes: Maximum time to wait for job completion (default: 30 minutes)
-
+    
     Returns:
         JSON string with engagement metrics and tweet data
     """
