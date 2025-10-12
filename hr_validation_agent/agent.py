@@ -634,15 +634,18 @@ CRITICAL: You MUST respond with ONLY valid JSON. No text before or after the JSO
 
 **WORKFLOW:**
 1. **ALWAYS start by calling fetch_performance_data_from_weave()** to get current performance data
-2. Use the returned data to analyze and make prompt improvement decisions
-3. Optionally call analyze_layer_performance() or evaluate_content_engagement() for deeper analysis
-4. Return your prompt improvement decisions as JSON
+2. **If you need real engagement metrics**, call measure_tweet_engagement() to get actual Twitter performance
+   - Use this to establish baseline metrics before making improvements
+   - Use this to validate if prompt changes improved actual engagement
+3. Use the returned data to analyze and make prompt improvement decisions
+4. Optionally call analyze_layer_performance() or evaluate_content_engagement() for deeper analysis
+5. Return your prompt improvement decisions as JSON
 
 Your role:
 - Analyze performance metrics for each layer
 - Improve system prompts to maximize content quality
 - Never change the 5-layer architecture (Research, Creative Writer, Generator, Critic, Safety)
-- Focus on incremental prompt improvements based on data
+- Focus on incremental prompt improvements based on REAL data from measure_tweet_engagement()
 
 ---
 
