@@ -4,46 +4,147 @@ CMO Agent 도구 함수들
 
 import json
 import random
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from datetime import datetime
+from pathlib import Path
 import weave
 from cmo_agent.schemas import ContentCandidate, EvaluationScores
 
 
-@weave.op()
-def research_trends(topic: str = "AI agents", max_results: int = 3) -> str:
+def load_latest_trend_data() -> Optional[Dict[str, Any]]:
     """
-    트렌드 리서치 수행
-    
-    Args:
-        topic: 조사할 주제
-        max_results: 반환할 최대 결과 수
-    
+    Load the most recent trending data from trend_data/ directory.
+
     Returns:
-        JSON 형식의 리서치 결과
+        Dict with trend data or None if no data found
     """
-    # 실제로는 TrendScout 에이전트를 호출하거나 Twitter API를 사용
-    # 여기서는 시뮬레이션
-    
-    trending_keywords = [
-        "AI", "agents", "automation", "LLM", "GPT", "Claude",
-        "developers", "builders", "indie hackers", "startups"
-    ]
-    
-    sample_topics = [
-        f"{topic}와 자동화의 미래",
-        f"{topic} 개발자 경험 개선",
-        f"{topic}가 바꾸는 워크플로우"
-    ]
-    
-    result = {
-        "topics": random.sample(sample_topics, min(max_results, len(sample_topics))),
-        "keywords": random.sample(trending_keywords, min(5, len(trending_keywords))),
-        "tone_style": "conversational, builder-friendly",
-        "insights": f"{topic}에 대한 개발자들의 관심이 증가하고 있습니다. 실용적이고 구체적인 사례를 선호합니다."
-    }
-    
-    return json.dumps(result, indent=2, ensure_ascii=False)
+    trend_data_dir = Path(__file__).parent.parent / "trend_data"
+
+    if not trend_data_dir.exists():
+        print("⚠️ trend_data/ directory not found")
+        return None
+
+    # Find most recent trending_*.json file
+    trend_files = sorted(trend_data_dir.glob("trending_*.json"), reverse=True)
+
+    if not trend_files:
+        print("⚠️ No trend data files found in trend_data/")
+        return None
+
+    latest_file = trend_files[0]
+    print(f"📊 Loading trend data from: {latest_file.name}")
+
+    try:
+        with open(latest_file, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"❌ Error loading trend data: {e}")
+        return None
+
+
+@weave.op()
+def research_trends(topic: str = "AI agents", max_results: int = 10) -> str:
+    """
+    트렌드 리서치 수행 - Load real trending data from trend_data/ directory
+
+    Args:
+        topic: 조사할 주제 (optional filter, ignored if real data available)
+        max_results: 반환할 최대 결과 수
+
+    Returns:
+        JSON 형식의 리서치 결과 with trending_topics array
+    """
+    # Load real trending data
+    trend_data = load_latest_trend_data()
+
+    if trend_data:
+        # Extract trending topics from the pipeline output
+        trending_topics = []
+
+        # Get data from data_sources structure
+        data_sources = trend_data.get("data_sources", {})
+
+        # Extract from twitter_trends if available
+        if "twitter_trends" in data_sources:
+            twitter_trends = data_sources["twitter_trends"]
+            if twitter_trends.get("collected"):
+                tabs_data = twitter_trends.get("data", {}).get("tabs", {})
+
+                for category, tab_info in tabs_data.items():
+                    topics_list = tab_info.get("trending_topics", [])
+                    for topic in topics_list[:max_results]:
+                        trending_topics.append({
+                            "topic_name": topic.get("topic_name", "Unknown"),
+                            "source": f"Twitter/{category}",
+                            "rank": topic.get("rank", "N/A"),
+                            "url": topic.get("url", ""),
+                            "engagement_hint": topic.get("engagement_hint", "unknown"),
+                            "raw_text": topic.get("raw_text", "")[:200]
+                        })
+
+        # Extract from post_analysis if available
+        if "post_analysis" in data_sources:
+            post_analysis_data = data_sources["post_analysis"]
+            if post_analysis_data.get("collected"):
+                analysis_data = post_analysis_data.get("data", {})
+                for keyword_data in analysis_data.get("keywords", [])[:max_results]:
+                    keyword = keyword_data.get("keyword", "")
+                    posts = keyword_data.get("posts", [])
+
+                    if posts:
+                        # Get the most engaging post
+                        top_post = posts[0] if posts else {}
+                        trending_topics.append({
+                            "topic_name": keyword,
+                            "source": "Post Analysis",
+                            "post_count": len(posts),
+                            "top_post": {
+                                "title": top_post.get("title", ""),
+                                "url": top_post.get("url", ""),
+                                "content": top_post.get("content", "")[:200]
+                            }
+                        })
+
+        # Limit to max_results
+        trending_topics = trending_topics[:max_results]
+
+        result = {
+            "status": "success",
+            "source": "real_trend_data",
+            "timestamp": trend_data.get("timestamp", ""),
+            "trending_topics": trending_topics,
+            "total_topics": len(trending_topics),
+            "insights": f"Loaded {len(trending_topics)} trending topics from real-time data collection"
+        }
+
+        print(f"✅ Loaded {len(trending_topics)} real trending topics")
+        return json.dumps(result, indent=2, ensure_ascii=False)
+
+    else:
+        # Fallback to mock data if no real data available
+        print("⚠️ No real trend data available, using fallback")
+
+        trending_keywords = [
+            "AI", "agents", "automation", "LLM", "GPT", "Claude",
+            "developers", "builders", "indie hackers", "startups"
+        ]
+
+        sample_topics = [
+            f"{topic}와 자동화의 미래",
+            f"{topic} 개발자 경험 개선",
+            f"{topic}가 바꾸는 워크플로우"
+        ]
+
+        result = {
+            "status": "fallback",
+            "source": "mock_data",
+            "topics": random.sample(sample_topics, min(max_results, len(sample_topics))),
+            "keywords": random.sample(trending_keywords, min(5, len(trending_keywords))),
+            "tone_style": "conversational, builder-friendly",
+            "insights": f"{topic}에 대한 개발자들의 관심이 증가하고 있습니다. 실용적이고 구체적인 사례를 선호합니다."
+        }
+
+        return json.dumps(result, indent=2, ensure_ascii=False)
 
 
 @weave.op()
