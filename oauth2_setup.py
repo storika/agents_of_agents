@@ -88,6 +88,66 @@ def load_credentials():
     # Client Secret은 Public Client의 경우 필요없을 수 있음
     return client_id, client_secret
 
+
+def refresh_access_token():
+    """Refresh Token을 사용해서 새로운 Access Token 발급"""
+    load_dotenv()
+    
+    client_id = os.getenv("TW_CLIENT_ID")
+    client_secret = os.getenv("TW_CLIENT_SECRET")
+    refresh_token = os.getenv("TW_OAUTH2_REFRESH_TOKEN")
+    
+    if not client_id:
+        print("[ERROR] TW_CLIENT_ID가 .env 파일에 없습니다.", file=sys.stderr)
+        sys.exit(1)
+    
+    if not refresh_token:
+        print("[ERROR] TW_OAUTH2_REFRESH_TOKEN이 .env 파일에 없습니다.", file=sys.stderr)
+        print("oauth2_setup.py를 먼저 실행하여 Refresh Token을 발급받으세요.\n", file=sys.stderr)
+        sys.exit(1)
+    
+    print("Refresh Token으로 Access Token을 갱신합니다...\n")
+    
+    try:
+        # OAuth2UserHandler 생성
+        oauth2_user_handler = tweepy.OAuth2UserHandler(
+            client_id=client_id,
+            redirect_uri=REDIRECT_URI,
+            scope=SCOPES,
+            client_secret=client_secret
+        )
+        
+        # Refresh token으로 새 access token 발급
+        new_token = oauth2_user_handler.refresh_token(
+            f"https://api.twitter.com/2/oauth2/token",
+            refresh_token=refresh_token,
+            body=f"grant_type=refresh_token&client_id={client_id}"
+        )
+        
+        print("✅ Access Token 갱신 성공!")
+        print(f"New Access Token: {new_token['access_token'][:20]}...")
+        
+        # .env 파일에 새 토큰 저장
+        env_path = ".env"
+        set_key(env_path, "TW_OAUTH2_ACCESS_TOKEN", new_token['access_token'])
+        
+        # 새로운 refresh token이 있으면 업데이트
+        if 'refresh_token' in new_token:
+            set_key(env_path, "TW_OAUTH2_REFRESH_TOKEN", new_token['refresh_token'])
+            print(f"New Refresh Token: {new_token['refresh_token'][:20]}...")
+        
+        print(f"\n새 토큰이 {env_path} 파일에 저장되었습니다.\n")
+        
+        return new_token
+        
+    except Exception as e:
+        print(f"[ERROR] 토큰 갱신 실패: {e}", file=sys.stderr)
+        print("Refresh Token이 만료되었거나 유효하지 않습니다.", file=sys.stderr)
+        print("oauth2_setup.py를 실행하여 새로운 인증을 받으세요.\n", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
 def setup_oauth2():
     """OAuth 2.0 인증 Flow 실행"""
     global auth_code, auth_error
@@ -177,5 +237,19 @@ def setup_oauth2():
         sys.exit(1)
 
 if __name__ == "__main__":
-    setup_oauth2()
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="Twitter OAuth 2.0 설정")
+    parser.add_argument(
+        "--refresh",
+        action="store_true",
+        help="Refresh Token을 사용해서 Access Token 갱신"
+    )
+    
+    args = parser.parse_args()
+    
+    if args.refresh:
+        refresh_access_token()
+    else:
+        setup_oauth2()
 

@@ -32,9 +32,17 @@ load_dotenv(Path(__file__).parent.parent.parent / ".env")
 BROWSERBASE_API_KEY = os.getenv("BROWSERBASE_API_KEY")
 BROWSERBASE_PROJECT_ID = os.getenv("BROWSERBASE_PROJECT_ID")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GOOGLE_GENAI_USE_VERTEXAI = os.getenv("GOOGLE_GENAI_USE_VERTEXAI", "False").lower() == "true"
+GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
+GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
+GOOGLE_APPLICATION_CREDENTIALS = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 GOOGLE_TRENDS_URL = "https://trends.google.com/trending?geo=US&hours=4&status=active&sort=search-volume"
 OUTPUT_DIR = Path(__file__).parent.parent / ".temp" / "google_trends"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+# Set Google credentials if using Vertex AI
+if GOOGLE_GENAI_USE_VERTEXAI and GOOGLE_APPLICATION_CREDENTIALS:
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = GOOGLE_APPLICATION_CREDENTIALS
 
 
 # Pydantic models for structured output
@@ -62,7 +70,16 @@ def extract_trends_with_gemini(screenshot_path: str) -> List[dict]:
         print("  Analyzing screenshot with Gemini Vision...")
 
         # Initialize Gemini client
-        client = genai.Client(api_key=GOOGLE_API_KEY)
+        if GOOGLE_GENAI_USE_VERTEXAI:
+            print(f"  Using Vertex AI (Project: {GOOGLE_CLOUD_PROJECT}, Location: {GOOGLE_CLOUD_LOCATION})")
+            client = genai.Client(
+                vertexai=True,
+                project=GOOGLE_CLOUD_PROJECT,
+                location=GOOGLE_CLOUD_LOCATION
+            )
+        else:
+            print("  Using Gemini API with API key")
+            client = genai.Client(api_key=GOOGLE_API_KEY)
 
         # Read and encode image
         with open(screenshot_path, 'rb') as f:
@@ -128,8 +145,12 @@ def scrape_google_trends():
     if not BROWSERBASE_API_KEY or not BROWSERBASE_PROJECT_ID:
         raise ValueError("Missing BROWSERBASE_API_KEY or BROWSERBASE_PROJECT_ID in .env file")
 
-    if not GOOGLE_API_KEY:
-        raise ValueError("Missing GOOGLE_API_KEY in .env file")
+    if GOOGLE_GENAI_USE_VERTEXAI:
+        if not GOOGLE_CLOUD_PROJECT:
+            raise ValueError("Missing GOOGLE_CLOUD_PROJECT in .env file (required for Vertex AI)")
+    else:
+        if not GOOGLE_API_KEY:
+            raise ValueError("Missing GOOGLE_API_KEY in .env file")
 
     print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Starting Google Trends scrape with Gemini OCR...")
 
