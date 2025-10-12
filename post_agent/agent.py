@@ -275,12 +275,79 @@ def execute(request: Dict[str, Any]) -> Dict[str, Any]:
 
             # Execute via content_pipeline tools
             print(f"[POST_AGENT] Executing ContentPipeline...")
-            from post_agent.sub_agents import call_research_layer, call_creative_writer_layer, call_generator_layer
+            from post_agent.sub_agents import (
+                call_research_layer,
+                call_creative_writer_layer,
+                call_generator_layer,
+                generate_image_concept,
+                generate_video_concept
+            )
+            from post_agent.tools import generate_twitter_image, generate_video_from_image
 
-            # Simple execution: Research -> Writer -> Generator
+            # Pipeline execution: Research -> Writer -> Generator
             research_result = call_research_layer(topic or "trending topics")
             writer_result = call_creative_writer_layer(research_result)
             generator_result = call_generator_layer(writer_result)
+
+            # Extract media_prompt from generator
+            media_prompt = None
+            media_path = None
+            media_type = "none"
+
+            if generator_result and "content_pieces" in generator_result:
+                content_pieces = generator_result.get("content_pieces", [])
+                if content_pieces:
+                    first_piece = content_pieces[0]
+                    media_prompt = first_piece.get("media_prompt", "")
+
+                    # Decide whether to generate image or video
+                    # For now, default to image (simple logic - can be enhanced later)
+                    user_requested_video = "video" in str(params).lower() or "video" in str(context).lower()
+
+                    if media_prompt:
+                        print(f"[POST_AGENT] Generating media from prompt: {media_prompt[:80]}...")
+
+                        # Generate image first (always needed, even for video)
+                        image_result = generate_twitter_image(concept=media_prompt)
+
+                        if image_result.get("status") == "success":
+                            image_path = image_result.get("file_path")
+                            media_path = image_path
+                            media_type = "image"
+                            print(f"[POST_AGENT] Image generated: {image_path}")
+
+                            # If video requested, generate video from image
+                            if user_requested_video and image_path:
+                                print(f"[POST_AGENT] User requested video, generating from image...")
+
+                                # Generate motion prompt
+                                video_concept_result = generate_video_concept(
+                                    image_concept=media_prompt,
+                                    topic=topic or "general",
+                                    tone=tone
+                                )
+
+                                if video_concept_result.get("status") == "success":
+                                    motion_prompt = video_concept_result.get("motion_prompt")
+
+                                    # Generate video
+                                    video_result = generate_video_from_image(
+                                        image_path=image_path,
+                                        motion_prompt=motion_prompt,
+                                        aspect_ratio="9:16",
+                                        duration=8
+                                    )
+
+                                    if video_result.get("status") == "success":
+                                        media_path = video_result.get("video_path")
+                                        media_type = "video"
+                                        print(f"[POST_AGENT] Video generated: {media_path}")
+                                    else:
+                                        print(f"[POST_AGENT] Video generation failed, using image instead")
+                                else:
+                                    print(f"[POST_AGENT] Video concept generation failed, using image only")
+                        else:
+                            print(f"[POST_AGENT] Image generation failed: {image_result.get('reason')}")
 
             response_text = json.dumps(generator_result, indent=2)
 
@@ -298,11 +365,13 @@ def execute(request: Dict[str, Any]) -> Dict[str, Any]:
                     full_text = f"{tweet_text} {hashtags}".strip()
 
                     print(f"[POST_AGENT] Posting to X: {full_text[:80]}...")
+                    if media_path:
+                        print(f"[POST_AGENT] Including media ({media_type}): {media_path}")
 
                     # Actually post to X
                     posting_result = post_to_x(
                         text=full_text,
-                        image_path="",  # No image for now
+                        image_path=media_path or "",  # Use generated media (image or video)
                         hashtags="",  # Already included in text
                         actually_post=True  # Always post immediately
                     )
@@ -313,6 +382,9 @@ def execute(request: Dict[str, Any]) -> Dict[str, Any]:
                 "status": "success",
                 "result": {
                     "content_generated": True,
+                    "media_generated": media_path is not None,
+                    "media_type": media_type,
+                    "media_path": media_path,
                     "content_posted": posting_result is not None,
                     "posting_result": posting_result,
                     "response": response_text,

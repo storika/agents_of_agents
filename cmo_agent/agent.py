@@ -205,12 +205,18 @@ Call the appropriate agent with relevant context:
 call_post_agent(
     topic=None,  # optional, let agent discover from trends
     tone="witty",
+    media_type="image",  # "image" or "video" - detect from user request
     context={
         "trending_topics": [...],
         "keywords": [...],
         "recommended_hashtags": [...]
     }
 )
+
+# Detect media_type from user request:
+# - If user says "make a post with video" → media_type="video"
+# - If user says "create video post" → media_type="video"
+# - Otherwise → media_type="image" (default)
 ```
 
 **STEP 4: REPORT TO USER**

@@ -91,7 +91,8 @@ def call_agent_via_a2a(
 def call_post_agent(
     tone: str = "witty",
     topic: str = "",
-    context_json: str = "{}"
+    context_json: str = "{}",
+    media_type: str = "image"
 ) -> str:
     """
     Convenience wrapper for post_agent
@@ -100,6 +101,7 @@ def call_post_agent(
         tone: Content tone (default: "witty")
         topic: Content topic (empty string means auto-discover from trends)
         context_json: JSON string with trending context data
+        media_type: Type of media to generate - "image" or "video" (default: "image")
 
     Returns:
         JSON string with response
@@ -114,6 +116,7 @@ def call_post_agent(
         params={
             "topic": topic if topic else None,
             "tone": tone,
+            "media_type": media_type,  # Pass media type to post_agent
             "require_approval": False  # Always post immediately
         },
         context=context
