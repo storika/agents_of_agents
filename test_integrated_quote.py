@@ -8,7 +8,7 @@ Now with real X API integration!
 import sys
 sys.path.insert(0, '/Users/jonghyunpark/Documents/agents_of_agents')
 
-from repost_agent.tools import (
+from quote_agent.tools import (
     search_recent_posts,
     generate_quote_tweet_comment,
     quote_tweet_post,

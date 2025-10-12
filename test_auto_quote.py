@@ -3,7 +3,7 @@ Test script for auto_trending_repost
 Automatically picks a random trending post and generates a comment
 """
 
-from repost_agent import auto_trending_repost
+from quote_agent import auto_trending_repost
 
 def main():
     """Run auto trending repost"""

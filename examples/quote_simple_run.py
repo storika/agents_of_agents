@@ -4,7 +4,7 @@ Demonstrates creating engaging quote tweets
 """
 
 import json
-from repost_agent.agent import create_quote_tweet, post_quote_tweet
+from quote_agent.agent import create_quote_tweet, post_quote_tweet
 
 
 def example_1_quote_specific_tweet():

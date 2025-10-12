@@ -1,5 +1,5 @@
 """
-Repost Agent - ADK Implementation with Weave Integration
+Quote Agent - ADK Implementation with Weave Integration
 An agent that creates engaging quote tweets (reposts with comments) for Twitter/X
 """
 
@@ -16,13 +16,13 @@ WANDB_API_KEY = os.getenv("WANDB_API_KEY", "3875d64c87801e9a71318a5a8754a0ee2d55
 os.environ["WANDB_API_KEY"] = WANDB_API_KEY
 
 weave.init("mason-choi-storika/WeaveHacks2")
-print("[INFO] 🐝 Weave initialized for Repost Agent: mason-choi-storika/WeaveHacks2")
+print("[INFO] 🐝 Weave initialized for Quote Agent: mason-choi-storika/WeaveHacks2")
 
 # Now import ADK
 from google.adk.agents.llm_agent import Agent as LlmAgent
 
 # Import tools
-from repost_agent.tools import (
+from quote_agent.tools import (
     analyze_tweet_for_repost,
     find_trending_tweets_tool,
     generate_repost_comment_tool,
@@ -32,7 +32,7 @@ from repost_agent.tools import (
 
 # ===== ROOT REPOST AGENT =====
 
-system_prompt = """You are the Repost Agent - a specialized agent for creating engaging quote tweets (reposts with comments) on Twitter/X.
+system_prompt = """You are the Quote Agent - a specialized agent for creating engaging quote tweets (reposts with comments) on Twitter/X.
 
 GLOBAL GOAL
 - Find trending or relevant tweets to repost
@@ -158,15 +158,15 @@ Remember: Your goal is to amplify great content while adding your unique perspec
 # Publish prompt to Weave
 try:
     prompt_obj = weave.StringPrompt(system_prompt)
-    weave.publish(prompt_obj, name="repost_agent_system_prompt")
-    print("📝 Repost Agent System Prompt published to Weave")
+    weave.publish(prompt_obj, name="quote_agent_system_prompt")
+    print("📝 Quote Agent System Prompt published to Weave")
 except Exception as e:
-    print(f"⚠️ Failed to publish Repost Agent prompt: {e}")
+    print(f"⚠️ Failed to publish Quote Agent prompt: {e}")
 
 
 root_agent = LlmAgent(
     model="gemini-2.5-flash",
-    name="repost_agent",
+    name="quote_agent",
     description="Specialized agent for creating engaging quote tweets (reposts with comments)",
     instruction=system_prompt,
     tools=[
@@ -208,7 +208,7 @@ def create_quote_tweet(
         }
 
     try:
-        print(f"🔄 Repost Agent executing...")
+        print(f"🔄 Quote Agent executing...")
 
         # Step 1: Find or use provided tweet
         original_tweet = {

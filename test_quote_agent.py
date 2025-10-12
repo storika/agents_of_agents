@@ -4,8 +4,8 @@ Demonstrates quote tweet generation with different strategies
 """
 
 import json
-from repost_agent.agent import create_quote_tweet, root_agent
-from repost_agent.tools import (
+from quote_agent.agent import create_quote_tweet, root_agent
+from quote_agent.tools import (
     find_trending_tweets_tool,
     generate_repost_comment_tool,
     analyze_tweet_for_repost,

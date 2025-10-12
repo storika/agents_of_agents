@@ -1,10 +1,10 @@
 """
-Repost Agent Package
+Quote Agent Package
 Complete X API integration for automated quote tweeting
 """
 
 # Import X API tools
-from repost_agent.tools import (
+from quote_agent.tools import (
     search_recent_posts,
     generate_quote_tweet_comment,
     quote_tweet_post,
