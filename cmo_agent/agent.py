@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Get Weave project from environment
-WEAVE_PROJECT = os.getenv("WEAVE_PROJECT", "mason-choi-storika/WeaveHacks2")
+# WEAVE_PROJECT = os.getenv("WEAVE_PROJECT", "your-org/your-project")
 
 # ===== OpenTelemetry Configuration for Weave =====
 # Reference: https://google.github.io/adk-docs/observability/weave/#sending-traces-to-weave

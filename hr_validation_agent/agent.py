@@ -5,20 +5,59 @@ Focuses on improving prompts for 5 fixed layers: Research, Creative Writer, Gene
 
 import json
 import os
+import base64
 from dotenv import load_dotenv
-import weave
 
 # Load environment variables
 load_dotenv()
 
-# Initialize Weave
-WANDB_API_KEY = os.getenv("WANDB_API_KEY", "3875d64c87801e9a71318a5a8754a0ee2d556946")
-os.environ['WANDB_API_KEY'] = WANDB_API_KEY
+# ===== OpenTelemetry Configuration for Weave =====
+# Reference: https://google.github.io/adk-docs/observability/weave/#sending-traces-to-weave
 
-weave.init("mason-choi-storika/WeaveHacks2")
-print("[INFO] 🐝 Weave initialized: mason-choi-storika/WeaveHacks2")
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk import trace as trace_sdk
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry import trace
 
-# Now import ADK
+# Configure Weave endpoint and authentication
+WANDB_BASE_URL = "https://trace.wandb.ai"
+# PROJECT_ID = os.environ.get("mason-choi-storika/otel-hr")
+PROJECT_ID = "mason-choi-storika/otel-hr"
+OTEL_EXPORTER_OTLP_ENDPOINT = f"{WANDB_BASE_URL}/otel/v1/traces"
+
+# Set up authentication
+os.environ['WANDB_API_KEY'] = '3875d64c87801e9a71318a5a8754a0ee2d556946'
+WANDB_API_KEY = os.environ['WANDB_API_KEY']
+AUTH = base64.b64encode(f"api:{WANDB_API_KEY}".encode()).decode()
+
+OTEL_EXPORTER_OTLP_HEADERS = {
+    "Authorization": f"Basic {AUTH}",
+    "project_id": PROJECT_ID,
+}
+
+# Create the OTLP span exporter with endpoint and headers
+exporter = OTLPSpanExporter(
+    endpoint=OTEL_EXPORTER_OTLP_ENDPOINT,
+    headers=OTEL_EXPORTER_OTLP_HEADERS,
+)
+
+# Get the current tracer provider (or create new if none exists)
+current_tracer_provider = trace.get_tracer_provider()
+
+# Check if it's a real TracerProvider or just the default proxy
+if isinstance(current_tracer_provider, trace_sdk.TracerProvider):
+    # TracerProvider already exists, add our exporter to it
+    tracer_provider = current_tracer_provider
+    tracer_provider.add_span_processor(SimpleSpanProcessor(exporter))
+    print(f"[INFO] 🐝 OpenTelemetry: Added Weave exporter to existing TracerProvider for {PROJECT_ID}")
+else:
+    # No TracerProvider yet, create a new one
+    tracer_provider = trace_sdk.TracerProvider()
+    tracer_provider.add_span_processor(SimpleSpanProcessor(exporter))
+    trace.set_tracer_provider(tracer_provider)
+    print(f"[INFO] 🐝 OpenTelemetry: Created new TracerProvider for Weave: {PROJECT_ID}")
+
+# Now import ADK (AFTER setting up tracer provider)
 from google.adk.agents.llm_agent import Agent
 from google.adk.agents.sequential_agent import SequentialAgent
 
@@ -475,7 +514,7 @@ def fetch_performance_data_from_weave(limit: int = 50) -> str:
     from hr_validation_agent.tools import get_calls_for_hr_validation
     
     # Get calls from Weave
-    calls_data = get_calls_for_hr_validation(limit=limit)
+    calls_data = get_calls_for_hr_validation(limit=limit, op_name_filter="execute_tool call_post_agent")
     
     # Simple conversion to HR format
     agents_performance = calls_data.get("agents_performance", [])

@@ -25,15 +25,17 @@ def get_recent_calls_as_json(
     Returns:
         JSON string
     """
-    client = weave.init("mason-choi-storika/WeaveHacks2")
+    # Use existing Weave client (initialized in agent.py via OTEL)
+    import os
+    client = weave.init(os.getenv("WANDB_PROJECT_ID", "mason-choi-storika/WeaveHacks2"))
     
-    # Get calls with relevant columns
+    # Get calls with minimal columns (only output)
     calls_iter = client.get_calls(
         limit=limit,
         filter=filter,
         include_costs=include_costs,
         include_feedback=include_feedback,
-        columns=["inputs", "output", "summary", "exception"],
+        columns=["output"],  # Only fetch output column for performance
         sort_by=[{"field": "started_at", "direction": "desc"}]
     )
     
@@ -73,20 +75,22 @@ def get_calls_for_hr_validation(
     Returns:
         HR agent input 형식의 dict
     """
-    client = weave.init("mason-choi-storika/WeaveHacks2")
+    # Use existing Weave client (initialized in agent.py via OTEL)
+    import os
+    client = weave.init(os.getenv("WANDB_PROJECT_ID", "mason-choi-storika/WeaveHacks2"))
     
     # Build filter
     filter_dict = None
     if op_name_filter:
         filter_dict = {"op_names": [op_name_filter]}
     
-    # Get calls
+    # Get calls with minimal columns (only output)
     calls_iter = client.get_calls(
         limit=limit,
         filter=filter_dict,
         include_costs=True,
         include_feedback=True,
-        columns=["inputs", "output", "summary", "exception"],
+        columns=["output"],  # Only fetch output column for performance
         sort_by=[{"field": "started_at", "direction": "desc"}]
     )
     
@@ -94,10 +98,10 @@ def get_calls_for_hr_validation(
     print(f"[HR_TOOLS] Found {len(calls)} calls for HR validation")
     
     if calls:
-        print(f"[HR_TOOLS] Sample call:")
-        print(f"[HR_TOOLS]   - op_name: {calls[0].op_name if calls else 'N/A'}")
-        print(f"[HR_TOOLS]   - call_id: {calls[0].id if calls else 'N/A'}")
-        print(f"[HR_TOOLS]   - has exception: {calls[0].exception is not None if calls else 'N/A'}")
+        print(f"[HR_TOOLS] Sample call (entire object):")
+        print(f"[HR_TOOLS] {calls[0]}")
+        print(f"[HR_TOOLS] Type: {type(calls[0])}")
+        print(f"[HR_TOOLS] Dir: {dir(calls[0])}")
     
     # Convert to HR agent format
     agents_performance = []
